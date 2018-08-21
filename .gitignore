@@ -10,10 +10,6 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
-# User-specific folder/files
-TestModule/
-**/Tokens/YahurrToken.json
-
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -263,3 +259,6 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/file.txt1
+/TestModule/
+/Yahurrbot/Tokens/YahurrToken.json

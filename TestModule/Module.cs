@@ -14,7 +14,7 @@ namespace TestModule
 
 		public async override Task MessageReceived(SocketMessage message)
 		{
-			if (message.Content == "Ping")
+			if (message.Content == "Ping1")
 			{
 				await message.Channel.SendMessageAsync("Pong");
 			}

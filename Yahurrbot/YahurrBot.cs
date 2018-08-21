@@ -27,6 +27,7 @@ namespace YahurrFramework
 		{
 			client = new DiscordSocketClient();
 			loadedModules = new List<YahurrModule>();
+
 			moduleManager = new ModuleManager(this, client);
 		}
 
