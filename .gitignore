@@ -260,5 +260,5 @@ paket-files/
 __pycache__/
 *.pyc
 /file.txt1
-/TestModule/
+TestModule/
 /Yahurrbot/Tokens/YahurrToken.json
