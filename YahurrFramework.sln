@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2000
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YahurrBot", "Yahurrbot\YahurrBot.csproj", "{9C5313A0-1EE4-41DD-AD0C-1C1818CC281C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestModule", "TestModule\TestModule.csproj", "{34E7FD52-D7B1-4263-B962-68FF50D0836E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9C5313A0-1EE4-41DD-AD0C-1C1818CC281C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C5313A0-1EE4-41DD-AD0C-1C1818CC281C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C5313A0-1EE4-41DD-AD0C-1C1818CC281C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C5313A0-1EE4-41DD-AD0C-1C1818CC281C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34E7FD52-D7B1-4263-B962-68FF50D0836E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34E7FD52-D7B1-4263-B962-68FF50D0836E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34E7FD52-D7B1-4263-B962-68FF50D0836E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34E7FD52-D7B1-4263-B962-68FF50D0836E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BA116384-3EBD-4BD4-A1E9-A356C4EA039A}
+	EndGlobalSection
+EndGlobal
