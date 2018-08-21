@@ -10,6 +10,10 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+# User-specific folder/files
+TestModule/
+Yahurrbot/Tokens/YahurrToken.json
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
