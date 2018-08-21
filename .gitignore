@@ -11,7 +11,7 @@
 *.userprefs
 
 # User-specific folder/files
-TestModule
+TestModule/
 **/Tokens/YahurrToken.json
 
 # Build results
