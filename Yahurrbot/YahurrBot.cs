@@ -18,17 +18,21 @@ namespace YahurrFramework
 		/// </summary>
 		public TokenType Type { get; } = TokenType.Bot;
 
-		DiscordSocketClient client;
-		List<YahurrModule> loadedModules;
+		internal ModuleManager ModuleManager { get; }
 
-		ModuleManager moduleManager;
+		internal EventManager EventManager { get; }
+
+		internal CommandManager CommandManager { get; }
+
+		DiscordSocketClient client;
 
 		public YahurrBot()
 		{
 			client = new DiscordSocketClient();
-			loadedModules = new List<YahurrModule>();
 
-			moduleManager = new ModuleManager(this, client);
+			ModuleManager = new ModuleManager(this, client);
+			EventManager = new EventManager(this, client);
+			CommandManager = new CommandManager(this, client);
 		}
 
 		/// <summary>
@@ -42,11 +46,14 @@ namespace YahurrFramework
 			await StartupAsync();
 
 			// Load all modules onto memory
-			await moduleManager.LoadModules("Modules");
+			await ModuleManager.LoadModules("Modules");
 
 			// Continue this as main loop.
 			Console.WriteLine("Done.");
-			await Task.Delay(-1);
+
+			// Run command and main loop
+			CommandLoop();
+			await MainLoop();
 		}
 
 		/// <summary>
@@ -56,6 +63,56 @@ namespace YahurrFramework
 		public async Task StopAsync()
 		{
 			await client.StopAsync().ConfigureAwait(false);
+		}
+
+		/// <summary>
+		/// Main yahurrbot loop
+		/// </summary>
+		/// <returns></returns>
+		async Task MainLoop()
+		{
+			await Task.Delay(-1);
+		}
+
+		/// <summary>
+		/// Bot command loop
+		/// </summary>
+		/// <returns></returns>
+		async Task CommandLoop()
+		{
+			while (true)
+			{
+				string input = Console.ReadLine().ToLower();
+				string[] commands = input.Split(' ');
+
+				if (commands.Length == 0)
+					continue;
+
+				switch (commands[0])
+				{
+					case "reload":
+						string folder = "Modules";
+						if (commands.Length > 1)
+							folder = commands[1];
+
+						await ModuleManager.LoadModules(folder);
+						break;
+					case "list":
+						Console.WriteLine("Loaded modules:");
+						for (int i = 0; i < ModuleManager.LoadedModules.Count; i++)
+						{
+							Console.WriteLine("	" + ModuleManager.LoadedModules[i].GetType().Name);
+						}
+						break;
+					case "exit":
+						await StopAsync();
+						Environment.Exit(1);
+						return;
+					default:
+						Console.WriteLine($"Unknown command: {commands[0]}");
+						break;
+				}
+			}
 		}
 
 		/// <summary>

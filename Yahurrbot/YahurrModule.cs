@@ -11,9 +11,16 @@ namespace YahurrFramework
     {
 		protected DiscordSocketClient Client { get; }
 
+		protected SocketMessage CommandContext { get; private set; }
+
 		public YahurrModule(DiscordSocketClient client)
 		{
 			this.Client = client;
+		}
+
+		internal void SetContext(SocketMessage context)
+		{
+			CommandContext = context;
 		}
 
 		#region Methods

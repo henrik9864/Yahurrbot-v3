@@ -5,7 +5,7 @@ using Discord.WebSocket;
 
 namespace YahurrFramework.Managers
 {
-    class BaseManager
+    internal class BaseManager
     {
 		protected YahurrBot Bot { get; }
 

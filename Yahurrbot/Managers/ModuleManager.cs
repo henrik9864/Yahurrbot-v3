@@ -6,16 +6,17 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using YahurrFramework.Attributes;
 
 namespace YahurrFramework.Managers
 {
-	class ModuleManager : BaseManager
+	internal class ModuleManager : BaseManager
 	{
-		public List<YahurrModule> LoadedModules { get; private set; }
+		public List<YahurrLoadedModule> LoadedModules { get; private set; }
 
 		public ModuleManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			LoadedModules = new List<YahurrModule>();
+			LoadedModules = new List<YahurrLoadedModule>();
 		}
 
 		/// <summary>
@@ -40,6 +41,23 @@ namespace YahurrFramework.Managers
 			}
 
 			Console.WriteLine($"Loaded {LoadedModules.Count} module{(LoadedModules.Count == 1 ? "" : "s")}...");
+		}
+
+		/// <summary>
+		/// Run a method on all modules
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="parameters"></param>
+		/// <returns></returns>
+		internal async Task RunMethod(string name, Func<YahurrModule, bool> validate, params object[] parameters)
+		{
+			for (int i = 0; i < LoadedModules.Count; i++)
+			{
+				YahurrModule module = LoadedModules[i].Module;
+
+				if (validate(module))
+					await (Task)module.GetType().GetMethod(name).Invoke(module, parameters);
+			}
 		}
 
 		/// <summary>
@@ -116,43 +134,32 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		void AddModule(YahurrModule module)
 		{
-			// Bind all methods to events in client.
-			#region EventBindings
-			Client.GuildUpdated += (a, b) => Task.Run(() => module.GuildUpdated(a, b));
-			Client.ReactionRemoved += (a, b, c) => Task.Run(() => module.ReactionRemoved(a.Value, b, c));
-			Client.ReactionsCleared += (a, b) => Task.Run(() => module.ReactionsCleared(a.Value, b));
-			Client.RoleCreated += (a) => Task.Run(() => module.RoleCreated(a));
-			Client.RoleDeleted += (a) => Task.Run(() => module.RoleDeleted(a));
-			Client.RoleUpdated += (a, b) => Task.Run(() => module.RoleUpdated(a, b));
-			Client.JoinedGuild += (a) => Task.Run(() => module.JoinedGuild(a));
-			Client.UserIsTyping += (a, b) => Task.Run(() => module.UserIsTyping(a, b));
-			Client.CurrentUserUpdated += (a, b) => Task.Run(() => module.CurrentUserUpdated(a, b));
-			Client.UserVoiceStateUpdated += (a, b, c) => Task.Run(() => module.UserVoiceStateUpdated(a, b, c));
-			Client.GuildMemberUpdated += (a, b) => Task.Run(() => module.GuildMemberUpdated(a, b));
-			Client.UserUpdated += (a, b) => Task.Run(() => module.UserUpdated(a, b));
-			Client.UserUnbanned += (a, b) => Task.Run(() => module.UserUnbanned(a, b));
-			Client.UserBanned += (a, b) => Task.Run(() => module.UserBanned(a, b));
-			Client.ReactionAdded += (a, b, c) => Task.Run(() => module.ReactionAdded(a.Value, b, c));
-			Client.LeftGuild += (a) => Task.Run(() => module.LeftGuild(a));
-			Client.GuildAvailable += (a) => Task.Run(() => module.GuildAvailable(a));
-			Client.GuildUnavailable += (a) => Task.Run(() => module.GuildUnavailable(a));
-			Client.GuildMembersDownloaded += (a) => Task.Run(() => module.GuildMembersDownloaded(a));
-			Client.UserJoined += (a) => Task.Run(() => module.UserJoined(a));
-			Client.MessageUpdated += (a, b, c) => Task.Run(() => module.MessageUpdated(a.Value, b, c));
-			Client.LatencyUpdated += (a, b) => Task.Run(() => module.LatencyUpdated(a, b));
-			Client.MessageReceived += (a) => Task.Run(() => module.MessageReceived(a));
-			Client.MessageDeleted += (a, b) => Task.Run(() => module.MessageDeleted(a.Value, b));
-			Client.Connected += () => Task.Run(() => module.Connected());
-			Client.Disconnected += (a) => Task.Run(() => module.Disconnected(a));
-			Client.Ready += () => Task.Run(() => module.Ready());
-			Client.RecipientRemoved += (a) => Task.Run(() => module.RecipientRemoved(a));
-			Client.ChannelCreated += (a) => Task.Run(() => module.ChannelCreated(a));
-			Client.ChannelDestroyed += (a) => Task.Run(() => module.ChannelDestroyed(a));
-			Client.ChannelUpdated += (a, b) => Task.Run(() => module.ChannelUpdated(a, b));
-			Client.RecipientAdded += (a) => Task.Run(() => module.RecipientAdded(a));
-			#endregion
+			List<YahurrCommand> commands = new List<YahurrCommand>();
 
-			LoadedModules.Add(module);
+			MethodInfo[] methods = module.GetType().GetMethods();
+			for (int i = 0; i < methods.Length; i++)
+			{
+				MethodInfo method = methods[i];
+
+				if (method.GetCustomAttribute<Command>() != null)
+					commands.Add(GetCommand(method));
+			}
+
+			LoadedModules.Add(new YahurrLoadedModule(module, commands));
+		}
+
+		/// <summary>
+		/// Get a command from a method.
+		/// </summary>
+		/// <param name="method"></param>
+		/// <param name="module"></param>
+		/// <returns></returns>
+		YahurrCommand GetCommand(MethodInfo method)
+		{
+			Command cmd = method.GetCustomAttribute<Command>();
+			Summary summary = method.GetCustomAttribute<Summary>();
+
+			return new YahurrCommand(cmd.CommandStructure, summary?.Value ?? "Not specefied.", method);
 		}
 	}
 }
