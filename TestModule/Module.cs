@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using YahurrFramework;
@@ -7,7 +8,7 @@ using YahurrFramework.Enums;
 
 namespace TestModule
 {
-	[ServerFilter(FilterType.Whitelist, 288626992373432320)]
+	[ServerFilter(FilterType.Whitelist, 288626992373432320), Summary("TestModule")]
     public class Module : YahurrModule
     {
         public Module(DiscordSocketClient client) : base(client)
@@ -23,18 +24,28 @@ namespace TestModule
 			}
 		}
 
-		[Command("print", "int"), Summary("prints a int")]
-		public async Task SayInt(int number)
+		[Command("print", "int"), Summary("Prints a int.")]
+		public async Task SayInt([Summary("Number to print")]int number)
 		{
 			await CommandContext.Channel.SendMessageAsync(number.ToString());
 		}
 
-		[Command("add"), Summary("adds two numbers together")]
-		public async Task AddInt(int n1, int n2)
+		[Command("print", "string"), Summary("Prints a string.")]
+		public async Task SayString([Summary("String to print")]string str)
 		{
-			Console.WriteLine("Running");
-			//Console.WriteLine("Context: " + CommandContext);
+			await CommandContext.Channel.SendMessageAsync(str);
+		}
+
+		[Command("add"), Summary("Adds two numbers together.")]
+		public async Task AddInt([Summary("Number 1.")]int n1, [Summary("Number 2.")]int n2)
+		{
 			await CommandContext.Channel.SendMessageAsync((n1 * n2).ToString());
+		}
+
+		[Command("rmd"), Summary("Reminds me")]
+		public async Task Remindme(string str)
+		{
+			await CommandContext.Channel.SendMessageAsync(str);
 		}
 	}
 }

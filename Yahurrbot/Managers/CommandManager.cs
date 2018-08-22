@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
+using YahurrFramework.Attributes;
 
 namespace YahurrFramework.Managers
 {
@@ -10,9 +12,34 @@ namespace YahurrFramework.Managers
 	{
 		internal char CommandPrefix { get; }
 
+		Dictionary<string, List<YahurrCommand>> commands;
+
 		public CommandManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
+			commands = new Dictionary<string, List<YahurrCommand>>();
 			CommandPrefix = '!';
+		}
+
+		/// <summary>
+		/// Add command to list of all commands.
+		/// </summary>
+		/// <param name="command"></param>
+		internal void AddCommand(YahurrCommand command)
+		{
+			if (commands.TryGetValue(command.Structure[0], out List<YahurrCommand> cmd))
+				cmd.Add(command);
+			else
+				commands.Add(command.Structure[0], new List<YahurrCommand>() { command });
+		}
+
+		/// <summary>
+		/// Add method from module to list of commands.
+		/// </summary>
+		/// <param name="module"></param>
+		/// <param name="method"></param>
+		internal void AddCommand(YahurrModule module, MethodInfo method)
+		{
+			AddCommand(new YahurrCommand(method, module));
 		}
 
 		/// <summary>
@@ -31,8 +58,25 @@ namespace YahurrFramework.Managers
 			List<string> cmd = new List<string>();
 			cmd.AddRange(msg.Split(' '));
 
+			await RunInternalCommand(command, cmd).ConfigureAwait(false);
 			await RunCommand(command, cmd).ConfigureAwait(false);
 			return true;
+		}
+
+		async Task RunInternalCommand(SocketMessage context, List<string> command)
+		{
+			string output = "";
+
+			// Might improve later
+			switch (command[0])
+			{
+				case "help":
+					output = HelpCommand(command);
+					break;
+			}
+
+			if (!string.IsNullOrEmpty(output))
+				await context.Channel.SendMessageAsync(output).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -43,23 +87,188 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		async Task<bool> RunCommand(SocketMessage context, List<string> command)
 		{
-			for (int i = 0; i < Bot.ModuleManager.LoadedModules.Count; i++)
+			Console.WriteLine("0");
+			List<YahurrCommand> commands;
+			if (!this.commands.TryGetValue(command[0], out commands))
+				return false;
+
+			for (int i = 0; i < commands.Count; i++)
 			{
-				YahurrLoadedModule loadedModule = Bot.ModuleManager.LoadedModules[i];
+				YahurrCommand cmd = commands[i];
 
-				if (loadedModule.VerifyCommand(command, out YahurrCommand cmd))
+				Console.WriteLine("1");
+
+				if (cmd.Verify(command))
 				{
-					command.RemoveRange(0, (command.Count - cmd.Parameters.Count));
+					Console.WriteLine("2");
+					command.RemoveRange(0, command.Count - cmd.Parameters.Count);
 
-					loadedModule.Module.SetContext(context);
-					await cmd.Invoke(loadedModule.Module, command).ConfigureAwait(false);
-					loadedModule.Module.SetContext(null);
-
-					return true;
+					Console.WriteLine("3");
+					await cmd.Invoke(command, context).ConfigureAwait(false);
 				}
 			}
 
-			return false;
+			return true;
 		}
+
+		#region InternalCommands
+
+		string HelpCommand(List<string> commands)
+		{
+			Console.WriteLine(commands.Count);
+
+			if (commands.Count == 1)
+				return HelpAllCommand(0, 3);
+
+			int page;
+			bool succsess = int.TryParse(commands[1], out page);
+
+			if (succsess && page > 0)
+				return HelpAllCommand(page - 1, 3);
+			else
+				return HelpDetailCommand(commands);
+		}
+
+		/// <summary>
+		/// Creats a string showing all commands for all modules
+		/// </summary>
+		/// <param name="commands"></param>
+		/// <returns></returns>
+		string HelpAllCommand(int page, int perPage)
+		{
+			int index = 0;
+			string output = "```";
+			output += "!help <page> -- View all commands sorted by module.\n";
+			output += "!help <command|module> <module> -- To view a command or module in more detail.\n\n";
+			output += "List of all commands by module:\n\n";
+
+			foreach (var moduleList in SortCommands())
+			{
+				if (index/perPage < page)
+					continue;
+
+				output += $"{moduleList.Key.Name}:\n";
+
+				for (int i = 0; i < moduleList.Value.Count; i++)
+				{
+					YahurrCommand cmd = moduleList.Value[i];
+					string cmdString = "	";
+
+					cmd.Structure.ForEach(a => cmdString += $"{a} ");
+					cmd.Parameters.ForEach(a => cmdString += $"<{TypeToShorthand(a.type.Name).ToLower()}> ");
+					cmdString += $"--- {cmd.Summary}\n";
+
+					output += cmdString;
+				}
+
+				index++;
+			}
+
+			return output + "```";
+		}
+
+		string HelpDetailCommand(List<string> commands)
+		{
+			string name = commands[1];
+
+			if (this.commands.TryGetValue(name, out List<YahurrCommand> cmds))
+			{
+				YahurrCommand cmd;
+
+				if (cmds.Count == 1)
+					cmd = cmds[0];
+				else if (!string.IsNullOrEmpty(commands[2]))
+					cmd = cmds.Find(a => string.Equals(a.Module.Name, commands[2], StringComparison.CurrentCultureIgnoreCase));
+				else
+					return "Ambegious name please specify module.";
+
+				return DisplayCommand(cmd);
+			}
+			else
+			{
+				YahurrModule module = Bot.ModuleManager.LoadedModules.Find(a => a.Name == commands[1]);
+				return DisplayModule(module);
+			}
+		}
+
+		string DisplayCommand(YahurrCommand command)
+		{
+			string output = "```";
+
+			output += $"Child command of {command.Module.Name}:\n";
+			command.Structure.ForEach(a => output += $"{a} ");
+			command.Parameters.ForEach(a => output += $"<{TypeToShorthand(a.type.Name).ToLower()}> ");
+			output += $" -- {command.Summary}";
+			command.Parameters.ForEach(a => output += $"\n	<{TypeToShorthand(a.type.Name).ToLower()}> -- {a.summary ?? "Not defined."}");
+
+			return output + "```";
+		}
+
+		string DisplayModule(YahurrModule module)
+		{
+			string output = "```";
+			output += $"{module.Name}:\n";
+
+			List<YahurrCommand> modules = SortCommands()[module];
+			for (int i = 0; i < modules.Count; i++)
+			{
+				YahurrCommand cmd = modules[i];
+				string cmdString = "	";
+
+				cmd.Structure.ForEach(a => cmdString += $"{a} ");
+				cmd.Parameters.ForEach(a => cmdString += $"<{TypeToShorthand(a.type.Name).ToLower()}> ");
+				cmdString += $"--- {cmd.Summary}\n";
+
+				output += cmdString;
+			}
+
+			return output + "```";
+		}
+
+		/// <summary>
+		/// Sorts all commands from commands dictionary.
+		/// </summary>
+		/// <returns></returns>
+		Dictionary<YahurrModule, List<YahurrCommand>> SortCommands()
+		{
+			var sortedCommands = new Dictionary<YahurrModule, List<YahurrCommand>>();
+
+			foreach (var cmds in this.commands)
+			{
+				List<YahurrCommand> cmdList = cmds.Value;
+
+				for (int i = 0; i < cmdList.Count; i++)
+				{
+					YahurrCommand cmd = cmdList[i];
+
+					if (sortedCommands.TryGetValue(cmd.Module, out List<YahurrCommand> toAdd))
+						toAdd.Add(cmd);
+					else
+						sortedCommands.Add(cmd.Module, new List<YahurrCommand>() { cmd });
+				}
+			}
+
+			return sortedCommands;
+		}
+
+		/// <summary>
+		/// Convert System.Type name to a shorthand version.
+		/// </summary>
+		/// <param name="type">TypeName to convert</param>
+		/// <returns></returns>
+		string TypeToShorthand(string type)
+		{
+			switch (type)
+			{
+				case "Int32":
+					return "Int";
+				case "Int64":
+					return "Int";
+				default:
+					return type;
+			}
+		}
+
+		#endregion
 	}
 }

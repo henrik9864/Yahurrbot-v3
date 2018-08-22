@@ -4,7 +4,7 @@ using System.Text;
 
 namespace YahurrFramework.Attributes
 {
-	[AttributeUsage(AttributeTargets.Method)]
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter | AttributeTargets.Class)]
     public class Summary : Attribute
     {
 		public string Value { get; }

@@ -2,13 +2,26 @@
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using YahurrFramework.Attributes;
 
 namespace YahurrFramework
 {
     public class YahurrModule
     {
+		/// <summary>
+		/// Name of module.
+		/// </summary>
+		public string Name
+		{
+			get
+			{
+				return GetType().GetCustomAttribute<Summary>()?.Value ?? GetType().Name;
+			}
+		}
+
 		protected DiscordSocketClient Client { get; }
 
 		protected SocketMessage CommandContext { get; private set; }

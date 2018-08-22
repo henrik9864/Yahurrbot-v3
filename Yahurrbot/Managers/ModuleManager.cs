@@ -12,11 +12,11 @@ namespace YahurrFramework.Managers
 {
 	internal class ModuleManager : BaseManager
 	{
-		public List<YahurrLoadedModule> LoadedModules { get; private set; }
+		public List<YahurrModule> LoadedModules { get; private set; }
 
 		public ModuleManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			LoadedModules = new List<YahurrLoadedModule>();
+			LoadedModules = new List<YahurrModule>();
 		}
 
 		/// <summary>
@@ -53,7 +53,7 @@ namespace YahurrFramework.Managers
 		{
 			for (int i = 0; i < LoadedModules.Count; i++)
 			{
-				YahurrModule module = LoadedModules[i].Module;
+				YahurrModule module = LoadedModules[i];
 
 				if (validate(module))
 					await (Task)module.GetType().GetMethod(name).Invoke(module, parameters);
@@ -134,32 +134,16 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		void AddModule(YahurrModule module)
 		{
-			List<YahurrCommand> commands = new List<YahurrCommand>();
-
 			MethodInfo[] methods = module.GetType().GetMethods();
 			for (int i = 0; i < methods.Length; i++)
 			{
 				MethodInfo method = methods[i];
 
 				if (method.GetCustomAttribute<Command>() != null)
-					commands.Add(GetCommand(method));
+					Bot.CommandManager.AddCommand(module, method);
 			}
 
-			LoadedModules.Add(new YahurrLoadedModule(module, commands));
-		}
-
-		/// <summary>
-		/// Get a command from a method.
-		/// </summary>
-		/// <param name="method"></param>
-		/// <param name="module"></param>
-		/// <returns></returns>
-		YahurrCommand GetCommand(MethodInfo method)
-		{
-			Command cmd = method.GetCustomAttribute<Command>();
-			Summary summary = method.GetCustomAttribute<Summary>();
-
-			return new YahurrCommand(cmd.CommandStructure, summary?.Value ?? "Not specefied.", method);
+			LoadedModules.Add(module);
 		}
 	}
 }
