@@ -68,7 +68,7 @@ namespace YahurrFramework
 		{
 			for (int i = 0; i < Structure.Count; i++)
 			{
-				if (Structure[i] != command[i])
+				if (!string.Equals(Structure[i], command[i], StringComparison.OrdinalIgnoreCase))
 					return false;
 			}
 
@@ -83,11 +83,9 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public async Task Invoke(List<string> parameters, SocketMessage context)
 		{
-			Console.WriteLine("hei");
 
 			if (parameters.Count != Parameters.Count)
 				return;
-			Console.WriteLine("hei");
 
 			object[] objects = new object[Parameters.Count];
 			for (int i = 0; i < parameters.Count; i++)
@@ -100,8 +98,6 @@ namespace YahurrFramework
 				else
 					objects[i] = JsonConvert.DeserializeObject(value, type);
 			}
-
-			Console.WriteLine("hei");
 
 			// Wrap in Task.Run?
 			Module.SetContext(context);

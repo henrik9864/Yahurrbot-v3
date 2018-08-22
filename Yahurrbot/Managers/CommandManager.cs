@@ -63,6 +63,12 @@ namespace YahurrFramework.Managers
 			return true;
 		}
 
+		/// <summary>
+		/// Run any hardcoded internal commands.
+		/// </summary>
+		/// <param name="context">Context for command</param>
+		/// <param name="command">Command to run</param>
+		/// <returns></returns>
 		async Task RunInternalCommand(SocketMessage context, List<string> command)
 		{
 			string output = "";
@@ -87,7 +93,6 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		async Task<bool> RunCommand(SocketMessage context, List<string> command)
 		{
-			Console.WriteLine("0");
 			List<YahurrCommand> commands;
 			if (!this.commands.TryGetValue(command[0], out commands))
 				return false;
@@ -96,14 +101,10 @@ namespace YahurrFramework.Managers
 			{
 				YahurrCommand cmd = commands[i];
 
-				Console.WriteLine("1");
-
-				if (cmd.Verify(command))
+				if (cmd.Verify(command) && cmd.Parameters.Count + cmd.Structure.Count == command.Count)
 				{
-					Console.WriteLine("2");
 					command.RemoveRange(0, command.Count - cmd.Parameters.Count);
 
-					Console.WriteLine("3");
 					await cmd.Invoke(command, context).ConfigureAwait(false);
 				}
 			}
@@ -113,10 +114,13 @@ namespace YahurrFramework.Managers
 
 		#region InternalCommands
 
+		/// <summary>
+		/// Start help command.
+		/// </summary>
+		/// <param name="commands"></param>
+		/// <returns></returns>
 		string HelpCommand(List<string> commands)
 		{
-			Console.WriteLine(commands.Count);
-
 			if (commands.Count == 1)
 				return HelpAllCommand(0, 3);
 
@@ -167,6 +171,11 @@ namespace YahurrFramework.Managers
 			return output + "```";
 		}
 
+		/// <summary>
+		/// Display detailed view of command or module.
+		/// </summary>
+		/// <param name="commands"></param>
+		/// <returns></returns>
 		string HelpDetailCommand(List<string> commands)
 		{
 			string name = commands[1];
@@ -175,10 +184,11 @@ namespace YahurrFramework.Managers
 			{
 				YahurrCommand cmd;
 
+				commands.RemoveRange(0, 1);
 				if (cmds.Count == 1)
 					cmd = cmds[0];
-				else if (!string.IsNullOrEmpty(commands[2]))
-					cmd = cmds.Find(a => string.Equals(a.Module.Name, commands[2], StringComparison.CurrentCultureIgnoreCase));
+				else if (!string.IsNullOrEmpty(commands[1]))
+					cmd = cmds.Find(a => a.Verify(commands));
 				else
 					return "Ambegious name please specify module.";
 
@@ -191,6 +201,11 @@ namespace YahurrFramework.Managers
 			}
 		}
 
+		/// <summary>
+		/// Display detailed view of command.
+		/// </summary>
+		/// <param name="command">Command to display</param>
+		/// <returns></returns>
 		string DisplayCommand(YahurrCommand command)
 		{
 			string output = "```";
@@ -204,6 +219,11 @@ namespace YahurrFramework.Managers
 			return output + "```";
 		}
 
+		/// <summary>
+		/// Display detailed view of module.
+		/// </summary>
+		/// <param name="module">Module to display</param>
+		/// <returns></returns>
 		string DisplayModule(YahurrModule module)
 		{
 			string output = "```";
