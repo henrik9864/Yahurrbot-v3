@@ -5,9 +5,9 @@ using YahurrFramework.Enums;
 
 namespace YahurrFramework.Attributes
 {
-	public class ServerFilter : BaseFilter
+	public class ChannelFilter : BaseFilter
 	{
-		public ServerFilter(FilterType type, params long[] serverIDs) : base(type, serverIDs)
+		public ChannelFilter(FilterType type, params long[] channelIDs) : base(type, channelIDs)
 		{
 		}
 	}

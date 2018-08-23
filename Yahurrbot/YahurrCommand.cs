@@ -12,7 +12,6 @@ namespace YahurrFramework
 {
     public class YahurrCommand
     {
-
 		public List<string> Structure { get; }
 
 		public List<(string summary, Type type, bool isParam)> Parameters { get; }
@@ -87,7 +86,7 @@ namespace YahurrFramework
 			object[] objects = new object[Parameters.Count];
 			for (int i = 0; i < Parameters.Count; i++)
 			{
-				string value = parameters[i];
+				string value = parameters[i + Structure.Count - 1];
 				Type type = Parameters[i].type;
 
 				if (Parameters[i].isParam)
@@ -105,10 +104,6 @@ namespace YahurrFramework
 				else
 					objects[i] = JsonConvert.DeserializeObject(value, type);
 			}
-
-			Console.WriteLine("Running...");
-			Console.WriteLine("Params: " + objects.Length);
-			Console.WriteLine("Params: " + Parameters.Count);
 
 			// Wrap in Task.Run?
 			try
