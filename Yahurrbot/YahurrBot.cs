@@ -52,7 +52,7 @@ namespace YahurrFramework
 			Console.WriteLine("Done.");
 
 			// Run command and main loop
-			CommandLoop();
+			Task.Run(CommandLoop);
 			await MainLoop();
 		}
 

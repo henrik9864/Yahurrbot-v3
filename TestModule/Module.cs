@@ -42,10 +42,17 @@ namespace TestModule
 			await CommandContext.Channel.SendMessageAsync((n1 * n2).ToString());
 		}
 
-		[Command("rmd"), Summary("Reminds me")]
-		public async Task Remindme(string str)
+		[Command("param"), Summary("Parameter test")]
+		public async Task ParamTest(params string[] strs)
 		{
-			await CommandContext.Channel.SendMessageAsync(str);
+			await CommandContext.Channel.SendMessageAsync("Length: " + strs.Length);
+
+			foreach (var item in strs)
+			{
+				await CommandContext.Channel.SendMessageAsync("	" + item);
+			}
+
+			throw new Exception("Nooo");
 		}
 	}
 }

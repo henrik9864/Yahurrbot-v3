@@ -101,9 +101,9 @@ namespace YahurrFramework.Managers
 			{
 				YahurrCommand cmd = commands[i];
 
-				if (cmd.Verify(command) && cmd.Parameters.Count + cmd.Structure.Count == command.Count)
+				if (cmd.Verify(command))
 				{
-					command.RemoveRange(0, command.Count - cmd.Parameters.Count);
+					command.RemoveRange(0, cmd.Structure.Count - 1);
 
 					await cmd.Invoke(command, context).ConfigureAwait(false);
 				}

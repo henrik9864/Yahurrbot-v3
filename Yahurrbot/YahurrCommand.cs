@@ -15,7 +15,7 @@ namespace YahurrFramework
 
 		public List<string> Structure { get; }
 
-		public List<(string summary, Type type)> Parameters { get; }
+		public List<(string summary, Type type, bool isParam)> Parameters { get; }
 
 		public string Summary { get; }
 
@@ -42,17 +42,18 @@ namespace YahurrFramework
 		/// </summary>
 		/// <param name="method">Method to parse</param>
 		/// <returns></returns>
-		List<(string summary, Type type)> LoadParameters(MethodInfo method)
+		List<(string summary, Type type, bool isParam)> LoadParameters(MethodInfo method)
 		{
-			var parameters = new List<(string summary, Type type)>();
+			var parameters = new List<(string summary, Type type, bool isParam)>();
 
 			ParameterInfo[] methodParameters = method.GetParameters();
 			for (int i = 0; i < methodParameters.Length; i++)
 			{
 				ParameterInfo parameter = methodParameters[i];
 				Summary summary = parameter.GetCustomAttribute<Summary>();
+				var param = parameter.GetCustomAttribute<ParamArrayAttribute>();
 
-				parameters.Add((summary?.Value, parameter.ParameterType));
+				parameters.Add((summary?.Value, parameter.ParameterType, param != null));
 			}
 
 			parameterCount = methodParameters.Length;
@@ -83,26 +84,47 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public async Task Invoke(List<string> parameters, SocketMessage context)
 		{
-
-			if (parameters.Count != Parameters.Count)
-				return;
-
 			object[] objects = new object[Parameters.Count];
-			for (int i = 0; i < parameters.Count; i++)
+			for (int i = 0; i < Parameters.Count; i++)
 			{
 				string value = parameters[i];
 				Type type = Parameters[i].type;
 
-				if (type == typeof(string))
+				if (Parameters[i].isParam)
+				{
+					Array arr = Array.CreateInstance(type.GetElementType(), parameters.Count - Parameters.Count);
+
+					// Adds rest of parameters into an array of last type
+					for (int a = 0; a < parameters.Count - (i + 1); a++)
+						arr.SetValue(parameters[a + i + 1], a);
+
+					objects[i] = arr;
+				}
+				else if (type == typeof(string))
 					objects[i] = value;
 				else
 					objects[i] = JsonConvert.DeserializeObject(value, type);
 			}
 
+			Console.WriteLine("Running...");
+			Console.WriteLine("Params: " + objects.Length);
+			Console.WriteLine("Params: " + Parameters.Count);
+
 			// Wrap in Task.Run?
-			Module.SetContext(context);
-			await (Task)method.Invoke(Module, objects);
-			Module.SetContext(null);
+			try
+			{
+				Module.SetContext(context);
+				Task command = (Task)method.Invoke(Module, objects);
+				command.Wait();
+				Module.SetContext(null);
+			}
+			catch (AggregateException e)
+			{
+				// Logg when i have logger
+				await context.Channel.SendMessageAsync("Error command threw an exception").ConfigureAwait(false);
+				throw;
+			}
+
 			await Task.CompletedTask;
 		}
     }
