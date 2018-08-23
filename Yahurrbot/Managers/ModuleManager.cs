@@ -73,7 +73,7 @@ namespace YahurrFramework.Managers
 
 			// Get types from the dll.
 			Assembly dll = Assembly.LoadFile(path);
-			LoadReferences(dll);
+			bool loaded = LoadReferences(dll);
 			Type[] types = dll.GetTypes();
 
 			// Add all types that extent yahurrmodule
@@ -107,13 +107,15 @@ namespace YahurrFramework.Managers
 		/// <summary>
 		/// Load all references for a dll
 		/// </summary>
-		void LoadReferences(Assembly assembly)
+		bool LoadReferences(Assembly assembly)
 		{
 			AssemblyName[] names = assembly.GetReferencedAssemblies();
 			for (int i = 0; i < names.Length; i++)
 			{
 				Assembly.Load(names[i]);
 			}
+
+			return true;
 		}
 
 		/// <summary>

@@ -86,7 +86,7 @@ namespace YahurrFramework
 			object[] objects = new object[Parameters.Count];
 			for (int i = 0; i < Parameters.Count; i++)
 			{
-				string value = parameters[i + Structure.Count - 1];
+				string value = parameters[i];
 				Type type = Parameters[i].type;
 
 				if (Parameters[i].isParam)
@@ -105,7 +105,6 @@ namespace YahurrFramework
 					objects[i] = JsonConvert.DeserializeObject(value, type);
 			}
 
-			// Wrap in Task.Run?
 			try
 			{
 				Module.SetContext(context);
@@ -113,7 +112,7 @@ namespace YahurrFramework
 				command.Wait();
 				Module.SetContext(null);
 			}
-			catch (AggregateException e)
+			catch (AggregateException)
 			{
 				// Logg when i have logger
 				await context.Channel.SendMessageAsync("Error command threw an exception").ConfigureAwait(false);
@@ -121,6 +120,16 @@ namespace YahurrFramework
 			}
 
 			await Task.CompletedTask;
+		}
+
+		/// <summary>
+		/// Return custom attribute from method.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		public T GetMethodAttribute<T>(bool inherit = false) where T : Attribute
+		{
+			return method.GetCustomAttribute<T>(inherit);
 		}
     }
 }

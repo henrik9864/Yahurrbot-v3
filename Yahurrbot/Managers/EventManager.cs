@@ -162,7 +162,7 @@ namespace YahurrFramework.Managers
 			{
 				ServerFilter filter = filterAttributes[i];
 
-				if (filter.IsFiltered((long)guild.Id))
+				if (filter.IsFiltered(guild.Id))
 					return false;
 			}
 

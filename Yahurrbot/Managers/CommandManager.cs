@@ -103,10 +103,51 @@ namespace YahurrFramework.Managers
 
 				if (cmd.Verify(command))
 				{
-					command.RemoveRange(0, cmd.Structure.Count - 1);
+					// Check if user can run command
+					if (!ValidateCommand(context, cmd))
+					{
+						await context.Channel.SendMessageAsync("You do not have permission to run that command!");
+						return false;
+					}
+
+					command.RemoveRange(0, cmd.Structure.Count);
 
 					await cmd.Invoke(command, context).ConfigureAwait(false);
 				}
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Validates if a command can be excecuted by person.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="command"></param>
+		/// <returns></returns>
+		bool ValidateCommand(SocketMessage context, YahurrCommand command)
+		{
+			SocketGuildChannel channel = context.Channel as SocketGuildChannel;
+			SocketGuildUser guildUser = context.Author as SocketGuildUser;
+			ChannelFilter channelFilter = command.GetMethodAttribute<ChannelFilter>(true);
+			RoleFilter roleFilter = command.GetMethodAttribute<RoleFilter>(true);
+
+			if (channel == null || guildUser == null)
+				return false;
+
+			if (channelFilter != null && !channelFilter.IsFiltered(channel.Id))
+				return false;
+
+			Console.WriteLine(roleFilter != null);
+			if (roleFilter != null)
+			{
+				foreach (SocketRole role in guildUser.Roles)
+				{
+					if (roleFilter.IsFiltered(role.Id))
+						return true;
+				}
+
+				return false;
 			}
 
 			return true;

@@ -5,16 +5,16 @@ using YahurrFramework.Enums;
 
 namespace YahurrFramework.Attributes
 {
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public abstract class BaseFilter : Attribute
     {
-		HashSet<long> IDs;
-		FilterType type;
+		protected HashSet<ulong> IDs { get; }
 
-		public BaseFilter(FilterType type, params long[] IDs)
+		protected FilterType Type { get; }
+
+		public BaseFilter(FilterType type, params ulong[] IDs)
 		{
-			this.IDs = new HashSet<long>();
-			this.type = type;
+			this.IDs = new HashSet<ulong>();
+			this.Type = type;
 
 			for (int i = 0; i < IDs.Length; i++)
 				this.IDs.Add(IDs[i]);
@@ -25,11 +25,11 @@ namespace YahurrFramework.Attributes
 		/// </summary>
 		/// <param name="id">ID to check</param>
 		/// <returns></returns>
-		public bool IsFiltered(long id)
+		public bool IsFiltered(ulong id)
 		{
 			bool found = IDs.Contains(id);
 
-			if (type == FilterType.Blacklist)
+			if (Type == FilterType.Blacklist)
 				found = !found;
 
 			return found;
