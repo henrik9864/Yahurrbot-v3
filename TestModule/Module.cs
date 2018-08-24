@@ -13,7 +13,7 @@ namespace TestModule
     {
         public Module(DiscordSocketClient client) : base(client)
 		{
-
+			
 		}
 
 		public async override Task MessageReceived(SocketMessage message)
@@ -24,7 +24,7 @@ namespace TestModule
 			}
 		}
 
-		[Command("print", "int"), Summary("Prints a int.")]
+		[Command("print", "int")]
 		public async Task SayInt([Summary("Number to print")]int number)
 		{
 			await CommandContext.Message.Channel.SendMessageAsync(number.ToString());
@@ -41,6 +41,8 @@ namespace TestModule
 		[Command("add"), Summary("Adds two numbers together.")]
 		public async Task AddInt([Summary("Number 1.")]int n1, [Summary("Number 2.")]int n2)
 		{
+			var s = Client.GetType().GetCustomAttribute(typeof(string)).TypeId;
+
 			await CommandContext.Message.Channel.SendMessageAsync((n1 * n2).ToString());
 		}
 

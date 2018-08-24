@@ -38,15 +38,8 @@ namespace YahurrFramework.Managers
 				FileInfo file = files[i];
 
 				// Load and add all modules in dll
-				try
-				{
-					List<YahurrModule> modules = await Task.Run(() => LoadModule(file.FullName));
-					AddModules(modules);
-				}
-				catch (Exception e)
-				{
-					await Bot.LoggingManager.LogMessage(e, "ModuleManager").ConfigureAwait(false);
-				}
+				List<YahurrModule> modules = await LoadModule(file.FullName).ConfigureAwait(false);
+				AddModules(modules);
 			}
 
 			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count} module{(LoadedModules.Count == 1 ? "" : "s")}...", "ModuleManager").ConfigureAwait(false);
@@ -65,7 +58,15 @@ namespace YahurrFramework.Managers
 				YahurrModule module = LoadedModules[i];
 
 				if (validate(module))
-					await (Task)module.GetType().GetMethod(name).Invoke(module, parameters);
+				{
+					Task task = (Task)module.GetType().GetMethod(name).Invoke(module, parameters);
+
+					if (task.Exception != null)
+					{
+						await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run method {name}:", "ModuleManager").ConfigureAwait(false);
+						await Bot.LoggingManager.LogMessage(task.Exception.InnerException, "ModuleManager").ConfigureAwait(false);
+					}
+				}
 			}
 		}
 
@@ -74,11 +75,11 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="path">Full path to dll.</param>
 		/// <returns></returns>
-		List<YahurrModule> LoadModule(string path)
+		async Task<List<YahurrModule>> LoadModule(string path)
 		{
 			// List to have all modules in this dll.
 			List<YahurrModule> modules = new List<YahurrModule>();
-			List<Task> tasks = new List<Task>();
+			List<(Task task, string name)> tasks = new List<(Task task, string name)>();
 
 			// Get types from the dll.
 			Assembly dll = Assembly.LoadFile(path);
@@ -99,17 +100,27 @@ namespace YahurrFramework.Managers
 
 					// Creat a new task and start running it.
 					Task task = new Task(() =>
-						modules.Add((YahurrModule)Activator.CreateInstance(type, Client)));
+					modules.Add((YahurrModule)Activator.CreateInstance(type, Client)));
 					task.Start();
-					tasks.Add(task);
+					tasks.Add((task, type.Name));
 				}
 			}
 
 			// Wait for all remaining tasks with 1 second timeout
 			CancellationTokenSource tokenSource = new CancellationTokenSource();
-			Task.WaitAll(tasks.ToArray(), 1000, tokenSource.Token);
-			tokenSource.Cancel();
+			try
+			{
+				Task.WaitAll(tasks.ConvertAll(a => a.task).ToArray(), 1000, tokenSource.Token);
+			}
+			catch (Exception ex)
+			{
+				string taskName = tasks.Find(a => a.task.Exception != null).name;
 
+				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {taskName}:", "ModuleManager").ConfigureAwait(false);
+				await Bot.LoggingManager.LogMessage(ex?.InnerException?.InnerException, "ModuleManager").ConfigureAwait(false);
+			}
+
+			tokenSource.Cancel();
 			return modules;
 		}
 

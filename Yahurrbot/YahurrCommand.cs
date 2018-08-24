@@ -20,6 +20,14 @@ namespace YahurrFramework
 
 		public YahurrModule Module { get; }
 
+		public string Name
+		{
+			get
+			{
+				return method.Name;
+			}
+		}
+
 		MethodInfo method;
 		int parameterCount;
 
@@ -29,7 +37,7 @@ namespace YahurrFramework
 			Summary summary = method.GetCustomAttribute<Summary>();
 
 			this.Structure = cmd.CommandStructure;
-			this.Summary = summary.Value ?? "Not specefied";
+			this.Summary = summary?.Value ?? "Not specefied";
 			this.method = method;
 			this.Module = module;
 
@@ -112,15 +120,13 @@ namespace YahurrFramework
 					{
 						objects[i] = JsonConvert.DeserializeObject(value, type);
 					}
-					catch (Exception)
+					catch (Exception e)
 					{
 						await context.Message.Channel.SendMessageAsync($"```Error parsing parameter {i}: {value}.```").ConfigureAwait(false);
 						throw;
 					}
 				}
 			}
-
-			Console.WriteLine(objects.Length);
 
 			try
 			{
@@ -131,9 +137,8 @@ namespace YahurrFramework
 			}
 			catch (AggregateException e)
 			{
-				// Logg when i have logger
-				await context.Message.Channel.SendMessageAsync($"```Error command threw an exception:\n{e.InnerException.Message}```").ConfigureAwait(false);
-				throw;
+				await context.Message.Channel.SendMessageAsync($"```Error: Command threw an exception:\n{e.InnerException.Message}```").ConfigureAwait(false);
+				throw e.InnerException;
 			}
 
 			await Task.CompletedTask;

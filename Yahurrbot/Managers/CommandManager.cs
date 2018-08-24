@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using YahurrFramework.Attributes;
+using YahurrFramework.Enums;
 
 namespace YahurrFramework.Managers
 {
@@ -112,7 +113,15 @@ namespace YahurrFramework.Managers
 
 					command.RemoveRange(0, cmd.Structure.Count);
 
-					await cmd.Invoke(command, new CommandContext(context)).ConfigureAwait(false);
+					try
+					{
+						await cmd.Invoke(command, new CommandContext(context)).ConfigureAwait(false);
+					}
+					catch (Exception ex)
+					{
+						await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {cmd.Name}:", "ModuleManager").ConfigureAwait(false);
+						await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
+					}
 				}
 			}
 

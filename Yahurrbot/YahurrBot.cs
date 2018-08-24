@@ -153,7 +153,12 @@ namespace YahurrFramework
 
 		async Task Log(LogMessage message)
 		{
-			Console.WriteLine($"{message.LogLevel}: {message.Message}");
+			if (message.Exception != null)
+				Console.WriteLine(message.Exception);
+			else
+				Console.WriteLine($"{message.LogLevel}: {message.Message}");
+
+			await Task.CompletedTask;
 		}
 	}
 }
