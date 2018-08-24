@@ -153,6 +153,7 @@ namespace YahurrFramework.Managers
 			return true;
 		}
 
+		// Commands hardcoded into the bot.
 		#region InternalCommands
 
 		/// <summary>
