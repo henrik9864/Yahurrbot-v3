@@ -81,7 +81,7 @@ namespace YahurrFramework
 		/// <param name="parameters">Parameters to give</param>
 		/// <param name="context">Context for this command invokation</param>
 		/// <returns></returns>
-		public async Task Invoke(List<string> parameters, SocketMessage context)
+		public async Task Invoke(List<string> parameters, CommandContext context)
 		{
 			// Remove all invalid parameters
 			parameters.RemoveAll(a => string.IsNullOrEmpty(a));
@@ -99,9 +99,6 @@ namespace YahurrFramework
 					// Adds rest of parameters into an array of last type
 					for (int a = 0; a < parameters.Count - i; a++)
 					{
-
-						Console.WriteLine($"Param {a + i}: {parameters[a + i]}.");
-
 						arr.SetValue(parameters[a + i], a);
 					}
 
@@ -117,7 +114,7 @@ namespace YahurrFramework
 					}
 					catch (Exception)
 					{
-						await context.Channel.SendMessageAsync($"```Error parsing parameter {i}: {value}.```").ConfigureAwait(false);
+						await context.Message.Channel.SendMessageAsync($"```Error parsing parameter {i}: {value}.```").ConfigureAwait(false);
 						throw;
 					}
 				}
@@ -135,7 +132,7 @@ namespace YahurrFramework
 			catch (AggregateException e)
 			{
 				// Logg when i have logger
-				await context.Channel.SendMessageAsync($"```Error command threw an exception:\n{e.InnerException.Message}```").ConfigureAwait(false);
+				await context.Message.Channel.SendMessageAsync($"```Error command threw an exception:\n{e.InnerException.Message}```").ConfigureAwait(false);
 				throw;
 			}
 
