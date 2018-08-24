@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
+using YahurrFramework.Enums;
 using YahurrFramework.Managers;
 using YahurrFramework.Structs;
 
@@ -18,11 +19,15 @@ namespace YahurrFramework
 		/// </summary>
 		public TokenType Type { get; } = TokenType.Bot;
 
+		public string Version { get; } = "0.0.1";
+
 		internal ModuleManager ModuleManager { get; }
 
 		internal EventManager EventManager { get; }
 
 		internal CommandManager CommandManager { get; }
+
+		internal LoggingManager LoggingManager { get; }
 
 		DiscordSocketClient client;
 
@@ -33,6 +38,9 @@ namespace YahurrFramework
 			ModuleManager = new ModuleManager(this, client);
 			EventManager = new EventManager(this, client);
 			CommandManager = new CommandManager(this, client);
+			LoggingManager = new LoggingManager(this, client);
+
+			LoggingManager.Log += Log;
 		}
 
 		/// <summary>
@@ -42,14 +50,14 @@ namespace YahurrFramework
 		public async Task StartAsync()
 		{
 			// Run Yahurrbot startup
-			Console.WriteLine("Starting Yahurrbot v0.0.1");
+			await LoggingManager.LogMessage(LogLevel.Message, $"Starting Yahurrbot v{Version}", "Startup").ConfigureAwait(false);
 			await StartupAsync();
 
 			// Load all modules onto memory
 			await ModuleManager.LoadModules("Modules");
 
 			// Continue this as main loop.
-			Console.WriteLine("Done.");
+			await LoggingManager.LogMessage(LogLevel.Message, $"Done", "Startup").ConfigureAwait(false);
 
 			// Run command and main loop
 			Task.Run(CommandLoop);
@@ -121,10 +129,10 @@ namespace YahurrFramework
 		/// <returns></returns>
 		async Task StartupAsync()
 		{
-			Console.WriteLine("Loading tokens...");
+			await LoggingManager.LogMessage(LogLevel.Message, $"Loading tokens...", "Startup").ConfigureAwait(false);
 			ClientInfo clientInfo = await GetInfoAsync("Tokens/YahurrToken.json").ConfigureAwait(false);
 
-			Console.WriteLine("Starting bot...");
+			await LoggingManager.LogMessage(LogLevel.Message, $"Starting bot...", "Startup").ConfigureAwait(false);
 			await client.LoginAsync(Type, clientInfo.Token).ConfigureAwait(false);
 			await client.StartAsync().ConfigureAwait(false);
 		}
@@ -141,6 +149,11 @@ namespace YahurrFramework
 				string json = await reader.ReadToEndAsync().ConfigureAwait(false);
 				return JsonConvert.DeserializeObject<ClientInfo>(json);
 			}
+		}
+
+		async Task Log(LogMessage message)
+		{
+			Console.WriteLine($"{message.LogLevel}: {message.Message}");
 		}
 	}
 }

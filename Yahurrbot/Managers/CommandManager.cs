@@ -112,7 +112,7 @@ namespace YahurrFramework.Managers
 
 					command.RemoveRange(0, cmd.Structure.Count);
 
-					await cmd.Invoke(command, context).ConfigureAwait(false);
+					await cmd.Invoke(command, new CommandContext(context)).ConfigureAwait(false);
 				}
 			}
 

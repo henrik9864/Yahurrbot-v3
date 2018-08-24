@@ -7,12 +7,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using YahurrFramework.Attributes;
+using YahurrFramework.Enums;
 
 namespace YahurrFramework.Managers
 {
 	internal class ModuleManager : BaseManager
 	{
-		public List<YahurrModule> LoadedModules { get; private set; }
+		public List<YahurrModule> LoadedModules { get; }
 
 		public ModuleManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
@@ -30,17 +31,25 @@ namespace YahurrFramework.Managers
 			FileInfo[] files = directory.GetFiles();
 
 			// Load all found modules
-			Console.WriteLine($"Loading modules...");
+			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loading modules...", "ModuleManager").ConfigureAwait(false);
+
 			for (int i = 0; i < files.Length; i++)
 			{
 				FileInfo file = files[i];
 
 				// Load and add all modules in dll
-				List<YahurrModule> modules = await Task.Run(() => LoadModule(file.FullName));
-				AddModules(modules);
+				try
+				{
+					List<YahurrModule> modules = await Task.Run(() => LoadModule(file.FullName));
+					AddModules(modules);
+				}
+				catch (Exception e)
+				{
+					await Bot.LoggingManager.LogMessage(e, "ModuleManager").ConfigureAwait(false);
+				}
 			}
 
-			Console.WriteLine($"Loaded {LoadedModules.Count} module{(LoadedModules.Count == 1 ? "" : "s")}...");
+			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count} module{(LoadedModules.Count == 1 ? "" : "s")}...", "ModuleManager").ConfigureAwait(false);
 		}
 
 		/// <summary>
