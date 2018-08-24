@@ -83,6 +83,9 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public async Task Invoke(List<string> parameters, SocketMessage context)
 		{
+			// Remove all invalid parameters
+			parameters.RemoveAll(a => string.IsNullOrEmpty(a));
+
 			object[] objects = new object[Parameters.Count];
 			for (int i = 0; i < Parameters.Count; i++)
 			{
@@ -96,6 +99,9 @@ namespace YahurrFramework
 					// Adds rest of parameters into an array of last type
 					for (int a = 0; a < parameters.Count - i; a++)
 					{
+
+						Console.WriteLine($"Param {a + i}: {parameters[a + i]}.");
+
 						arr.SetValue(parameters[a + i], a);
 					}
 
@@ -104,8 +110,20 @@ namespace YahurrFramework
 				else if (type == typeof(string))
 					objects[i] = value;
 				else
-					objects[i] = JsonConvert.DeserializeObject(value, type);
+				{
+					try
+					{
+						objects[i] = JsonConvert.DeserializeObject(value, type);
+					}
+					catch (Exception)
+					{
+						await context.Channel.SendMessageAsync($"```Error parsing parameter {i}: {value}.```").ConfigureAwait(false);
+						throw;
+					}
+				}
 			}
+
+			Console.WriteLine(objects.Length);
 
 			try
 			{
@@ -114,10 +132,10 @@ namespace YahurrFramework
 				command.Wait();
 				Module.SetContext(null);
 			}
-			catch (AggregateException)
+			catch (AggregateException e)
 			{
 				// Logg when i have logger
-				await context.Channel.SendMessageAsync("Error command threw an exception").ConfigureAwait(false);
+				await context.Channel.SendMessageAsync($"```Error command threw an exception:\n{e.InnerException.Message}```").ConfigureAwait(false);
 				throw;
 			}
 
