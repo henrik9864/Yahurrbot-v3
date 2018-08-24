@@ -36,7 +36,7 @@ namespace TestModule
 			await CommandContext.Channel.SendMessageAsync(str);
 		}
 
-		[ChannelFilter(FilterType.Whitelist, 293381166365540353)]
+		[ChannelFilter(FilterType.Blacklist, 293381166365540353)]
 		[RoleFilter(FilterType.Whitelist, 288627464450736128)]
 		[Command("add"), Summary("Adds two numbers together.")]
 		public async Task AddInt([Summary("Number 1.")]int n1, [Summary("Number 2.")]int n2)

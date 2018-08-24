@@ -91,11 +91,13 @@ namespace YahurrFramework
 
 				if (Parameters[i].isParam)
 				{
-					Array arr = Array.CreateInstance(type.GetElementType(), parameters.Count - Parameters.Count);
+					Array arr = Array.CreateInstance(type.GetElementType(), parameters.Count - Parameters.Count + 1);
 
 					// Adds rest of parameters into an array of last type
-					for (int a = 0; a < parameters.Count - (i + 1); a++)
-						arr.SetValue(parameters[a + i + 1], a);
+					for (int a = 0; a < parameters.Count - i; a++)
+					{
+						arr.SetValue(parameters[a + i], a);
+					}
 
 					objects[i] = arr;
 				}

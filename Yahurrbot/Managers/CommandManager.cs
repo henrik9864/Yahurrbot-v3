@@ -138,7 +138,6 @@ namespace YahurrFramework.Managers
 			if (channelFilter != null && !channelFilter.IsFiltered(channel.Id))
 				return false;
 
-			Console.WriteLine(roleFilter != null);
 			if (roleFilter != null)
 			{
 				foreach (SocketRole role in guildUser.Roles)
