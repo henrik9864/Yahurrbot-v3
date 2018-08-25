@@ -12,14 +12,19 @@ namespace YahurrFramework
     {
         static void Main(string[] args)
         {
-			new Program().MainAsync().GetAwaiter().GetResult();
+			int code;
+			while (true)
+			{
+				YahurrBot bot = new YahurrBot();
+				code = (int)bot.StartAsync().GetAwaiter().GetResult();
+
+				if (code != 2)
+					break;
+
+				Console.Clear();
+			}
+
+			Console.WriteLine("Program exited with code: " + code);
         }
-
-		public async Task MainAsync()
-		{
-			YahurrBot yahurrBot = new YahurrBot();
-
-			await yahurrBot.StartAsync();
-		}
     }
 }

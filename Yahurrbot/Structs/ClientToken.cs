@@ -5,16 +5,16 @@ using System.Text;
 
 namespace YahurrFramework.Structs
 {
-    class ClientInfo
+    class ClientToken
     {
-		public string ID { get; }
+		public ulong ID { get; private set; }
 
-		public string Secret { get; }
+		public string Secret { get; private set; }
 
-		public string Token { get; }
+		public string Token { get; private set; }
 
 		[JsonConstructor]
-		public ClientInfo(string ID, string Secret, string Token)
+		public ClientToken(ulong ID, string Secret, string Token)
 		{
 			this.ID = ID;
 			this.Secret = Secret;

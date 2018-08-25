@@ -120,9 +120,9 @@ namespace YahurrFramework
 					{
 						objects[i] = JsonConvert.DeserializeObject(value, type);
 					}
-					catch (Exception e)
+					catch (Exception)
 					{
-						await context.Message.Channel.SendMessageAsync($"```Error parsing parameter {i}: {value}.```").ConfigureAwait(false);
+						await context.Message.Channel.SendMessageAsync($"```Error parsing parameter {i + 1}: {value}.```").ConfigureAwait(false);
 						throw;
 					}
 				}

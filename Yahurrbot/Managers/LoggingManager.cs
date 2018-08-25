@@ -4,12 +4,15 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using YahurrFramework.Enums;
+using YahurrFramework.Structs;
 
 namespace YahurrFramework.Managers
 {
 	internal class LoggingManager : BaseManager
 	{
-		public event Func<LogMessage, Task> Log;
+		public event Func<LogMessage, ClientConfig, Task> Log;
+
+		public event Func<ClientConfig, Task<string>> Read;
 
 		List<LogMessage> loggedMessages = new List<LogMessage>();
 
@@ -44,10 +47,19 @@ namespace YahurrFramework.Managers
 			await LogMessage(msg);
 		}
 
+		/// <summary>
+		/// Get user input from logger.
+		/// </summary>
+		/// <returns></returns>
+		public Task<string> GetInput()
+		{
+			return Task.Run(() => Read?.Invoke(Bot.Config) ?? Task.FromResult<string>(null));
+		}
+
 		async Task LogMessage(LogMessage message)
 		{
 			loggedMessages.Add(message);
-			await Log.Invoke(message).ConfigureAwait(false);
+			await Log.Invoke(message, Bot.Config).ConfigureAwait(false);
 		}
 	}
 }
