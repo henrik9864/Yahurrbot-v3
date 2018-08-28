@@ -99,8 +99,11 @@ namespace YahurrFramework.Managers
 						LoadedModules.RemoveAt(index);
 
 					// Creat a new task and start running it.
-					Task task = new Task(() =>
-					modules.Add((YahurrModule)Activator.CreateInstance(type, Client)));
+					Task task = new Task(() => {
+						YahurrModule module = (YahurrModule)Activator.CreateInstance(type);
+						module.Init(Client, Bot);
+						modules.Add(module);
+					});
 					task.Start();
 					tasks.Add((task, type.Name));
 				}
@@ -115,6 +118,8 @@ namespace YahurrFramework.Managers
 			catch (Exception ex)
 			{
 				string taskName = tasks.Find(a => a.task.Exception != null).name;
+
+				Console.WriteLine(ex);
 
 				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {taskName}:", "ModuleManager").ConfigureAwait(false);
 				await Bot.LoggingManager.LogMessage(ex?.InnerException?.InnerException, "ModuleManager").ConfigureAwait(false);
@@ -146,7 +151,10 @@ namespace YahurrFramework.Managers
 		{
 			for (int i = 0; i < modules.Count; i++)
 			{
-				AddModule(modules[i]);
+				YahurrModule module = modules[i];
+
+				if (!LoadedModules.Exists(a => a.Name == module.Name))
+					AddModule(module);
 			}
 		}
 

@@ -35,6 +35,8 @@ namespace YahurrFramework
 
 		internal LoggingManager LoggingManager { get; }
 
+		internal FileManager FileManager { get; }
+
 		DiscordSocketClient client;
 
 		public YahurrBot()
@@ -45,6 +47,7 @@ namespace YahurrFramework
 			EventManager = new EventManager(this, client);
 			CommandManager = new CommandManager(this, client);
 			LoggingManager = new LoggingManager(this, client);
+			FileManager = new FileManager(this, client);
 
 			LoggingManager.Log += Log;
 			LoggingManager.Read += GetInput;
@@ -283,7 +286,7 @@ namespace YahurrFramework
 			if (message.Exception != null && config.ThrowExceptions)
 				Console.WriteLine(message.Exception);
 			else
-				Console.WriteLine($"{message.Timestamp.ToString("hh:mm:ss")}: {message.Message}");
+				Console.WriteLine($"{message.Timestamp.ToString("HH:mm:ss")}: {message.Message}");
 
 			return Task.CompletedTask;
 		}

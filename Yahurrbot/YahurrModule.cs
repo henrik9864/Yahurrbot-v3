@@ -22,18 +22,44 @@ namespace YahurrFramework
 			}
 		}
 
-		protected DiscordSocketClient Client { get; }
+		protected DiscordSocketClient Client { get; private set; }
 
 		protected CommandContext CommandContext { get; private set; }
 
-		public YahurrModule(DiscordSocketClient client)
+		internal YahurrBot Bot { get; private set; }
+
+		internal void Init(DiscordSocketClient client, YahurrBot bot)
 		{
 			this.Client = client;
+			this.Bot = bot;
 		}
 
 		internal void SetContext(CommandContext context)
 		{
 			CommandContext = context;
+		}
+
+		/// <summary>
+		/// Save object to file.
+		/// </summary>
+		/// <param name="name">Identefier for this object.</param>
+		/// <param name="obj">Object to save.</param>
+		/// <param name="override">If you want to override previous saves</param>
+		/// <returns></returns>
+		protected async Task Save(string name, object obj, bool @override)
+		{
+			await Bot.FileManager.Save(obj, name, this, @override).ConfigureAwait(false);
+		}
+
+		/// <summary>
+		/// Load object from file.
+		/// </summary>
+		/// <typeparam name="T">Type item was saved as.</typeparam>
+		/// <param name="name">Identefier for the saved item.</param>
+		/// <returns></returns>
+		protected Task<T> Load<T>(string name)
+		{
+			return Bot.FileManager.Load<T>(name, this);
 		}
 
 		#region Methods

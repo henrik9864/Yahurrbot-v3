@@ -11,13 +11,13 @@ namespace TestModule
 	[ServerFilter(FilterType.Whitelist, 288626992373432320), Summary("TestModule")]
     public class Module : YahurrModule
     {
-        public Module(DiscordSocketClient client) : base(client)
-		{
-			
-		}
-
 		public async override Task MessageReceived(SocketMessage message)
 		{
+			//await Save("test", message.Content, false).ConfigureAwait(false);
+			string msg = await Load<string>("test");
+
+			Console.WriteLine(msg);
+
 			if (message.Content == "Ping")
 			{
 				await message.Channel.SendMessageAsync("Pong");

@@ -8,6 +8,7 @@ namespace YahurrFramework.Enums
     {
 		Debug,
 		Message,
+		Warning,
 		Critical,
 		Error,
     }
