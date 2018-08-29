@@ -204,6 +204,7 @@ namespace YahurrFramework.Managers
 					using (StreamReader reader = new StreamReader(path))
 					{
 						string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+						Console.WriteLine(json);
 						return JsonConvert.DeserializeObject(json);
 					}
 				}

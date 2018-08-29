@@ -22,14 +22,10 @@ namespace TestModule
 
 		public async override Task MessageReceived(SocketMessage message)
 		{
-			Console.WriteLine("hei");
-
 			await Save("test", message.Content, false).ConfigureAwait(false);
 			string msg = await Load<string>("test").ConfigureAwait(false);
 			bool valid = await IsValid<string>("test").ConfigureAwait(false);
 			bool exists = await Exists("test").ConfigureAwait(false);
-
-			Console.WriteLine("hei: " + Config);
 
 			if (message.Content == "Ping")
 			{

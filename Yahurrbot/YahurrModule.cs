@@ -36,7 +36,14 @@ namespace YahurrFramework
 			this.Bot = bot;
 			this.Config = config;
 
-			await Init().ConfigureAwait(false);
+			try
+			{
+				await Init().ConfigureAwait(false);
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+			}
 		}
 
 		internal void SetContext(CommandContext context)
