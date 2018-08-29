@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Schema;
+using Newtonsoft.Json.Schema.Generation;
 using YahurrBot.Structs;
 
 namespace YahurrFramework.Managers
@@ -62,6 +64,9 @@ namespace YahurrFramework.Managers
 				string path = $"Saves/{SanetizeName(module.Name)}/{name}.json";
 				using (StreamReader reader = new StreamReader(path))
 				{
+					JSchemaGenerator generator = new JSchemaGenerator();
+					JSchema schema = generator.Generate(typeof(T));
+
 					string json = await reader.ReadToEndAsync().ConfigureAwait(false);
 					savedObject = JsonConvert.DeserializeObject<SavedObject>(json);
 				}

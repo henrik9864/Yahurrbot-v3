@@ -13,14 +13,12 @@ namespace TestModule
     {
 		public async override Task MessageReceived(SocketMessage message)
 		{
-			//await Save("test", message.Content, false).ConfigureAwait(false);
-			string msg = await Load<string>("test");
-
-			Console.WriteLine(msg);
+			await Save("test", message.Content, false).ConfigureAwait(false);
+			string msg = await Load<string>("test").ConfigureAwait(false);
 
 			if (message.Content == "Ping")
 			{
-				await message.Channel.SendMessageAsync("Pong");
+				await message.Channel.SendMessageAsync("Pong").ConfigureAwait(false);
 			}
 		}
 

@@ -28,10 +28,12 @@ namespace YahurrFramework
 
 		internal YahurrBot Bot { get; private set; }
 
-		internal void Init(DiscordSocketClient client, YahurrBot bot)
+		internal async Task InitModule(DiscordSocketClient client, YahurrBot bot)
 		{
 			this.Client = client;
 			this.Bot = bot;
+
+			await Init().ConfigureAwait(false);
 		}
 
 		internal void SetContext(CommandContext context)
@@ -63,6 +65,11 @@ namespace YahurrFramework
 		}
 
 		#region Methods
+
+		public async virtual Task Init()
+		{
+			await Task.CompletedTask;
+		}
 
 		public async virtual Task GuildUpdated(SocketGuild before, SocketGuild after)
 		{

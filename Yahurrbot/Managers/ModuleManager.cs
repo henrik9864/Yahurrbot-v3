@@ -98,10 +98,17 @@ namespace YahurrFramework.Managers
 					if (index >= 0)
 						LoadedModules.RemoveAt(index);
 
+					ConstructorInfo[] constructorInfo = type.GetConstructors();
+					if (constructorInfo.Length > 1 || constructorInfo[0].GetParameters().Length > 0)
+					{
+						await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {type.Name}, type can only have 1 constrcot with 0 arguments.", "ModuleManager").ConfigureAwait(false);
+						continue;
+					}
+
 					// Creat a new task and start running it.
 					Task task = new Task(() => {
 						YahurrModule module = (YahurrModule)Activator.CreateInstance(type);
-						module.Init(Client, Bot);
+						module.InitModule(Client, Bot).GetAwaiter().GetResult();
 						modules.Add(module);
 					});
 					task.Start();
