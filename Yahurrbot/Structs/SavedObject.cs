@@ -40,7 +40,7 @@ namespace YahurrBot.Structs
 		{
 			Type generic = typeof(T);
 			if (!generic.IsAssignableFrom(Type))
-				throw new Exception($"Type {generic.Name} is not assignable from {Type}");
+				throw new Exception($"{Name} is saved as {Type.Name} not {generic.Name}");
 
 			JSchemaGenerator generator = new JSchemaGenerator();
 			JSchema schema = generator.Generate(typeof(T));

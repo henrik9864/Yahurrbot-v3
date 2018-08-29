@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using YahurrFramework.Attributes;
+using YahurrFramework.Enums;
 
 namespace YahurrFramework
 {
@@ -42,7 +43,8 @@ namespace YahurrFramework
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine(e);
+				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to initialize module {Name}:", "YahurrModule").ConfigureAwait(false);
+				await Bot.LoggingManager.LogMessage(e?.InnerException?.InnerException, "ModuleManager").ConfigureAwait(false);
 			}
 		}
 

@@ -42,8 +42,12 @@ namespace YahurrFramework.Managers
 					await writer.WriteAsync(json).ConfigureAwait(false);
 
 			if (cache.TryGetValue((name, module), out SavedObject so))
+			{
 				if (@override)
+				{
 					cache[(name, module)] = savedObject;
+				}
+			}
 			else
 				cache.Add((name, module), savedObject);
 		}

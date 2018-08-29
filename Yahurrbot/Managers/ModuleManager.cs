@@ -128,8 +128,6 @@ namespace YahurrFramework.Managers
 			{
 				string taskName = tasks.Find(a => a.task.Exception != null).name;
 
-				Console.WriteLine(ex);
-
 				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {taskName}:", "ModuleManager").ConfigureAwait(false);
 				await Bot.LoggingManager.LogMessage(ex?.InnerException?.InnerException, "ModuleManager").ConfigureAwait(false);
 			}
