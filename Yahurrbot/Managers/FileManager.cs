@@ -5,8 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
-using Newtonsoft.Json.Schema.Generation;
 using YahurrBot.Structs;
 
 namespace YahurrFramework.Managers
@@ -35,8 +33,8 @@ namespace YahurrFramework.Managers
 			string json = JsonConvert.SerializeObject(savedObject);
 
 			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
-			string path = $"Saves/{SanetizeName(module.Name)}/{name}.json";
-			if (!File.Exists(path))
+			string path = GetPath(name, module);
+			if (!await Exists(name, module).ConfigureAwait(false))
 				using (StreamWriter writer = File.CreateText(path))
 					await writer.WriteAsync(json).ConfigureAwait(false);
 			else if (@override)
@@ -61,15 +59,7 @@ namespace YahurrFramework.Managers
 		{
 			if (!cache.TryGetValue((name, module), out SavedObject savedObject))
 			{
-				string path = $"Saves/{SanetizeName(module.Name)}/{name}.json";
-				using (StreamReader reader = new StreamReader(path))
-				{
-					JSchemaGenerator generator = new JSchemaGenerator();
-					JSchema schema = generator.Generate(typeof(T));
-
-					string json = await reader.ReadToEndAsync().ConfigureAwait(false);
-					savedObject = JsonConvert.DeserializeObject<SavedObject>(json);
-				}
+				savedObject = await GetSavedObject(name, module).ConfigureAwait(false);
 
 				cache.Add((name, module), savedObject);
 			}
@@ -77,11 +67,70 @@ namespace YahurrFramework.Managers
 			return savedObject.Deserialize<T>();
 		}
 
+		/// <summary>
+		/// Check if save exists.
+		/// </summary>
+		/// <param name="name">Save identefier.</param>
+		/// <param name="module"></param>
+		/// <returns></returns>
+		public Task<bool> Exists(string name, YahurrModule module)
+		{
+			string path = GetPath(name, module);
+
+			return Task.Run(() => File.Exists(path));
+		}
+
+		/// <summary>
+		/// Check if saved item is of type.
+		/// </summary>
+		/// <param name="name">Save identefier.</param>
+		/// <param name="type">Type to check for</param>
+		/// <param name="module"></param>
+		/// <returns></returns>
+		public async Task<bool> IsValid(string name, Type type, YahurrModule module)
+		{
+			if (await Exists(name, module).ConfigureAwait(false))
+			{
+				if (!cache.TryGetValue((name, module), out SavedObject savedObject))
+					savedObject = await GetSavedObject(name, module).ConfigureAwait(false);
+
+				return savedObject.IsValid(type);
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Removes spaces from string.
+		/// </summary>
+		/// <param name="name"></param>
+		/// <returns></returns>
 		string SanetizeName(string name)
 		{
 			name = name.Replace(" ", "");
 
 			return name;
+		}
+
+		/// <summary>
+		/// Get path from name and module.
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="module"></param>
+		/// <returns></returns>
+		string GetPath(string name, YahurrModule module)
+		{
+			return $"Saves/{SanetizeName(module.Name)}/{name}.json";
+		}
+
+		async Task<SavedObject> GetSavedObject(string name, YahurrModule module)
+		{
+			string path = GetPath(name, module);
+			using (StreamReader reader = new StreamReader(path))
+			{
+				string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+				return JsonConvert.DeserializeObject<SavedObject>(json);
+			}
 		}
 	}
 }

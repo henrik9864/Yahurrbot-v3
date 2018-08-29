@@ -8,17 +8,32 @@ using YahurrFramework.Enums;
 
 namespace TestModule
 {
+	[Config(typeof(ModuleConfig))]
 	[ServerFilter(FilterType.Whitelist, 288626992373432320), Summary("TestModule")]
     public class Module : YahurrModule
     {
+		public new ModuleConfig Config
+		{
+			get
+			{
+				return base.Config as ModuleConfig;
+			}
+		}
+
 		public async override Task MessageReceived(SocketMessage message)
 		{
+			Console.WriteLine("hei");
+
 			await Save("test", message.Content, false).ConfigureAwait(false);
 			string msg = await Load<string>("test").ConfigureAwait(false);
+			bool valid = await IsValid<string>("test").ConfigureAwait(false);
+			bool exists = await Exists("test").ConfigureAwait(false);
+
+			Console.WriteLine("hei: " + Config);
 
 			if (message.Content == "Ping")
 			{
-				await message.Channel.SendMessageAsync("Pong").ConfigureAwait(false);
+				await message.Channel.SendMessageAsync(Config?.PingResponse ?? "Error").ConfigureAwait(false);
 			}
 		}
 

@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -108,7 +109,8 @@ namespace YahurrFramework.Managers
 					// Creat a new task and start running it.
 					Task task = new Task(() => {
 						YahurrModule module = (YahurrModule)Activator.CreateInstance(type);
-						module.InitModule(Client, Bot).GetAwaiter().GetResult();
+						object config = LoadConfig(module).GetAwaiter().GetResult();
+						module.InitModule(Client, Bot, config).GetAwaiter().GetResult();
 						modules.Add(module);
 					});
 					task.Start();
@@ -181,6 +183,44 @@ namespace YahurrFramework.Managers
 			}
 
 			LoadedModules.Add(module);
+		}
+
+		/// <summary>
+		/// Load or create config for module.
+		/// </summary>
+		/// <param name="module"></param>
+		/// <returns></returns>
+		async Task<object> LoadConfig(YahurrModule module)
+		{
+			Config configAttribute = module.GetType().GetCustomAttribute<Config>();
+
+			if (configAttribute != null)
+			{
+				Directory.CreateDirectory("Config/Modules");
+
+				string path = $"Config/Modules/{module.Name}.json";
+				if (File.Exists(path))
+				{
+					using (StreamReader reader = new StreamReader(path))
+					{
+						string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+						return JsonConvert.DeserializeObject(json);
+					}
+				}
+				else
+				{
+					object instance = Activator.CreateInstance(configAttribute.Type);
+					string json = JsonConvert.SerializeObject(instance, Formatting.Indented);
+					using (StreamWriter writer = File.CreateText(path))
+					{
+						await writer.WriteLineAsync(json).ConfigureAwait(false);
+					}
+
+					return instance;
+				}
+			}
+
+			return null;
 		}
 	}
 }

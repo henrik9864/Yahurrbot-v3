@@ -1,4 +1,7 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
+using Newtonsoft.Json.Schema.Generation;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -39,7 +42,28 @@ namespace YahurrBot.Structs
 			if (!generic.IsAssignableFrom(Type))
 				throw new Exception($"Type {generic.Name} is not assignable from {Type}");
 
-			return JsonConvert.DeserializeObject<T>(Object);
+			JSchemaGenerator generator = new JSchemaGenerator();
+			JSchema schema = generator.Generate(typeof(T));
+			JToken token = JToken.Parse(Object);
+
+			if (token.IsValid(schema))
+				return token.ToObject<T>();
+			else
+				throw new Exception($"Invalid JSON in file.");
+		}
+
+		/// <summary>
+		/// Validate if object is of type.
+		/// </summary>
+		/// <param name="type">Type to validate for</param>
+		/// <returns></returns>
+		public bool IsValid(Type type)
+		{
+			JSchemaGenerator generator = new JSchemaGenerator();
+			JSchema schema = generator.Generate(type);
+			JToken token = JToken.Parse(Object);
+
+			return token.IsValid(schema);
 		}
     }
 }

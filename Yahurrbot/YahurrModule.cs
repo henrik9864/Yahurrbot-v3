@@ -26,12 +26,15 @@ namespace YahurrFramework
 
 		protected CommandContext CommandContext { get; private set; }
 
+		protected object Config { get; private set; }
+
 		internal YahurrBot Bot { get; private set; }
 
-		internal async Task InitModule(DiscordSocketClient client, YahurrBot bot)
+		internal async Task InitModule(DiscordSocketClient client, YahurrBot bot, object config)
 		{
 			this.Client = client;
 			this.Bot = bot;
+			this.Config = config;
 
 			await Init().ConfigureAwait(false);
 		}
@@ -40,6 +43,8 @@ namespace YahurrFramework
 		{
 			CommandContext = context;
 		}
+
+		#region Save/Load
 
 		/// <summary>
 		/// Save object to file.
@@ -64,7 +69,41 @@ namespace YahurrFramework
 			return Bot.FileManager.Load<T>(name, this);
 		}
 
-		#region Methods
+		/// <summary>
+		/// Check if save exists.
+		/// </summary>
+		/// <param name="name">Identefier.</param>
+		/// <returns></returns>
+		protected Task<bool> Exists(string name)
+		{
+			return Bot.FileManager.Exists(name, this);
+		}
+
+		/// <summary>
+		/// Check if saved item is of type.
+		/// </summary>
+		/// <param name="name">Identefier.</param>
+		/// <param name="type">Type to check for.</param>
+		/// <returns></returns>
+		protected Task<bool> IsValid(string name, Type type)
+		{
+			return Bot.FileManager.IsValid(name, type, this);
+		}
+
+		/// <summary>
+		/// Check if saved item is of type.
+		/// </summary>
+		/// <typeparam name="T">Type to check for.</typeparam>
+		/// <param name="name">Identefier.</param>
+		/// <returns></returns>
+		protected Task<bool> IsValid<T>(string name)
+		{
+			return IsValid(name, typeof(T));
+		}
+
+		#endregion
+
+		#region EventMethods
 
 		public async virtual Task Init()
 		{
