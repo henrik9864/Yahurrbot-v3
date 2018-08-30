@@ -23,7 +23,7 @@ namespace YahurrFramework
 		/// </summary>
 		public TokenType Type { get; } = TokenType.Bot;
 
-		public string Version { get; } = "0.0.1";
+		public string Version { get; } = "0.1.0";
 
 		internal ClientConfig Config { get; private set; } = new ClientConfig();
 

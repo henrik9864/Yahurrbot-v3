@@ -17,7 +17,6 @@ namespace YahurrFramework.Managers
 		{
 			cache = new Dictionary<(string name, YahurrModule module), SavedObject>();
 			Directory.CreateDirectory("Saves");
-			Directory.CreateDirectory("Config/Defaults");
 		}
 
 		/// <summary>

@@ -17,7 +17,7 @@ namespace YahurrFramework.Managers
 		}
 
 		/// <summary>
-		/// Bind all events to their coresponding event in the module loader.
+		/// Bind all events to their coresponding event string in the module loader.
 		/// </summary>
 		void BindEvents()
 		{

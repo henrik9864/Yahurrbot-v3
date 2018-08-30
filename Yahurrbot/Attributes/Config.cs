@@ -4,6 +4,7 @@ using System.Text;
 
 namespace YahurrFramework.Attributes
 {
+	[AttributeUsage(AttributeTargets.Class)]
     public class Config : Attribute
     {
 		public Type Type { get; }

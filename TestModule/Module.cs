@@ -16,7 +16,7 @@ namespace TestModule
 		{
 			get
 			{
-				return base.Config as ModuleConfig;
+				return (ModuleConfig)base.Config;
 			}
 		}
 
