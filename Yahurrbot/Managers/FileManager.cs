@@ -146,7 +146,7 @@ namespace YahurrFramework.Managers
 				using (StreamWriter writer = File.CreateText(path))
 					await writer.WriteAsync(toWrite).ConfigureAwait(false);
 			}
-			else if (@override)
+			else if (@override || append)
 			{
 				using (StreamWriter writer = new StreamWriter(path, append))
 					await writer.WriteAsync(toWrite).ConfigureAwait(false);
