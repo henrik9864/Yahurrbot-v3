@@ -15,6 +15,8 @@ namespace YahurrBot.Structs
     {
 		public string Name { get; private set; }
 
+		public string Extension { get; private set; }
+
 		public Type Type { get; private set; }
 
 		public YahurrModule Module { get; private set; }
@@ -22,12 +24,13 @@ namespace YahurrBot.Structs
 		public string Path { get; private set; }
 
 		[JsonConstructor]
-		public SavedObject(string Name, YahurrModule Module, Type Type)
+		public SavedObject(string Name, string Ex, YahurrModule Module, Type Type)
 		{
 			this.Name = Name;
 			this.Type = Type;
 			this.Module = Module;
-			this.Path = $"Saves/{Module.Name}/{Name}.json";
+			this.Extension = Ex;
+			this.Path = $"Saves/{Module.Name}/{Name}{Ex}";
 		}
 
 		/// <summary>
@@ -60,13 +63,17 @@ namespace YahurrBot.Structs
 		/// </summary>
 		/// <param name="type">Type to validate for</param>
 		/// <returns></returns>
-		public bool IsValid(Type type)
+		public async Task<bool> IsValid(Type type)
 		{
-			JSchemaGenerator generator = new JSchemaGenerator();
-			JSchema schema = generator.Generate(type);
-			JToken token = JToken.Parse(Path);
+			using (StreamReader reader = new StreamReader(Path))
+			{
+				string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+				JSchemaGenerator generator = new JSchemaGenerator();
+				JSchema schema = generator.Generate(type);
+				JToken token = JToken.Parse(json);
 
-			return token.IsValid(schema);
+				return token.IsValid(schema);
+			}
 		}
     }
 }

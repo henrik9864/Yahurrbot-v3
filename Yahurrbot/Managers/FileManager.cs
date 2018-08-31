@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Newtonsoft.Json;
+using ServiceStack.Text;
+using YahurrBot.Enums;
 using YahurrBot.Structs;
 
 namespace YahurrFramework.Managers
@@ -22,7 +24,7 @@ namespace YahurrFramework.Managers
 		}
 
 		/// <summary>
-		/// Sav object to file.
+		/// Sav object to file as json.
 		/// </summary>
 		/// <param name="obj">Object to save</param>
 		/// <param name="name">Reference for loading this object.</param>
@@ -31,32 +33,25 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public async Task Save(object obj, string name, YahurrModule module, bool @override = true)
 		{
-			string path = GetPath(name, module);
-			string json = JsonConvert.SerializeObject(obj);
+			(string json, string extension) = Serialize(obj, SerializationType.JSON);
+			SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
+
 			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
-			SavedObject savedObject = new SavedObject(name, module, obj.GetType());
 
-			if (!await Exists(name, module).ConfigureAwait(false))
-			{
-				using (StreamWriter writer = File.CreateText(path))
-					await writer.WriteAsync(json).ConfigureAwait(false);
-			}
-			else if (@override)
-			{
-				using (StreamWriter writer = new StreamWriter(path))
-					await writer.WriteAsync(json).ConfigureAwait(false);
-			}
+			await WriteToFile(savedObject, json, @override).ConfigureAwait(false);
+			AddToCache((name, module), savedObject, @override);
+			SaveObjectList();
+		}
 
-			if (savedObjects.TryGetValue((name, module), out SavedObject so))
-			{
-				if (@override)
-				{
-					savedObjects[(name, module)] = savedObject;
-				}
-			}
-			else
-				savedObjects.Add((name, module), savedObject);
+		public async Task Save(object obj, string name, SerializationType type, YahurrModule module, bool @override = true)
+		{
+			(string json, string extension) = Serialize(obj, type);
+			SavedObject savedObject = new SavedObject(name, $".{type.ToString()}", module, obj.GetType());
 
+			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
+
+			await WriteToFile(savedObject, json, @override).ConfigureAwait(false);
+			AddToCache((name, module), savedObject, @override);
 			SaveObjectList();
 		}
 
@@ -70,26 +65,20 @@ namespace YahurrFramework.Managers
 		public async Task<T> Load<T>(string name, YahurrModule module)
 		{
 			if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
-			{
-				savedObject = await GetSavedObject(name, module).ConfigureAwait(false);
+				return default(T);
 
-				savedObjects.Add((name, module), savedObject);
-			}
-
-			return await savedObject.Deserialize<T>();
+			return await savedObject.Deserialize<T>().ConfigureAwait(false);
 		}
 
 		/// <summary>
-		/// Check if save exists.
+		/// Check if file exists
 		/// </summary>
 		/// <param name="name">Save identefier.</param>
 		/// <param name="module"></param>
 		/// <returns></returns>
 		public Task<bool> Exists(string name, YahurrModule module)
 		{
-			string path = GetPath(name, module);
-
-			return Task.Run(() => File.Exists(path));
+			return Task.Run(() => savedObjects.TryGetValue((name, module), out SavedObject savedObject));
 		}
 
 		/// <summary>
@@ -101,21 +90,40 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public async Task<bool> IsValid(string name, Type type, YahurrModule module)
 		{
-			if (await Exists(name, module).ConfigureAwait(false))
+			if (savedObjects.TryGetValue((name, module), out SavedObject savedObject))
 			{
-				if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
-					savedObject = await GetSavedObject(name, module).ConfigureAwait(false);
-
-				return savedObject.IsValid(type);
+				return await savedObject.IsValid(type).ConfigureAwait(false);
 			}
 
 			return false;
 		}
 
+		/// <summary>
+		/// Write to file, override if its already there
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="toWrite"></param>
+		/// <param name="module"></param>
+		/// <param name="override"></param>
+		/// <returns></returns>
+		async Task WriteToFile(SavedObject savedObject, string toWrite, bool @override)
+		{
+			string path = GetPath(savedObject);
+
+			if (!File.Exists(path))
+			{
+				using (StreamWriter writer = File.CreateText(path))
+					await writer.WriteAsync(toWrite).ConfigureAwait(false);
+			}
+			else if (@override)
+			{
+				using (StreamWriter writer = new StreamWriter(path))
+					await writer.WriteAsync(toWrite).ConfigureAwait(false);
+			}
+		}
+
 		void SaveObjectList()
 		{
-			Console.WriteLine("hei");
-
 			string json = JsonConvert.SerializeObject(savedObjects.Values);
 			File.WriteAllText("Saves/SavedObjects.json", json);
 		}
@@ -147,20 +155,51 @@ namespace YahurrFramework.Managers
 		/// Get path from name and module.
 		/// </summary>
 		/// <param name="name"></param>
+		/// <param name="ex"></param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		string GetPath(string name, YahurrModule module)
+		string GetPath(SavedObject savedObject)
 		{
-			return $"Saves/{SanetizeName(module.Name)}/{name}.json";
+			return $"Saves/{SanetizeName(savedObject.Module.Name)}/{savedObject.Name}{savedObject.Extension}";
 		}
 
-		async Task<SavedObject> GetSavedObject(string name, YahurrModule module)
+		/// <summary>
+		/// Add object to cache, ovveride if its already there
+		/// </summary>
+		/// <param name="key"></param>
+		/// <param name="savedObject"></param>
+		/// <param name="override"></param>
+		void AddToCache((string name, YahurrModule module) key, SavedObject savedObject, bool @override)
 		{
-			string path = GetPath(name, module);
-			using (StreamReader reader = new StreamReader(path))
+			if (savedObjects.TryGetValue(key, out SavedObject so))
 			{
-				string json = await reader.ReadToEndAsync().ConfigureAwait(false);
-				return JsonConvert.DeserializeObject<SavedObject>(json);
+				if (@override)
+				{
+					savedObjects[key] = savedObject;
+				}
+}
+			else
+				savedObjects.Add(key, savedObject);
+		}
+
+		/// <summary>
+		/// Convert any object to string useing serialization type.
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <param name="type"></param>
+		/// <returns></returns>
+		(string content, string extension) Serialize(object obj, SerializationType type)
+		{
+			switch (type)
+			{
+				case SerializationType.JSON:
+					return (JsonConvert.SerializeObject(obj), ".json");
+				case SerializationType.JSV:
+					return (TypeSerializer.SerializeToString(obj, obj.GetType()), ".jsv");
+				case SerializationType.CSV:
+					return (CsvSerializer.SerializeToString(obj), ".csv");
+				default:
+					return (null, null);
 			}
 		}
 	}

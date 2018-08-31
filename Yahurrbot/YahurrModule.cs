@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using YahurrBot.Enums;
 using YahurrFramework.Attributes;
 using YahurrFramework.Enums;
 
@@ -65,6 +66,19 @@ namespace YahurrFramework
 		protected async Task Save(string name, object obj, bool @override)
 		{
 			await Bot.FileManager.Save(obj, name, this, @override).ConfigureAwait(false);
+		}
+
+		/// <summary>
+		/// Save object to file.
+		/// </summary>
+		/// <param name="name">Identefier for this object.</param>
+		/// <param name="obj">Object to save.</param>
+		/// <param name="type">Srialization method to use,</param>
+		/// <param name="override">If you want to override previous saves</param>
+		/// <returns></returns>
+		protected async Task Save(string name, object obj, SerializationType type, bool @override)
+		{
+			await Bot.FileManager.Save(obj, name, type, this, @override).ConfigureAwait(false);
 		}
 
 		/// <summary>

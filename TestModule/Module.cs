@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using YahurrBot.Enums;
 using YahurrFramework;
 using YahurrFramework.Attributes;
 using YahurrFramework.Enums;
@@ -22,23 +23,15 @@ namespace TestModule
 
 		public async override Task MessageReceived(SocketMessage message)
 		{
-			Console.WriteLine("1");
-
-			await Save("test", message.Content, false).ConfigureAwait(false);
-			string msg = await Load<string>("test").ConfigureAwait(false);
-			bool valid = await IsValid<string>("test").ConfigureAwait(false);
-			bool exists = await Exists("test").ConfigureAwait(false);
+			await Save("test1", new object[] { message.Content, "t1", 2, 's' }, SerializationType.CSV, true).ConfigureAwait(false);
+			var msg = await Load<object[]>("test1").ConfigureAwait(false);
+			bool valid = await IsValid<object[]>("test1").ConfigureAwait(false);
+			bool exists = await Exists("test1").ConfigureAwait(false);
 
 			if (message.Content == "Ping")
 			{
 				await message.Channel.SendMessageAsync(Config?.PingResponse ?? "Error").ConfigureAwait(false);
 			}
-		}
-
-		public async override Task MessageUpdated(IMessage before, SocketMessage after, ISocketMessageChannel channel)
-		{
-			Console.WriteLine("hi");
-			await Task.CompletedTask;
 		}
 
 		[Command("print", "int")]
