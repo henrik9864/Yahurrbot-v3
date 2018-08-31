@@ -4,7 +4,10 @@ using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using System.Threading.Tasks;
+using YahurrFramework;
 
 namespace YahurrBot.Structs
 {
@@ -14,21 +17,17 @@ namespace YahurrBot.Structs
 
 		public Type Type { get; private set; }
 
-		public string Object { get; private set; }
+		public YahurrModule Module { get; private set; }
+
+		public string Path { get; private set; }
 
 		[JsonConstructor]
-		private SavedObject(string Name, Type Type, string Object)
+		public SavedObject(string Name, YahurrModule Module, Type Type)
 		{
 			this.Name = Name;
 			this.Type = Type;
-			this.Object = Object;
-		}
-
-		public SavedObject(string Name, object Object)
-		{
-			this.Name = Name;
-			this.Type = Object.GetType();
-			this.Object = JsonConvert.SerializeObject(Object);
+			this.Module = Module;
+			this.Path = $"Saves/{Module.Name}/{Name}.json";
 		}
 
 		/// <summary>
@@ -36,20 +35,24 @@ namespace YahurrBot.Structs
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
-		public T Deserialize<T>()
+		public async Task<T> Deserialize<T>()
 		{
 			Type generic = typeof(T);
 			if (!generic.IsAssignableFrom(Type))
 				throw new Exception($"{Name} is saved as {Type.Name} not {generic.Name}");
 
-			JSchemaGenerator generator = new JSchemaGenerator();
-			JSchema schema = generator.Generate(typeof(T));
-			JToken token = JToken.Parse(Object);
+			using (StreamReader reader = new StreamReader(Path))
+			{
+				string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+				JSchemaGenerator generator = new JSchemaGenerator();
+				JSchema schema = generator.Generate(typeof(T));
+				JToken token = JToken.Parse(json);
 
-			if (token.IsValid(schema))
-				return token.ToObject<T>();
-			else
-				throw new Exception($"Invalid JSON in file.");
+				if (token.IsValid(schema))
+					return token.ToObject<T>();
+				else
+					throw new Exception($"Invalid JSON in file.");
+			}
 		}
 
 		/// <summary>
@@ -61,7 +64,7 @@ namespace YahurrBot.Structs
 		{
 			JSchemaGenerator generator = new JSchemaGenerator();
 			JSchema schema = generator.Generate(type);
-			JToken token = JToken.Parse(Object);
+			JToken token = JToken.Parse(Path);
 
 			return token.IsValid(schema);
 		}

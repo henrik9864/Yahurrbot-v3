@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using YahurrFramework.Attributes;
 
@@ -22,7 +24,7 @@ namespace YahurrFramework.Managers
 		void BindEvents()
 		{
 			Client.GuildUpdated += (a, b) => RunEvent("GuildUpdated", a, b);
-			Client.ReactionRemoved += (a, b, c) => RunEvent("ReactionRemoved", a, b, c);
+			Client.ReactionRemoved += async (a, b, c) => await RunEvent("ReactionRemoved", await FromCache(a, b), b, c);
 			Client.ReactionsCleared += (a, b) => RunEvent("ReactionsCleared", a, b);
 			Client.RoleCreated += (a) => RunEvent("RoleCreated", a);
 			Client.RoleDeleted += (a) => RunEvent("RoleDeleted", a);
@@ -35,16 +37,16 @@ namespace YahurrFramework.Managers
 			Client.UserUpdated += (a, b) => RunEvent("UserUpdated", a, b);
 			Client.UserUnbanned += (a, b) => RunEvent("UserUnbanned", a, b);
 			Client.UserBanned += (a, b) => RunEvent("UserBanned", a, b);
-			Client.ReactionAdded += (a, b, c) => RunEvent("ReactionAdded", a, b, c);
+			Client.ReactionAdded += async (a, b, c) => await RunEvent("ReactionAdded", await FromCache(a, b), b, c);
 			Client.LeftGuild += (a) => RunEvent("LeftGuild", a);
 			Client.GuildAvailable += (a) => RunEvent("GuildAvailable", a);
 			Client.GuildUnavailable += (a) => RunEvent("GuildUnavailable", a);
 			Client.GuildMembersDownloaded += (a) => RunEvent("GuildMembersDownloaded", a);
 			Client.UserJoined += (a) => RunEvent("UserJoined", a);
-			Client.MessageUpdated += (a, b, c) => RunEvent("MessageUpdated", a, b, c);
+			Client.MessageUpdated += async (a, b, c) => await RunEvent("MessageUpdated", await FromCache(a, c), b, c);
 			Client.LatencyUpdated += (a, b) => RunEvent("LatencyUpdated", a, b);
 			Client.MessageReceived += (a) => RunEvent("MessageReceived", a);
-			Client.MessageDeleted += (a, b) => RunEvent("MessageDeleted", a, b);
+			Client.MessageDeleted += async (a, b) => await RunEvent("MessageDeleted", await FromCache(a, b), b);
 			Client.Connected += () => RunEvent("Connected");
 			Client.Disconnected += (a) => RunEvent("Disconnected", a);
 			Client.Ready += () => RunEvent("Ready");
@@ -117,7 +119,7 @@ namespace YahurrFramework.Managers
 		/// <param name="name">Name of Event</param>
 		/// <param name="paremeters">Event parameters</param>
 		/// <returns></returns>
-		private async Task RunCommand(string name, params object[] paremeters)
+		async Task RunCommand(string name, params object[] paremeters)
 		{
 			switch (name)
 			{
@@ -140,6 +142,7 @@ namespace YahurrFramework.Managers
 			{
 				{ typeof(SocketGuild), m => ValidateGuild(p as SocketGuild, m) },
 				{ typeof(SocketGuildUser), m => ValidateGuild((p as SocketGuildUser)?.Guild, m) },
+				{ typeof(SocketUserMessage), m => ValidateMessage(p as SocketUserMessage, m) },
 				{ typeof(SocketGuildChannel), m => ValidateGuild((p as SocketGuildChannel)?.Guild, m) }
 			};
 
@@ -157,16 +160,28 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		bool ValidateGuild(SocketGuild guild, YahurrModule module)
 		{
-			List<ServerFilter> filterAttributes = (List<ServerFilter>)module.GetType().GetCustomAttributes<ServerFilter>();
+			List<ServerFilter> filterAttributes = module.GetType().GetCustomAttributes<ServerFilter>().ToList();
 			for (int i = 0; i < filterAttributes.Count; i++)
 			{
 				ServerFilter filter = filterAttributes[i];
 
-				if (filter.IsFiltered(guild.Id))
+				if (!filter.IsFiltered(guild.Id))
 					return false;
 			}
 
 			return true;
+		}
+
+		bool ValidateMessage(SocketUserMessage message, YahurrModule module)
+		{
+			SocketGuildChannel channel = message.Channel as SocketGuildChannel;
+
+			return ValidateGuild(channel?.Guild, module);
+		}
+
+		Task<IMessage> FromCache<T>(Cacheable<T, ulong> cache, ISocketMessageChannel channel) where T : IEntity<ulong>
+		{
+			return channel.GetMessageAsync(cache.Id);
 		}
 	}
 }

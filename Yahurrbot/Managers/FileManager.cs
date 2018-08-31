@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
@@ -11,12 +12,13 @@ namespace YahurrFramework.Managers
 {
 	internal class FileManager : BaseManager
 	{
-		Dictionary<(string name, YahurrModule module), SavedObject> cache;
+		Dictionary<(string name, YahurrModule module), SavedObject> savedObjects;
 
 		public FileManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			cache = new Dictionary<(string name, YahurrModule module), SavedObject>();
+			savedObjects = new Dictionary<(string name, YahurrModule module), SavedObject>();
 			Directory.CreateDirectory("Saves");
+			LoadObjectList();
 		}
 
 		/// <summary>
@@ -29,27 +31,33 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public async Task Save(object obj, string name, YahurrModule module, bool @override = true)
 		{
-			SavedObject savedObject = new SavedObject(name, obj);
-			string json = JsonConvert.SerializeObject(savedObject);
-
-			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
 			string path = GetPath(name, module);
+			string json = JsonConvert.SerializeObject(obj);
+			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
+			SavedObject savedObject = new SavedObject(name, module, obj.GetType());
+
 			if (!await Exists(name, module).ConfigureAwait(false))
+			{
 				using (StreamWriter writer = File.CreateText(path))
 					await writer.WriteAsync(json).ConfigureAwait(false);
+			}
 			else if (@override)
+			{
 				using (StreamWriter writer = new StreamWriter(path))
 					await writer.WriteAsync(json).ConfigureAwait(false);
+			}
 
-			if (cache.TryGetValue((name, module), out SavedObject so))
+			if (savedObjects.TryGetValue((name, module), out SavedObject so))
 			{
 				if (@override)
 				{
-					cache[(name, module)] = savedObject;
+					savedObjects[(name, module)] = savedObject;
 				}
 			}
 			else
-				cache.Add((name, module), savedObject);
+				savedObjects.Add((name, module), savedObject);
+
+			SaveObjectList();
 		}
 
 		/// <summary>
@@ -61,14 +69,14 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public async Task<T> Load<T>(string name, YahurrModule module)
 		{
-			if (!cache.TryGetValue((name, module), out SavedObject savedObject))
+			if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
 			{
 				savedObject = await GetSavedObject(name, module).ConfigureAwait(false);
 
-				cache.Add((name, module), savedObject);
+				savedObjects.Add((name, module), savedObject);
 			}
 
-			return savedObject.Deserialize<T>();
+			return await savedObject.Deserialize<T>();
 		}
 
 		/// <summary>
@@ -95,13 +103,29 @@ namespace YahurrFramework.Managers
 		{
 			if (await Exists(name, module).ConfigureAwait(false))
 			{
-				if (!cache.TryGetValue((name, module), out SavedObject savedObject))
+				if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
 					savedObject = await GetSavedObject(name, module).ConfigureAwait(false);
 
 				return savedObject.IsValid(type);
 			}
 
 			return false;
+		}
+
+		void SaveObjectList()
+		{
+			Console.WriteLine("hei");
+
+			string json = JsonConvert.SerializeObject(savedObjects.Values);
+			File.WriteAllText("Saves/SavedObjects.json", json);
+		}
+
+		void LoadObjectList()
+		{
+			string json = File.ReadAllText("Saves/SavedObjects.json");
+			List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
+
+			savedObjects = objects.ToDictionary(a => (a.Name, a.Module));
 		}
 
 		/// <summary>

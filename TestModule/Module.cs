@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using YahurrFramework;
 using YahurrFramework.Attributes;
@@ -9,7 +10,6 @@ using YahurrFramework.Enums;
 namespace TestModule
 {
 	[Config(typeof(ModuleConfig))]
-	[ServerFilter(FilterType.Whitelist, 288626992373432320), Summary("TestModule")]
     public class Module : YahurrModule
     {
 		public new ModuleConfig Config
@@ -22,6 +22,8 @@ namespace TestModule
 
 		public async override Task MessageReceived(SocketMessage message)
 		{
+			Console.WriteLine("1");
+
 			await Save("test", message.Content, false).ConfigureAwait(false);
 			string msg = await Load<string>("test").ConfigureAwait(false);
 			bool valid = await IsValid<string>("test").ConfigureAwait(false);
@@ -31,6 +33,12 @@ namespace TestModule
 			{
 				await message.Channel.SendMessageAsync(Config?.PingResponse ?? "Error").ConfigureAwait(false);
 			}
+		}
+
+		public async override Task MessageUpdated(IMessage before, SocketMessage after, ISocketMessageChannel channel)
+		{
+			Console.WriteLine("hi");
+			await Task.CompletedTask;
 		}
 
 		[Command("print", "int")]
