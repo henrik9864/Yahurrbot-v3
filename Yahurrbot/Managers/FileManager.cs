@@ -27,30 +27,61 @@ namespace YahurrFramework.Managers
 		/// Sav object to file as json.
 		/// </summary>
 		/// <param name="obj">Object to save</param>
-		/// <param name="name">Reference for loading this object.</param>
+		/// <param name="name">Identefier for loading this object.</param>
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, YahurrModule module, bool @override = true)
+		public async Task Save(object obj, string name, YahurrModule module, bool @override, bool append)
 		{
-			(string json, string extension) = Serialize(obj, SerializationType.JSON);
+			string json = Serialize(obj, SerializationType.JSON);
 			SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
 
 			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
 
-			await WriteToFile(savedObject, json, @override).ConfigureAwait(false);
+			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
 			AddToCache((name, module), savedObject, @override);
 			SaveObjectList();
 		}
 
-		public async Task Save(object obj, string name, SerializationType type, YahurrModule module, bool @override = true)
+		/// <summary>
+		/// Save object to file as type.
+		/// </summary>
+		/// <param name="obj">Object to save.</param>
+		/// <param name="name">Identefier for loading this object.</param>
+		/// <param name="type">Type to save as.</param>
+		/// <param name="module"></param>
+		/// <param name="override"></param>
+		/// <returns></returns>
+		public async Task Save(object obj, string name, SerializationType type, YahurrModule module, bool @override, bool append)
 		{
-			(string json, string extension) = Serialize(obj, type);
+			string json = Serialize(obj, type);
 			SavedObject savedObject = new SavedObject(name, $".{type.ToString()}", module, obj.GetType());
 
 			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
 
-			await WriteToFile(savedObject, json, @override).ConfigureAwait(false);
+			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
+			AddToCache((name, module), savedObject, @override);
+			SaveObjectList();
+		}
+
+		/// <summary>
+		/// Save object to file as custom type.
+		/// </summary>
+		/// <param name="obj">Object to save.</param>
+		/// <param name="name">Identefier for loading this object.</param>
+		/// <param name="extension">File extension.</param>
+		/// <param name="serializer">Custom method for serializing objects.</param>
+		/// <param name="module"></param>
+		/// <param name="override"></param>
+		/// <returns></returns>
+		public async Task Save(object obj, string name, string extension, Func<object, string> serializer, YahurrModule module, bool @override, bool append)
+		{
+			string json = serializer(obj);
+			SavedObject savedObject = new SavedObject(name, extension, module, obj.GetType());
+
+			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
+
+			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
 			AddToCache((name, module), savedObject, @override);
 			SaveObjectList();
 		}
@@ -106,7 +137,7 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		async Task WriteToFile(SavedObject savedObject, string toWrite, bool @override)
+		async Task WriteToFile(SavedObject savedObject, string toWrite, bool @override, bool append)
 		{
 			string path = GetPath(savedObject);
 
@@ -117,7 +148,7 @@ namespace YahurrFramework.Managers
 			}
 			else if (@override)
 			{
-				using (StreamWriter writer = new StreamWriter(path))
+				using (StreamWriter writer = new StreamWriter(path, append))
 					await writer.WriteAsync(toWrite).ConfigureAwait(false);
 			}
 		}
@@ -188,18 +219,18 @@ namespace YahurrFramework.Managers
 		/// <param name="obj"></param>
 		/// <param name="type"></param>
 		/// <returns></returns>
-		(string content, string extension) Serialize(object obj, SerializationType type)
+		string Serialize(object obj, SerializationType type)
 		{
 			switch (type)
 			{
 				case SerializationType.JSON:
-					return (JsonConvert.SerializeObject(obj), ".json");
+					return JsonConvert.SerializeObject(obj);
 				case SerializationType.JSV:
-					return (TypeSerializer.SerializeToString(obj, obj.GetType()), ".jsv");
+					return TypeSerializer.SerializeToString(obj, obj.GetType());
 				case SerializationType.CSV:
-					return (CsvSerializer.SerializeToString(obj), ".csv");
+					return CsvSerializer.SerializeToString(obj);
 				default:
-					return (null, null);
+					return null;
 			}
 		}
 	}

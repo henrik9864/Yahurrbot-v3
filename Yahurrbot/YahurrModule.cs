@@ -63,9 +63,9 @@ namespace YahurrFramework
 		/// <param name="obj">Object to save.</param>
 		/// <param name="override">If you want to override previous saves</param>
 		/// <returns></returns>
-		protected async Task Save(string name, object obj, bool @override)
+		protected async Task Save(string name, object obj, bool @override = true, bool append = false)
 		{
-			await Bot.FileManager.Save(obj, name, this, @override).ConfigureAwait(false);
+			await Bot.FileManager.Save(obj, name, this, @override, append).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -76,9 +76,14 @@ namespace YahurrFramework
 		/// <param name="type">Srialization method to use,</param>
 		/// <param name="override">If you want to override previous saves</param>
 		/// <returns></returns>
-		protected async Task Save(string name, object obj, SerializationType type, bool @override)
+		protected async Task Save(string name, object obj, SerializationType type, bool @override = true, bool append = false)
 		{
-			await Bot.FileManager.Save(obj, name, type, this, @override).ConfigureAwait(false);
+			await Bot.FileManager.Save(obj, name, type, this, @override, append).ConfigureAwait(false);
+		}
+
+		protected async Task Save(string name, object obj, string extension, Func<object, string> serializer, bool @override = true, bool append = false)
+		{
+			await Bot.FileManager.Save(obj, name, extension, serializer, this, @override, append).ConfigureAwait(false);
 		}
 
 		/// <summary>
