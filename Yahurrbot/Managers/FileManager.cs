@@ -122,10 +122,13 @@ namespace YahurrFramework.Managers
 
 		void LoadObjectList()
 		{
-			string json = File.ReadAllText("Saves/SavedObjects.json");
-			List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
+			if (File.Exists("Saves/SavedObjects.json"))
+			{
+				string json = File.ReadAllText("Saves/SavedObjects.json");
+				List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
 
-			savedObjects = objects.ToDictionary(a => (a.Name, a.Module));
+				savedObjects = objects.ToDictionary(a => (a.Name, a.Module));
+			}
 		}
 
 		/// <summary>

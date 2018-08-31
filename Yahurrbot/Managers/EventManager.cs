@@ -179,6 +179,13 @@ namespace YahurrFramework.Managers
 			return ValidateGuild(channel?.Guild, module);
 		}
 
+		/// <summary>
+		/// Downloads cached itesm from discord.
+		/// </summary>
+		/// <typeparam name="T">Cached type</typeparam>
+		/// <param name="cache">Cahe return</param>
+		/// <param name="channel">Where item is cached</param>
+		/// <returns></returns>
 		Task<IMessage> FromCache<T>(Cacheable<T, ulong> cache, ISocketMessageChannel channel) where T : IEntity<ulong>
 		{
 			return channel.GetMessageAsync(cache.Id);
