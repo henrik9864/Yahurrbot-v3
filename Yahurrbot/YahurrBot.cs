@@ -111,7 +111,7 @@ namespace YahurrFramework
 				if (commands.Length == 0)
 					continue;
 
-				switch (commands[0])
+				switch (input)
 				{
 					case "reload modules":
 						string folder = "Modules";

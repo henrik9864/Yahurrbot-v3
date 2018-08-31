@@ -5,6 +5,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -60,15 +61,15 @@ namespace YahurrFramework.Managers
 			{
 				YahurrModule module = LoadedModules[i];
 
-				if (validate(module))
-				{
-					Task task = (Task)module.GetType().GetMethod(name).Invoke(module, parameters);
+				if (!validate(module))
+					continue;
 
-					if (task.Exception != null)
-					{
-						await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run method {name}:", "ModuleManager").ConfigureAwait(false);
-						await Bot.LoggingManager.LogMessage(task.Exception.InnerException, "ModuleManager").ConfigureAwait(false);
-					}
+				Task task = (Task)module.GetType().GetMethod(name).Invoke(module, parameters);
+
+				if (task.Exception != null)
+				{
+					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run method {name}:", "ModuleManager").ConfigureAwait(false);
+					await Bot.LoggingManager.LogMessage(task.Exception.InnerException, "ModuleManager").ConfigureAwait(false);
 				}
 			}
 		}
@@ -143,10 +144,13 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		bool LoadReferences(Assembly assembly)
 		{
+			List<Assembly> loadeAssemeblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
 			AssemblyName[] names = assembly.GetReferencedAssemblies();
 			for (int i = 0; i < names.Length; i++)
 			{
-				Assembly.Load(names[i]);
+				AssemblyName assemblyName = names[i];
+				if (!loadeAssemeblies.Exists(a => a.GetName() == assemblyName))
+					Assembly.Load(assemblyName);
 			}
 
 			return true;
