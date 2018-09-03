@@ -11,7 +11,7 @@ using YahurrFramework.Enums;
 
 namespace YahurrFramework
 {
-    public class YahurrModule
+    public class Module
     {
 		/// <summary>
 		/// Name of module.

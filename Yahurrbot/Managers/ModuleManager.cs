@@ -17,11 +17,11 @@ namespace YahurrFramework.Managers
 {
 	internal class ModuleManager : BaseManager
 	{
-		public List<YahurrModule> LoadedModules { get; }
+		public List<Module> LoadedModules { get; }
 
 		public ModuleManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			LoadedModules = new List<YahurrModule>();
+			LoadedModules = new List<Module>();
 		}
 
 		/// <summary>
@@ -42,7 +42,7 @@ namespace YahurrFramework.Managers
 				FileInfo file = files[i];
 
 				// Load and add all modules in dll
-				List<YahurrModule> modules = await LoadModule(file.FullName).ConfigureAwait(false);
+				List<Module> modules = await LoadModule(file.FullName).ConfigureAwait(false);
 				AddModules(modules);
 			}
 
@@ -55,11 +55,11 @@ namespace YahurrFramework.Managers
 		/// <param name="name"></param>
 		/// <param name="parameters"></param>
 		/// <returns></returns>
-		internal async Task RunMethod(string name, Func<YahurrModule, bool> validate, params object[] parameters)
+		internal async Task RunMethod(string name, Func<Module, bool> validate, params object[] parameters)
 		{
 			for (int i = 0; i < LoadedModules.Count; i++)
 			{
-				YahurrModule module = LoadedModules[i];
+				Module module = LoadedModules[i];
 
 				if (!validate(module))
 					continue;
@@ -79,10 +79,10 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="path">Full path to dll.</param>
 		/// <returns></returns>
-		async Task<List<YahurrModule>> LoadModule(string path)
+		async Task<List<Module>> LoadModule(string path)
 		{
 			// List to have all modules in this dll.
-			List<YahurrModule> modules = new List<YahurrModule>();
+			List<Module> modules = new List<Module>();
 			List<(Task task, string name)> tasks = new List<(Task task, string name)>();
 
 			// Get types from the dll.
@@ -96,7 +96,7 @@ namespace YahurrFramework.Managers
 				Type type = types[i];
 
 				// Check if type found is a YahurrModule
-				if (typeof(YahurrModule).IsAssignableFrom(type))
+				if (typeof(Module).IsAssignableFrom(type))
 				{
 					int index = LoadedModules.FindIndex(a => a.GetType() == type);
 					if (index >= 0)
@@ -111,7 +111,7 @@ namespace YahurrFramework.Managers
 
 					// Creat a new task and start running it.
 					Task task = new Task(() => {
-						YahurrModule module = (YahurrModule)Activator.CreateInstance(type);
+						Module module = (Module)Activator.CreateInstance(type);
 						object config = LoadConfig(module).GetAwaiter().GetResult();
 						module.InitModule(Client, Bot, config).GetAwaiter().GetResult();
 						modules.Add(module);
@@ -160,11 +160,11 @@ namespace YahurrFramework.Managers
 		/// Load and add all modules to loadedmodules.
 		/// </summary>
 		/// <param name="modules">Listof modules.</param>
-		void AddModules(List<YahurrModule> modules)
+		void AddModules(List<Module> modules)
 		{
 			for (int i = 0; i < modules.Count; i++)
 			{
-				YahurrModule module = modules[i];
+				Module module = modules[i];
 
 				if (!LoadedModules.Exists(a => a.Name == module.Name))
 					AddModule(module);
@@ -175,14 +175,14 @@ namespace YahurrFramework.Managers
 		/// Bind module to client events.
 		/// </summary>
 		/// <param name="module"></param>
-		void AddModule(YahurrModule module)
+		void AddModule(Module module)
 		{
 			MethodInfo[] methods = module.GetType().GetMethods();
 			for (int i = 0; i < methods.Length; i++)
 			{
 				MethodInfo method = methods[i];
 
-				if (method.GetCustomAttribute<Command>() != null)
+				if (method.GetCustomAttribute<Attributes.Command>() != null)
 					Bot.CommandManager.AddCommand(module, method);
 			}
 
@@ -194,7 +194,7 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		async Task<object> LoadConfig(YahurrModule module)
+		async Task<object> LoadConfig(Module module)
 		{
 			Config configAttribute = module.GetType().GetCustomAttribute<Config>();
 

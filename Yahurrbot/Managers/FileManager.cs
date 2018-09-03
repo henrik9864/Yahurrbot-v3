@@ -14,11 +14,11 @@ namespace YahurrFramework.Managers
 {
 	internal class FileManager : BaseManager
 	{
-		Dictionary<(string name, YahurrModule module), SavedObject> savedObjects;
+		Dictionary<(string name, Module module), SavedObject> savedObjects;
 
 		public FileManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			savedObjects = new Dictionary<(string name, YahurrModule module), SavedObject>();
+			savedObjects = new Dictionary<(string name, Module module), SavedObject>();
 			Directory.CreateDirectory("Saves");
 			LoadObjectList();
 		}
@@ -31,7 +31,7 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, YahurrModule module, bool @override, bool append)
+		public async Task Save(object obj, string name, Module module, bool @override, bool append)
 		{
 			string json = Serialize(obj, SerializationType.JSON);
 			SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
@@ -52,7 +52,7 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, SerializationType type, YahurrModule module, bool @override, bool append)
+		public async Task Save(object obj, string name, SerializationType type, Module module, bool @override, bool append)
 		{
 			string json = Serialize(obj, type);
 			SavedObject savedObject = new SavedObject(name, $".{type.ToString()}", module, obj.GetType());
@@ -74,7 +74,7 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, string extension, Func<object, string> serializer, YahurrModule module, bool @override, bool append)
+		public async Task Save(object obj, string name, string extension, Func<object, string> serializer, Module module, bool @override, bool append)
 		{
 			string json = serializer(obj);
 			SavedObject savedObject = new SavedObject(name, extension, module, obj.GetType());
@@ -93,7 +93,7 @@ namespace YahurrFramework.Managers
 		/// <param name="name">Identefier</param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		public async Task<T> Load<T>(string name, YahurrModule module)
+		public async Task<T> Load<T>(string name, Module module)
 		{
 			if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
 				return default(T);
@@ -107,7 +107,7 @@ namespace YahurrFramework.Managers
 		/// <param name="name">Save identefier.</param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		public Task<bool> Exists(string name, YahurrModule module)
+		public Task<bool> Exists(string name, Module module)
 		{
 			return Task.Run(() => savedObjects.TryGetValue((name, module), out SavedObject savedObject));
 		}
@@ -119,7 +119,7 @@ namespace YahurrFramework.Managers
 		/// <param name="type">Type to check for</param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		public async Task<bool> IsValid(string name, Type type, YahurrModule module)
+		public async Task<bool> IsValid(string name, Type type, Module module)
 		{
 			if (savedObjects.TryGetValue((name, module), out SavedObject savedObject))
 			{
@@ -200,7 +200,7 @@ namespace YahurrFramework.Managers
 		/// <param name="key"></param>
 		/// <param name="savedObject"></param>
 		/// <param name="override"></param>
-		void AddToCache((string name, YahurrModule module) key, SavedObject savedObject, bool @override)
+		void AddToCache((string name, Module module) key, SavedObject savedObject, bool @override)
 		{
 			if (savedObjects.TryGetValue(key, out SavedObject so))
 			{

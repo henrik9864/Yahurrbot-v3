@@ -10,15 +10,15 @@ using YahurrFramework.Attributes;
 
 namespace YahurrFramework
 {
-    public class YahurrCommand
-    {
+	public class Command
+	{
 		public List<string> Structure { get; }
 
-		public List<(string summary, Type type, bool isParam)> Parameters { get; }
+		public List<CommandParameterInfo> Parameters { get; }
 
 		public string Summary { get; }
 
-		public YahurrModule Module { get; }
+		public Module Module { get; }
 
 		public string Name
 		{
@@ -31,9 +31,9 @@ namespace YahurrFramework
 		MethodInfo method;
 		int parameterCount;
 
-		public YahurrCommand(MethodInfo method, YahurrModule module)
+		public Command(MethodInfo method, Module module)
 		{
-			Command cmd = method.GetCustomAttribute<Command>();
+			Attributes.Command cmd = method.GetCustomAttribute<Attributes.Command>();
 			Summary summary = method.GetCustomAttribute<Summary>();
 
 			this.Structure = cmd.CommandStructure;
@@ -49,18 +49,15 @@ namespace YahurrFramework
 		/// </summary>
 		/// <param name="method">Method to parse</param>
 		/// <returns></returns>
-		List<(string summary, Type type, bool isParam)> LoadParameters(MethodInfo method)
+		List<CommandParameterInfo> LoadParameters(MethodInfo method)
 		{
-			var parameters = new List<(string summary, Type type, bool isParam)>();
+			var parameters = new List<CommandParameterInfo>();
 
 			ParameterInfo[] methodParameters = method.GetParameters();
 			for (int i = 0; i < methodParameters.Length; i++)
 			{
 				ParameterInfo parameter = methodParameters[i];
-				Summary summary = parameter.GetCustomAttribute<Summary>();
-				var param = parameter.GetCustomAttribute<ParamArrayAttribute>();
-
-				parameters.Add((summary?.Value, parameter.ParameterType, param != null));
+				parameters.Add(new CommandParameterInfo(parameter));
 			}
 
 			parameterCount = methodParameters.Length;
@@ -70,13 +67,27 @@ namespace YahurrFramework
 		/// <summary>
 		/// Validates that this list of commands can preform this command.
 		/// </summary>
-		/// <param name="command"></param>
+		/// <param name="parameters"></param>
 		/// <returns></returns>
-		public bool Verify(List<string> command)
+		public bool VerifyParameters(List<string> parameters)
 		{
-			for (int i = 0; i < Structure.Count; i++)
+			if (parameters.Count - Structure.Count == Parameters.Count)
+				return true;
+
+			for (int i = 0; i < Parameters.Count; i++)
 			{
-				if (!string.Equals(Structure[i], command[i], StringComparison.OrdinalIgnoreCase))
+				int index = Structure.Count + i;
+				CommandParameterInfo param = Parameters[index];
+				string input;
+
+				if (parameters.Count > index)
+					input = parameters[index];
+				else if (param.IsOptional || param.HasDefaultValue)
+					continue;
+				else
+					return false;
+
+				if (!param.IsParam && parameters.Count > Parameters.Count)
 					return false;
 			}
 
@@ -98,9 +109,9 @@ namespace YahurrFramework
 			for (int i = 0; i < Parameters.Count; i++)
 			{
 				string value = parameters[i];
-				Type type = Parameters[i].type;
+				Type type = Parameters[i].Type;
 
-				if (Parameters[i].isParam)
+				if (Parameters[i].IsParam)
 				{
 					Array arr = Array.CreateInstance(type.GetElementType(), parameters.Count - Parameters.Count + 1);
 
@@ -153,5 +164,5 @@ namespace YahurrFramework
 		{
 			return method.GetCustomAttribute<T>(inherit);
 		}
-    }
+	}
 }

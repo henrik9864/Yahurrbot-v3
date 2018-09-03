@@ -21,7 +21,7 @@ namespace YahurrFramework
 				if (code != 2)
 					break;
 
-				Console.Clear();
+				//Console.Clear();
 			}
 
 			Console.WriteLine("Program exited with code: " + code);

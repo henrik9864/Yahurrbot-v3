@@ -7,9 +7,9 @@ namespace YahurrFramework
 {
     public class YahurrLoadedModule
     {
-		public YahurrModule Module { get; }
+		public Module Module { get; }
 
-		public YahurrLoadedModule(YahurrModule module)
+		public YahurrLoadedModule(Module module)
 		{
 			this.Module = module;
 		}

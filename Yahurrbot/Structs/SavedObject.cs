@@ -19,12 +19,12 @@ namespace YahurrBot.Structs
 
 		public Type Type { get; private set; }
 
-		public YahurrModule Module { get; private set; }
+		public Module Module { get; private set; }
 
 		public string Path { get; private set; }
 
 		[JsonConstructor]
-		public SavedObject(string Name, string Ex, YahurrModule Module, Type Type)
+		public SavedObject(string Name, string Ex, Module Module, Type Type)
 		{
 			this.Name = Name;
 			this.Type = Type;

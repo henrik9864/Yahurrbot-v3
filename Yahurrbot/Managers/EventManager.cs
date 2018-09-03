@@ -135,10 +135,10 @@ namespace YahurrFramework.Managers
 		/// <typeparam name="T">Parameter type.</typeparam>
 		/// <param name="p">Parameter</param>
 		/// <returns></returns>
-		Func<YahurrModule, bool> Validate<T>(T p)
+		Func<Module, bool> Validate<T>(T p)
 		{
 			// Substitute switch statement
-			var @switch = new Dictionary<Type, Func<YahurrModule, bool>>
+			var @switch = new Dictionary<Type, Func<Module, bool>>
 			{
 				{ typeof(SocketGuild), m => ValidateGuild(p as SocketGuild, m) },
 				{ typeof(SocketGuildUser), m => ValidateGuild((p as SocketGuildUser)?.Guild, m) },
@@ -146,7 +146,7 @@ namespace YahurrFramework.Managers
 				{ typeof(SocketGuildChannel), m => ValidateGuild((p as SocketGuildChannel)?.Guild, m) }
 			};
 
-			if (@switch.TryGetValue(p.GetType(), out Func<YahurrModule, bool> func))
+			if (@switch.TryGetValue(p.GetType(), out Func<Module, bool> func))
 				return func;
 			else
 				return _ => true;
@@ -158,7 +158,7 @@ namespace YahurrFramework.Managers
 		/// <param name="guild">Guild to access</param>
 		/// <param name="module">Module</param>
 		/// <returns></returns>
-		bool ValidateGuild(SocketGuild guild, YahurrModule module)
+		bool ValidateGuild(SocketGuild guild, Module module)
 		{
 			List<ServerFilter> filterAttributes = module.GetType().GetCustomAttributes<ServerFilter>().ToList();
 			for (int i = 0; i < filterAttributes.Count; i++)
@@ -172,7 +172,7 @@ namespace YahurrFramework.Managers
 			return true;
 		}
 
-		bool ValidateMessage(SocketUserMessage message, YahurrModule module)
+		bool ValidateMessage(SocketUserMessage message, Module module)
 		{
 			SocketGuildChannel channel = message.Channel as SocketGuildChannel;
 

@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using Discord.WebSocket;
-using YahurrFramework.Attributes;
+using YahurrFramework;
 using YahurrFramework.Enums;
+using YahurrFramework.Attributes;
 
 namespace YahurrFramework.Managers
 {
@@ -14,11 +15,13 @@ namespace YahurrFramework.Managers
 	{
 		internal char CommandPrefix { get; }
 
-		Dictionary<string, List<YahurrCommand>> commands;
+		Dictionary<string, SavedCommand> savedCommands;
+		Dictionary<Module, List<Command>> sortedCommands;
 
 		public CommandManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			commands = new Dictionary<string, List<YahurrCommand>>();
+			savedCommands = new Dictionary<string, SavedCommand>();
+			sortedCommands = new Dictionary<Module, List<Command>>();
 			CommandPrefix = '!';
 		}
 
@@ -26,12 +29,17 @@ namespace YahurrFramework.Managers
 		/// Add command to list of all commands.
 		/// </summary>
 		/// <param name="command"></param>
-		internal void AddCommand(YahurrCommand command)
+		internal void AddCommand(Command command)
 		{
-			if (commands.TryGetValue(command.Structure[0], out List<YahurrCommand> cmd))
-				cmd.Add(command);
+			if (savedCommands.TryGetValue(command.Structure[0], out SavedCommand cmd))
+				cmd.AddCommand(command);
 			else
-				commands.Add(command.Structure[0], new List<YahurrCommand>() { command });
+				savedCommands.Add(command.Structure[0], new SavedCommand(command));
+
+			if (sortedCommands.TryGetValue(command.Module, out List<Command> commands))
+				commands.Add(command);
+			else
+				sortedCommands.Add(command.Module, new List<Command>() { command });
 		}
 
 		/// <summary>
@@ -39,9 +47,9 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="module"></param>
 		/// <param name="method"></param>
-		internal void AddCommand(YahurrModule module, MethodInfo method)
+		internal void AddCommand(Module module, MethodInfo method)
 		{
-			AddCommand(new YahurrCommand(method, module));
+			AddCommand(new Command(method, module));
 		}
 
 		/// <summary>
@@ -95,35 +103,34 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		async Task<bool> RunCommand(SocketMessage context, List<string> command)
 		{
-			List<YahurrCommand> commands;
-			if (!this.commands.TryGetValue(command[0], out commands))
+			SavedCommand savedCommand;
+			if (!this.savedCommands.TryGetValue(command[0], out savedCommand))
 				return false;
 
-			for (int i = 0; i < commands.Count; i++)
+			if (savedCommand.Validate(command))
 			{
-				YahurrCommand cmd = commands[i];
+				Command cmd = savedCommand.GetCommand(command);
 
-				if (cmd.Verify(command))
+				// Check if user can run command
+				if (!ValidateCommand(context, cmd))
 				{
-					// Check if user can run command
-					if (!ValidateCommand(context, cmd))
-					{
-						await context.Channel.SendMessageAsync("You do not have permission to run that command!");
-						return false;
-					}
-
-					command.RemoveRange(0, cmd.Structure.Count);
-
-					try
-					{
-						await cmd.Invoke(command, new CommandContext(context)).ConfigureAwait(false);
-					}
-					catch (Exception ex)
-					{
-						await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {cmd.Name}:", "ModuleManager").ConfigureAwait(false);
-						await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
-					}
+					Console.WriteLine("Waaaa");
+					await context.Channel.SendMessageAsync("You do not have permission to run that command!").ConfigureAwait(false);
+					return false;
 				}
+
+				try
+				{
+					command.RemoveRange(0, cmd.Structure.Count);
+					await cmd.Invoke(command, new CommandContext(context)).ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {cmd.Name}:", "ModuleManager").ConfigureAwait(false);
+					await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
+				}
+
+				Console.WriteLine("Command ran!");
 			}
 
 			return true;
@@ -135,7 +142,7 @@ namespace YahurrFramework.Managers
 		/// <param name="context"></param>
 		/// <param name="command"></param>
 		/// <returns></returns>
-		bool ValidateCommand(SocketMessage context, YahurrCommand command)
+		bool ValidateCommand(SocketMessage context, Command command)
 		{
 			SocketGuildChannel channel = context.Channel as SocketGuildChannel;
 			SocketGuildUser guildUser = context.Author as SocketGuildUser;
@@ -164,7 +171,7 @@ namespace YahurrFramework.Managers
 
 		// Commands hardcoded into the bot.
 		#region InternalCommands
-
+		
 		/// <summary>
 		/// Start help command.
 		/// </summary>
@@ -197,7 +204,7 @@ namespace YahurrFramework.Managers
 			output += "!help <command|module> <module> -- To view a command or module in more detail.\n\n";
 			output += "List of all commands by module:\n\n";
 
-			foreach (var moduleList in SortCommands())
+			foreach (var moduleList in sortedCommands)
 			{
 				if (index/perPage < page)
 					continue;
@@ -206,11 +213,11 @@ namespace YahurrFramework.Managers
 
 				for (int i = 0; i < moduleList.Value.Count; i++)
 				{
-					YahurrCommand cmd = moduleList.Value[i];
+					Command cmd = moduleList.Value[i];
 					string cmdString = "	";
 
 					cmd.Structure.ForEach(a => cmdString += $"{a} ");
-					cmd.Parameters.ForEach(a => cmdString += $"<{TypeToShorthand(a.type.Name).ToLower()}> ");
+					cmd.Parameters.ForEach(a => cmdString += $"<{TypeToShorthand(a.Type.Name).ToLower()}> ");
 					cmdString += $"--- {cmd.Summary}\n";
 
 					output += cmdString;
@@ -231,23 +238,40 @@ namespace YahurrFramework.Managers
 		{
 			string name = commands[1];
 
-			if (this.commands.TryGetValue(name, out List<YahurrCommand> cmds))
+			if (this.savedCommands.TryGetValue(name, out SavedCommand savedCommand))
 			{
-				YahurrCommand cmd;
-
 				commands.RemoveRange(0, 1);
-				if (cmds.Count == 1)
-					cmd = cmds[0];
-				else if (!string.IsNullOrEmpty(commands[1]))
-					cmd = cmds.Find(a => a.Verify(commands));
-				else
-					return "Ambegious name please specify module.";
+				List<Command> cmds = savedCommand.GetCommands(commands);
+				int index = 1;
 
-				return DisplayCommand(cmd);
+				if (cmds.Count > 1 && !int.TryParse(commands[commands.Count - 1], out index))
+				{
+					string output = "```";
+
+					output += "Multiple results found please specify by adding an index at the end of the command.\n";
+					output += "Commands found:\n";
+
+					for (int i = 0; i < cmds.Count; i++)
+					{
+						Command cmd = cmds[i];
+						output += $"{DisplayCommandSmall(cmd)}\n";
+					}
+
+					return output + "```";
+				}
+
+				// Convert from natural number
+				index--;
+				if (cmds.Count > 1 && (index < 0 || index >= cmds.Count))
+				{
+					return "```Invalid index!```";
+				}
+
+				return DisplayCommand(cmds[index]);
 			}
 			else
 			{
-				YahurrModule module = Bot.ModuleManager.LoadedModules.Find(a => a.Name == commands[1]);
+				Module module = Bot.ModuleManager.LoadedModules.Find(a => a.Name == commands[1]);
 				return DisplayModule(module);
 			}
 		}
@@ -257,17 +281,33 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="command">Command to display</param>
 		/// <returns></returns>
-		string DisplayCommand(YahurrCommand command)
+		string DisplayCommand(Command command)
 		{
 			string output = "```";
 
 			output += $"Child command of {command.Module.Name}:\n";
 			command.Structure.ForEach(a => output += $"{a} ");
-			command.Parameters.ForEach(a => output += $"<{TypeToShorthand(a.type.Name).ToLower()}> ");
+			command.Parameters.ForEach(a => output += $"<{TypeToShorthand(a.Type.Name).ToLower()}> ");
 			output += $" -- {command.Summary}";
-			command.Parameters.ForEach(a => output += $"\n	<{TypeToShorthand(a.type.Name).ToLower()}> -- {a.summary ?? "Not defined."}");
+			command.Parameters.ForEach(a => output += $"\n	<{(a.IsParam ? "params " : "")}{(a.IsOptional ? "?" : "")}{TypeToShorthand(a.Type.Name).ToLower()}> -- {a.Summary ?? a.Name ?? "Not defined."}");
 
 			return output + "```";
+		}
+
+		/// <summary>
+		/// Display one line version of command.
+		/// </summary>
+		/// <param name="command"></param>
+		/// <returns></returns>
+		string DisplayCommandSmall(Command command)
+		{
+			string output = "";
+
+			command.Structure.ForEach(a => output += $"{a} ");
+			command.Parameters.ForEach(a => output += $"<{TypeToShorthand(a.Type.Name).ToLower()}> ");
+			output += $" -- {command.Summary}";
+
+			return output;
 		}
 
 		/// <summary>
@@ -275,51 +315,25 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="module">Module to display</param>
 		/// <returns></returns>
-		string DisplayModule(YahurrModule module)
+		string DisplayModule(Module module)
 		{
 			string output = "```";
 			output += $"{module.Name}:\n";
 
-			List<YahurrCommand> modules = SortCommands()[module];
+			List<Command> modules = sortedCommands[module];
 			for (int i = 0; i < modules.Count; i++)
 			{
-				YahurrCommand cmd = modules[i];
+				Command cmd = modules[i];
 				string cmdString = "	";
 
 				cmd.Structure.ForEach(a => cmdString += $"{a} ");
-				cmd.Parameters.ForEach(a => cmdString += $"<{TypeToShorthand(a.type.Name).ToLower()}> ");
+				cmd.Parameters.ForEach(a => cmdString += $"<{TypeToShorthand(a.Type.Name).ToLower()}> ");
 				cmdString += $"--- {cmd.Summary}\n";
 
 				output += cmdString;
 			}
 
 			return output + "```";
-		}
-
-		/// <summary>
-		/// Sorts all commands from commands dictionary.
-		/// </summary>
-		/// <returns></returns>
-		Dictionary<YahurrModule, List<YahurrCommand>> SortCommands()
-		{
-			var sortedCommands = new Dictionary<YahurrModule, List<YahurrCommand>>();
-
-			foreach (var cmds in this.commands)
-			{
-				List<YahurrCommand> cmdList = cmds.Value;
-
-				for (int i = 0; i < cmdList.Count; i++)
-				{
-					YahurrCommand cmd = cmdList[i];
-
-					if (sortedCommands.TryGetValue(cmd.Module, out List<YahurrCommand> toAdd))
-						toAdd.Add(cmd);
-					else
-						sortedCommands.Add(cmd.Module, new List<YahurrCommand>() { cmd });
-				}
-			}
-
-			return sortedCommands;
 		}
 
 		/// <summary>
