@@ -112,6 +112,14 @@ namespace YahurrFramework.Managers
 			return await savedObject.Deserialize<T>(deserializer).ConfigureAwait(false);
 		}
 
+		public async Task<T> Load<T>(string name, Func<string, T> deserializer, Module module)
+		{
+			if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
+				return default(T);
+
+			return await savedObject.Deserialize<T>().ConfigureAwait(false);
+		}
+
 		/// <summary>
 		/// Check if file exists
 		/// </summary>
