@@ -16,12 +16,12 @@ namespace YahurrFramework.Managers
 		internal char CommandPrefix { get; }
 
 		Dictionary<string, SavedCommand> savedCommands;
-		Dictionary<Module, List<Command>> sortedCommands;
+		Dictionary<Module, List<YahurrCommand>> sortedCommands;
 
 		public CommandManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
 			savedCommands = new Dictionary<string, SavedCommand>();
-			sortedCommands = new Dictionary<Module, List<Command>>();
+			sortedCommands = new Dictionary<Module, List<YahurrCommand>>();
 			CommandPrefix = '!';
 		}
 
@@ -29,17 +29,17 @@ namespace YahurrFramework.Managers
 		/// Add command to list of all commands.
 		/// </summary>
 		/// <param name="command"></param>
-		internal void AddCommand(Command command)
+		internal void AddCommand(YahurrCommand command)
 		{
 			if (savedCommands.TryGetValue(command.Structure[0], out SavedCommand cmd))
 				cmd.AddCommand(command);
 			else
 				savedCommands.Add(command.Structure[0], new SavedCommand(command));
 
-			if (sortedCommands.TryGetValue(command.Module, out List<Command> commands))
+			if (sortedCommands.TryGetValue(command.Module, out List<YahurrCommand> commands))
 				commands.Add(command);
 			else
-				sortedCommands.Add(command.Module, new List<Command>() { command });
+				sortedCommands.Add(command.Module, new List<YahurrCommand>() { command });
 		}
 
 		/// <summary>
@@ -49,7 +49,7 @@ namespace YahurrFramework.Managers
 		/// <param name="method"></param>
 		internal void AddCommand(Module module, MethodInfo method)
 		{
-			AddCommand(new Command(method, module));
+			AddCommand(new YahurrCommand(method, module));
 		}
 
 		/// <summary>
@@ -109,12 +109,11 @@ namespace YahurrFramework.Managers
 
 			if (savedCommand.Validate(command))
 			{
-				Command cmd = savedCommand.GetCommand(command);
+				YahurrCommand cmd = savedCommand.GetCommand(command);
 
 				// Check if user can run command
 				if (!ValidateCommand(context, cmd))
 				{
-					Console.WriteLine("Waaaa");
 					await context.Channel.SendMessageAsync("You do not have permission to run that command!").ConfigureAwait(false);
 					return false;
 				}
@@ -129,8 +128,6 @@ namespace YahurrFramework.Managers
 					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {cmd.Name}:", "ModuleManager").ConfigureAwait(false);
 					await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
 				}
-
-				Console.WriteLine("Command ran!");
 			}
 
 			return true;
@@ -142,7 +139,7 @@ namespace YahurrFramework.Managers
 		/// <param name="context"></param>
 		/// <param name="command"></param>
 		/// <returns></returns>
-		bool ValidateCommand(SocketMessage context, Command command)
+		bool ValidateCommand(SocketMessage context, YahurrCommand command)
 		{
 			SocketGuildChannel channel = context.Channel as SocketGuildChannel;
 			SocketGuildUser guildUser = context.Author as SocketGuildUser;
@@ -213,7 +210,7 @@ namespace YahurrFramework.Managers
 
 				for (int i = 0; i < moduleList.Value.Count; i++)
 				{
-					Command cmd = moduleList.Value[i];
+					YahurrCommand cmd = moduleList.Value[i];
 					string cmdString = "	";
 
 					cmd.Structure.ForEach(a => cmdString += $"{a} ");
@@ -241,7 +238,7 @@ namespace YahurrFramework.Managers
 			if (this.savedCommands.TryGetValue(name, out SavedCommand savedCommand))
 			{
 				commands.RemoveRange(0, 1);
-				List<Command> cmds = savedCommand.GetCommands(commands);
+				List<YahurrCommand> cmds = savedCommand.GetCommands(commands);
 				int index = 1;
 
 				if (cmds.Count > 1 && !int.TryParse(commands[commands.Count - 1], out index))
@@ -253,7 +250,7 @@ namespace YahurrFramework.Managers
 
 					for (int i = 0; i < cmds.Count; i++)
 					{
-						Command cmd = cmds[i];
+						YahurrCommand cmd = cmds[i];
 						output += $"{DisplayCommandSmall(cmd)}\n";
 					}
 
@@ -281,7 +278,7 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="command">Command to display</param>
 		/// <returns></returns>
-		string DisplayCommand(Command command)
+		string DisplayCommand(YahurrCommand command)
 		{
 			string output = "```";
 
@@ -299,7 +296,7 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="command"></param>
 		/// <returns></returns>
-		string DisplayCommandSmall(Command command)
+		string DisplayCommandSmall(YahurrCommand command)
 		{
 			string output = "";
 
@@ -320,10 +317,10 @@ namespace YahurrFramework.Managers
 			string output = "```";
 			output += $"{module.Name}:\n";
 
-			List<Command> modules = sortedCommands[module];
+			List<YahurrCommand> modules = sortedCommands[module];
 			for (int i = 0; i < modules.Count; i++)
 			{
-				Command cmd = modules[i];
+				YahurrCommand cmd = modules[i];
 				string cmdString = "	";
 
 				cmd.Structure.ForEach(a => cmdString += $"{a} ");

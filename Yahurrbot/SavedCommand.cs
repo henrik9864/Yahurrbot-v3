@@ -9,23 +9,23 @@ namespace YahurrFramework
 		public string Token { get; }
 
 		Dictionary<string, SavedCommand> subCommands;
-		List<Command> commands;
+		List<YahurrCommand> commands;
 
-		public SavedCommand(Command command) : this(command, 0)
+		public SavedCommand(YahurrCommand command) : this(command, 0)
 		{
 
 		}
 
-		private SavedCommand(Command command, int depth)
+		private SavedCommand(YahurrCommand command, int depth)
 		{
 			this.Token = command.Structure[depth];
 			this.subCommands = new Dictionary<string, SavedCommand>();
-			this.commands = new List<Command>();
+			this.commands = new List<YahurrCommand>();
 
 			AddCommand(command, depth);
 		}
 
-		public void AddCommand(Command command)
+		public void AddCommand(YahurrCommand command)
 		{
 			AddCommand(command, 0);
 		}
@@ -35,7 +35,7 @@ namespace YahurrFramework
 			return Validate(command, 0);
 		}
 
-		public Command GetCommand(List<string> command)
+		public YahurrCommand GetCommand(List<string> command)
 		{
 			(SavedCommand cmd, int depth) = GetSavedCommand(command, 0);
 			int index = cmd.MatchCommand(command, depth + 1);
@@ -43,7 +43,7 @@ namespace YahurrFramework
 			return cmd.commands[index];
 		}
 
-		public List<Command> GetCommands(List<string> command)
+		public List<YahurrCommand> GetCommands(List<string> command)
 		{
 			(SavedCommand cmd, int depth) = GetSavedCommand(command, 0);
 			return cmd?.commands;
@@ -53,7 +53,7 @@ namespace YahurrFramework
 		/// Add a command to this saved command.
 		/// </summary>
 		/// <param name="command"></param>
-		void AddCommand(Command command, int depth)
+		void AddCommand(YahurrCommand command, int depth)
 		{
 			string token = command.Structure[depth];
 			if (token != Token)
@@ -93,7 +93,7 @@ namespace YahurrFramework
 				return MatchCommand(command, depth + 1) != -1;
 		}
 
-		Command GetCommand(List<string> command, int depth)
+		YahurrCommand GetCommand(List<string> command, int depth)
 		{
 			string token = command[depth];
 			if (token != Token)

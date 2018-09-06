@@ -10,7 +10,7 @@ using YahurrFramework.Attributes;
 
 namespace YahurrFramework
 {
-	public class Command
+	public class YahurrCommand
 	{
 		public List<string> Structure { get; }
 
@@ -31,7 +31,7 @@ namespace YahurrFramework
 		MethodInfo method;
 		int parameterCount;
 
-		public Command(MethodInfo method, Module module)
+		public YahurrCommand(MethodInfo method, Module module)
 		{
 			Attributes.Command cmd = method.GetCustomAttribute<Attributes.Command>();
 			Summary summary = method.GetCustomAttribute<Summary>();

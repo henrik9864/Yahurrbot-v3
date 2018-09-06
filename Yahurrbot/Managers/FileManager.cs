@@ -14,6 +14,9 @@ namespace YahurrFramework.Managers
 {
 	internal class FileManager : BaseManager
 	{
+		static FileStream fileStream;
+		static object fileLock = new object();
+
 		Dictionary<(string name, Module module), SavedObject> savedObjects;
 
 		public FileManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
@@ -141,31 +144,56 @@ namespace YahurrFramework.Managers
 		{
 			string path = GetPath(savedObject);
 
-			if (!File.Exists(path))
+			lock (fileLock)
 			{
-				using (StreamWriter writer = File.CreateText(path))
-					await writer.WriteAsync(toWrite).ConfigureAwait(false);
+				if (!File.Exists(path))
+					fileStream = File.Create(path);
+				else if (@override || append)
+					fileStream = File.Open(path, FileMode.Open, FileAccess.Write, FileShare.Write);
+
+				using (StreamWriter writer = new StreamWriter(fileStream))
+				{
+					writer.Write(toWrite);
+				}
+
+				fileStream.Close();
 			}
-			else if (@override || append)
-			{
-				using (StreamWriter writer = new StreamWriter(path, append))
-					await writer.WriteAsync(toWrite).ConfigureAwait(false);
-			}
+
+			await Task.CompletedTask;
 		}
 
 		void SaveObjectList()
 		{
 			string json = JsonConvert.SerializeObject(savedObjects.Values);
-			File.WriteAllText("Saves/SavedObjects.json", json);
+			string path = "Saves/SavedObjects.json";
+
+			lock (fileLock)
+			{
+				fileStream = File.Open(path, FileMode.Open, FileAccess.Write, FileShare.Write);
+				using (StreamWriter writer = new StreamWriter(fileStream))
+					writer.Write(json);
+
+				fileStream.Close();
+			}
 		}
 
 		void LoadObjectList()
 		{
-			if (File.Exists("Saves/SavedObjects.json"))
-			{
-				string json = File.ReadAllText("Saves/SavedObjects.json");
-				List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
+			string path = "Saves/SavedObjects.json";
+			string json;
 
+			if (File.Exists(path))
+			{
+				lock (fileLock)
+				{
+					fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+					using (StreamReader reader = new StreamReader(fileStream))
+						json = reader.ReadToEnd();
+
+					fileStream.Close();
+				}
+
+				List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
 				savedObjects = objects.ToDictionary(a => (a.Name, a.Module));
 			}
 		}
