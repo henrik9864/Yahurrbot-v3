@@ -99,7 +99,7 @@ namespace YahurrFramework
 
 		protected Task<T> Load<T>(string name, Func<string, T> deserializer)
 		{
-			return Bot.FileManager.Load<T>(name, deserializer, this);
+			return Bot.FileManager.Load(name, deserializer, this);
 		}
 
 		/// <summary>

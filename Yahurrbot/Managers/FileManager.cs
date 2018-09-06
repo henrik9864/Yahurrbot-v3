@@ -109,7 +109,7 @@ namespace YahurrFramework.Managers
 			if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
 				return default(T);
 
-			return await savedObject.Deserialize<T>(deserializer).ConfigureAwait(false);
+			return await savedObject.Deserialize(deserializer).ConfigureAwait(false);
 		}
 
 		/// <summary>
