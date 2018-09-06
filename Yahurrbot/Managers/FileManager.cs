@@ -149,7 +149,7 @@ namespace YahurrFramework.Managers
 				if (!File.Exists(path))
 					fileStream = File.Create(path);
 				else if (@override || append)
-					fileStream = File.Open(path, FileMode.Open, FileAccess.Write, FileShare.Write);
+					fileStream = new FileStream(path, append ? FileMode.Append : FileMode.OpenOrCreate);
 
 				using (StreamWriter writer = new StreamWriter(fileStream))
 				{
@@ -169,7 +169,7 @@ namespace YahurrFramework.Managers
 
 			lock (fileLock)
 			{
-				fileStream = File.Open(path, FileMode.Open, FileAccess.Write, FileShare.Write);
+				fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write);
 				using (StreamWriter writer = new StreamWriter(fileStream))
 					writer.Write(json);
 
