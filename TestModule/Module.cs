@@ -33,13 +33,13 @@ namespace TestModule
 			}
 		}
 
-		[YahurrFramework.Attributes.Command("print", "int")]
+		[Command("print", "int")]
 		public async Task SayInt([Summary("Number to print")]int number)
 		{
 			await CommandContext.Message.Channel.SendMessageAsync(number.ToString());
 		}
 
-		[YahurrFramework.Attributes.Command("print", "string"), Summary("Prints a string.")]
+		[Command("print", "string"), Summary("Prints a string.")]
 		public async Task SayString([Summary("String to print")]string str)
 		{
 			await CommandContext.Message.Channel.SendMessageAsync(str);
@@ -47,13 +47,13 @@ namespace TestModule
 
 		[ChannelFilter(FilterType.Blacklist, 293381166365540353)]
 		[RoleFilter(FilterType.Whitelist, 288627464450736128)]
-		[YahurrFramework.Attributes.Command("add"), Summary("Adds two numbers together.")]
+		[Command("add"), Summary("Adds two numbers together.")]
 		public async Task AddInt([Summary("Number 1.")]int n1, [Summary("Number 2.")]int n2)
 		{
 			await CommandContext.Message.Channel.SendMessageAsync((n1 * n2).ToString());
 		}
 
-		[YahurrFramework.Attributes.Command("param"), Summary("Parameter test")]
+		[Command("param"), Summary("Parameter test")]
 		public async Task ParamTest(params string[] strs)
 		{
 			await CommandContext.Message.Channel.SendMessageAsync("Length: " + strs.Length);

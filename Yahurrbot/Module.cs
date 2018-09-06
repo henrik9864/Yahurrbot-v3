@@ -97,6 +97,11 @@ namespace YahurrFramework
 			return Bot.FileManager.Load<T>(name, this);
 		}
 
+		protected Task<T> Load<T>(string name, Func<string, T> deserializer)
+		{
+			return Bot.FileManager.Load<T>(name, deserializer, this);
+		}
+
 		/// <summary>
 		/// Check if save exists.
 		/// </summary>

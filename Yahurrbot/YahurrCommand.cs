@@ -80,9 +80,9 @@ namespace YahurrFramework
 				CommandParameterInfo param = Parameters[index];
 				string input;
 
-				if (parameters.Count > index)
+				if (index < parameters.Count)
 					input = parameters[index];
-				else if (param.IsOptional || param.HasDefaultValue)
+				else if (param.IsOptional || param.HasDefaultValue || param.IsParam)
 					continue;
 				else
 					return false;

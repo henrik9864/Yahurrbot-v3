@@ -38,7 +38,7 @@ namespace YahurrBot.Structs
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
-		public async Task<T> Deserialize<T>()
+		public async Task<T> Deserialize<T>(Func<string, T> deserializer)
 		{
 			Type generic = typeof(T);
 			if (!generic.IsAssignableFrom(Type))
@@ -52,7 +52,12 @@ namespace YahurrBot.Structs
 				JToken token = JToken.Parse(json);
 
 				if (token.IsValid(schema))
-					return token.ToObject<T>();
+				{
+					if (deserializer != null)
+						return deserializer(json);
+					else
+						return token.ToObject<T>();
+				}
 				else
 					throw new Exception($"Invalid JSON in file.");
 			}
