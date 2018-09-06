@@ -196,6 +196,10 @@ namespace YahurrFramework.Managers
 				List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
 				savedObjects = objects.ToDictionary(a => (a.Name, a.Module));
 			}
+			else
+			{
+				SaveObjectList();
+			}
 		}
 
 		/// <summary>
