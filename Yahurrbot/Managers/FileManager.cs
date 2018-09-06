@@ -104,6 +104,14 @@ namespace YahurrFramework.Managers
 			return await savedObject.Deserialize<T>().ConfigureAwait(false);
 		}
 
+		public async Task<T> Load<T>(string name, Func<string, T> deserializer, Module module)
+		{
+			if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
+				return default(T);
+
+			return await savedObject.Deserialize<T>().ConfigureAwait(false);
+		}
+
 		/// <summary>
 		/// Check if file exists
 		/// </summary>
@@ -136,9 +144,11 @@ namespace YahurrFramework.Managers
 		/// Write to file, override if its already there
 		/// </summary>
 		/// <param name="name"></param>
+		/// <param name="savedObject"></param>
 		/// <param name="toWrite"></param>
 		/// <param name="module"></param>
 		/// <param name="override"></param>
+		/// <param name="append"></param>
 		/// <returns></returns>
 		async Task WriteToFile(SavedObject savedObject, string toWrite, bool @override, bool append)
 		{
@@ -172,7 +182,7 @@ namespace YahurrFramework.Managers
 				fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write);
 				using (StreamWriter writer = new StreamWriter(fileStream))
 					writer.Write(json);
-
+				
 				fileStream.Close();
 			}
 		}
