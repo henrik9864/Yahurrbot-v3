@@ -169,7 +169,7 @@ namespace YahurrFramework.Managers
 
 			lock (fileLock)
 			{
-				fileStream = File.Open(path, FileMode.Open, FileAccess.Write, FileShare.Write);
+				fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write);
 				using (StreamWriter writer = new StreamWriter(fileStream))
 					writer.Write(json);
 
