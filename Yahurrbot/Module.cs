@@ -20,7 +20,15 @@ namespace YahurrFramework
 		{
 			get
 			{
-				return GetType().GetCustomAttribute<Summary>()?.Value ?? GetType().Name;
+				return GetType().GetCustomAttribute<Name>()?.Value ?? GetType().Name;
+			}
+		}
+
+		public int ID
+		{
+			get
+			{
+				return this.GetHashCode();
 			}
 		}
 

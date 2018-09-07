@@ -87,7 +87,9 @@ namespace YahurrFramework
 				else
 					return false;
 
-				if (!param.IsParam && parameters.Count > Parameters.Count)
+				if (parameters.Count > Parameters.Count && param.IsParam)
+					return true;
+				else if (parameters.Count > Parameters.Count)
 					return false;
 			}
 

@@ -17,11 +17,11 @@ namespace YahurrFramework.Managers
 		static FileStream fileStream;
 		static object fileLock = new object();
 
-		Dictionary<(string name, Module module), SavedObject> savedObjects;
+		Dictionary<(string name, int moduleID), SavedObject> savedObjects;
 
 		public FileManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			savedObjects = new Dictionary<(string name, Module module), SavedObject>();
+			savedObjects = new Dictionary<(string, int), SavedObject>();
 			Directory.CreateDirectory("Saves");
 			LoadObjectList();
 		}
@@ -39,10 +39,8 @@ namespace YahurrFramework.Managers
 			string json = Serialize(obj, SerializationType.JSON);
 			SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
 
-			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
-
 			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
-			AddToCache((name, module), savedObject, @override);
+			AddToCache((name, module.ID), savedObject, @override);
 			SaveObjectList();
 		}
 
@@ -60,10 +58,8 @@ namespace YahurrFramework.Managers
 			string json = Serialize(obj, type);
 			SavedObject savedObject = new SavedObject(name, $".{type.ToString()}", module, obj.GetType());
 
-			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
-
 			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
-			AddToCache((name, module), savedObject, @override);
+			AddToCache((name, module.ID), savedObject, @override);
 			SaveObjectList();
 		}
 
@@ -82,10 +78,8 @@ namespace YahurrFramework.Managers
 			string json = serializer(obj);
 			SavedObject savedObject = new SavedObject(name, extension, module, obj.GetType());
 
-			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
-
 			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
-			AddToCache((name, module), savedObject, @override);
+			AddToCache((name, module.ID), savedObject, @override);
 			SaveObjectList();
 		}
 
@@ -98,7 +92,7 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public async Task<T> Load<T>(string name, Module module)
 		{
-			if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
+			if (!savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
 				return default(T);
 
 			return await savedObject.Deserialize<T>(null).ConfigureAwait(false);
@@ -106,7 +100,7 @@ namespace YahurrFramework.Managers
 
 		public async Task<T> Load<T>(string name, Func<string, T> deserializer, Module module)
 		{
-			if (!savedObjects.TryGetValue((name, module), out SavedObject savedObject))
+			if (!savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
 				return default(T);
 
 			return await savedObject.Deserialize(deserializer).ConfigureAwait(false);
@@ -120,7 +114,7 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public Task<bool> Exists(string name, Module module)
 		{
-			return Task.Run(() => savedObjects.TryGetValue((name, module), out SavedObject savedObject));
+			return Task.Run(() => savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject));
 		}
 
 		/// <summary>
@@ -132,7 +126,7 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public async Task<bool> IsValid(string name, Type type, Module module)
 		{
-			if (savedObjects.TryGetValue((name, module), out SavedObject savedObject))
+			if (savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
 			{
 				return await savedObject.IsValid(type).ConfigureAwait(false);
 			}
@@ -152,7 +146,7 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		async Task WriteToFile(SavedObject savedObject, string toWrite, bool @override, bool append)
 		{
-			string path = GetPath(savedObject);
+			string path = savedObject.Path;
 
 			lock (fileLock)
 			{
@@ -204,7 +198,7 @@ namespace YahurrFramework.Managers
 				}
 
 				List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
-				savedObjects = objects.ToDictionary(a => (a.Name, a.Module));
+				savedObjects = objects.ToDictionary(a => (a.Name, a.ModuleID));
 			}
 			else
 			{
@@ -233,7 +227,7 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		string GetPath(SavedObject savedObject)
 		{
-			return $"Saves/{SanetizeName(savedObject.Module.Name)}/{savedObject.Name}{savedObject.Extension}";
+			return $"Saves/{savedObject.ModuleID}/{savedObject.Name}{savedObject.Extension}";
 		}
 
 		/// <summary>
@@ -242,7 +236,7 @@ namespace YahurrFramework.Managers
 		/// <param name="key"></param>
 		/// <param name="savedObject"></param>
 		/// <param name="override"></param>
-		void AddToCache((string name, Module module) key, SavedObject savedObject, bool @override)
+		void AddToCache((string name, int moduleID) key, SavedObject savedObject, bool @override)
 		{
 			if (savedObjects.TryGetValue(key, out SavedObject so))
 			{
