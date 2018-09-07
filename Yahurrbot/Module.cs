@@ -28,7 +28,7 @@ namespace YahurrFramework
 		{
 			get
 			{
-				return this.GetHashCode();
+				return this.GetType().AssemblyQualifiedName.GetHashCode();
 			}
 		}
 

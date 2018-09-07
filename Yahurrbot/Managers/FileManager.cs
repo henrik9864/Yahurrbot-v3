@@ -168,7 +168,7 @@ namespace YahurrFramework.Managers
 
 		void SaveObjectList()
 		{
-			string json = JsonConvert.SerializeObject(savedObjects.Values, Formatting.Indented);
+			string json = JsonConvert.SerializeObject(savedObjects.Values);
 			string path = "Saves/SavedObjects.json";
 
 			lock (fileLock)
@@ -204,30 +204,6 @@ namespace YahurrFramework.Managers
 			{
 				SaveObjectList();
 			}
-		}
-
-		/// <summary>
-		/// Removes spaces from string.
-		/// </summary>
-		/// <param name="name"></param>
-		/// <returns></returns>
-		string SanetizeName(string name)
-		{
-			name = name.Replace(" ", "");
-
-			return name;
-		}
-
-		/// <summary>
-		/// Get path from name and module.
-		/// </summary>
-		/// <param name="name"></param>
-		/// <param name="ex"></param>
-		/// <param name="module"></param>
-		/// <returns></returns>
-		string GetPath(SavedObject savedObject)
-		{
-			return $"Saves/{savedObject.ModuleID}/{savedObject.Name}{savedObject.Extension}";
 		}
 
 		/// <summary>
