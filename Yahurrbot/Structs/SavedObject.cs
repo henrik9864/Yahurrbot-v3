@@ -17,20 +17,30 @@ namespace YahurrBot.Structs
 
 		public string Extension { get; private set; }
 
+		[JsonIgnore]
 		public Type Type { get; private set; }
 
-		public Module Module { get; private set; }
+		public int ModuleID { get; private set; }
 
 		public string Path { get; private set; }
 
+		[JsonProperty]
+		string typeName;
+
 		[JsonConstructor]
-		public SavedObject(string Name, string Ex, Module Module, Type Type)
+		private SavedObject(string Name, string Extension, int ModuleID, string typeName, string Path)
 		{
 			this.Name = Name;
-			this.Type = Type;
-			this.Module = Module;
-			this.Extension = Ex;
-			this.Path = $"Saves/{Module.Name}/{Name}{Ex}";
+			this.Type = Type.GetType(typeName);
+			this.ModuleID = ModuleID;
+			this.Extension = Extension;
+			this.Path = Path;
+			this.typeName = typeName;
+		}
+
+		public SavedObject(string name, string ex, Module module, Type type) : this(name, ex, module.ID, type.FullName, $"Saves/{SanetizeName(module.Name)}/{name}{ex}")
+		{
+			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
 		}
 
 		/// <summary>
@@ -80,5 +90,12 @@ namespace YahurrBot.Structs
 				return token.IsValid(schema);
 			}
 		}
-    }
+
+		static string SanetizeName(string name)
+		{
+			name = name.Replace(" ", "");
+
+			return name;
+		}
+	}
 }
