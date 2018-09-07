@@ -71,9 +71,9 @@ namespace YahurrFramework
 		/// <param name="obj">Object to save.</param>
 		/// <param name="override">If you want to override previous saves</param>
 		/// <returns></returns>
-		protected async Task Save(string name, object obj, bool @override = true, bool append = false)
+		protected Task Save(string name, object obj, bool @override = true, bool append = false)
 		{
-			await Bot.FileManager.Save(obj, name, this, @override, append).ConfigureAwait(false);
+			return Task.Run(() => Bot.FileManager.Save(obj, name, this, @override, append));
 		}
 
 		/// <summary>
@@ -84,14 +84,14 @@ namespace YahurrFramework
 		/// <param name="type">Srialization method to use,</param>
 		/// <param name="override">If you want to override previous saves</param>
 		/// <returns></returns>
-		protected async Task Save(string name, object obj, SerializationType type, bool @override = true, bool append = false)
+		protected Task Save(string name, object obj, SerializationType type, bool @override = true, bool append = false)
 		{
-			await Bot.FileManager.Save(obj, name, type, this, @override, append).ConfigureAwait(false);
+			return Task.Run(() => Bot.FileManager.Save(obj, name, type, this, @override, append));
 		}
 
-		protected async Task Save(string name, object obj, string extension, Func<object, string> serializer, bool @override = true, bool append = false)
+		protected Task Save(string name, object obj, string extension, Func<object, string> serializer, bool @override = true, bool append = false)
 		{
-			await Bot.FileManager.Save(obj, name, extension, serializer, this, @override, append).ConfigureAwait(false);
+			return Task.Run(() => Bot.FileManager.Save(obj, name, extension, serializer, this, @override, append));
 		}
 
 		/// <summary>
@@ -126,7 +126,7 @@ namespace YahurrFramework
 		/// <param name="name">Identefier.</param>
 		/// <param name="type">Type to check for.</param>
 		/// <returns></returns>
-		protected Task<bool> IsValid(string name, Type type)
+		protected bool IsValid(string name, Type type)
 		{
 			return Bot.FileManager.IsValid(name, type, this);
 		}
@@ -137,7 +137,7 @@ namespace YahurrFramework
 		/// <typeparam name="T">Type to check for.</typeparam>
 		/// <param name="name">Identefier.</param>
 		/// <returns></returns>
-		protected Task<bool> IsValid<T>(string name)
+		protected bool IsValid<T>(string name)
 		{
 			return IsValid(name, typeof(T));
 		}

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Discord.WebSocket;
@@ -22,10 +23,24 @@ namespace TestModule
 
 		public async override Task MessageReceived(SocketMessage message)
 		{
-			await Save("test1", message.Content, SerializationType.CSV, true).ConfigureAwait(false);
-			var msg = await Load<string>("test1").ConfigureAwait(false);
-			bool valid = await IsValid<string>("test1").ConfigureAwait(false);
-			bool exists = await Exists("test1").ConfigureAwait(false);
+			try
+			{
+				await Save("test1", message.Content, true, false).ConfigureAwait(false);
+				string msg = await Load<string>("test1").ConfigureAwait(false);
+				bool valid = IsValid<string>("test1");
+				bool exists = await Exists("test1").ConfigureAwait(false);
+
+				Console.WriteLine(msg ?? "null");
+				Console.WriteLine(exists);
+				Console.WriteLine(valid);
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+				throw;
+			}
+
+			//Console.WriteLine(msg ?? "null");
 
 			if (message.Content == "Ping")
 			{

@@ -2,11 +2,13 @@
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
+using ServiceStack.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using YahurrBot.Enums;
 using YahurrFramework;
 
 namespace YahurrBot.Structs
@@ -54,23 +56,18 @@ namespace YahurrBot.Structs
 			if (!generic.IsAssignableFrom(Type))
 				throw new Exception($"{Name} is saved as {Type.Name} not {generic.Name}");
 
+			string json;
 			using (StreamReader reader = new StreamReader(Path))
 			{
-				string json = await reader.ReadToEndAsync().ConfigureAwait(false);
-				JSchemaGenerator generator = new JSchemaGenerator();
-				JSchema schema = generator.Generate(typeof(T));
-				JToken token = JToken.Parse(json);
-
-				if (token.IsValid(schema))
-				{
-					if (deserializer != null)
-						return deserializer(json);
-					else
-						return token.ToObject<T>();
-				}
-				else
-					throw new Exception($"Invalid JSON in file.");
+				json = await reader.ReadToEndAsync().ConfigureAwait(false);
 			}
+
+			SerializationType type = (SerializationType)Enum.Parse(typeof(SerializationType), Extension.Replace(".", ""), true);
+
+			if (deserializer != null)
+				return deserializer(json);
+			else
+				return Deserialize<T>(json, type);
 		}
 
 		/// <summary>
@@ -78,17 +75,9 @@ namespace YahurrBot.Structs
 		/// </summary>
 		/// <param name="type">Type to validate for</param>
 		/// <returns></returns>
-		public async Task<bool> IsValid(Type type)
+		public bool IsValid(Type type)
 		{
-			using (StreamReader reader = new StreamReader(Path))
-			{
-				string json = await reader.ReadToEndAsync().ConfigureAwait(false);
-				JSchemaGenerator generator = new JSchemaGenerator();
-				JSchema schema = generator.Generate(type);
-				JToken token = JToken.Parse(json);
-
-				return token.IsValid(schema);
-			}
+			return Type.IsAssignableFrom(type);
 		}
 
 		static string SanetizeName(string name)
@@ -96,6 +85,21 @@ namespace YahurrBot.Structs
 			name = name.Replace(" ", "");
 
 			return name;
+		}
+
+		T Deserialize<T>(string json, SerializationType type)
+		{
+			switch (type)
+			{
+				case SerializationType.JSON:
+					return JsonConvert.DeserializeObject<T>(json);
+				case SerializationType.JSV:
+					return TypeSerializer.DeserializeFromString<T>(json);
+				case SerializationType.CSV:
+					return CsvSerializer.DeserializeFromString<T>(json);
+				default:
+					return default(T);
+			}
 		}
 	}
 }

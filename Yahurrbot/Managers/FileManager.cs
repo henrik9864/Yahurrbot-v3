@@ -14,9 +14,6 @@ namespace YahurrFramework.Managers
 {
 	internal class FileManager : BaseManager
 	{
-		static FileStream fileStream;
-		static object fileLock = new object();
-
 		Dictionary<(string name, int moduleID), SavedObject> savedObjects;
 
 		public FileManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
@@ -34,14 +31,12 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, Module module, bool @override, bool append)
+		public void Save(object obj, string name, Module module, bool @override, bool append)
 		{
 			string json = Serialize(obj, SerializationType.JSON);
 			SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
 
-			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
-			AddToCache((name, module.ID), savedObject, @override);
-			SaveObjectList();
+			Save(savedObject, json, @override, append);
 		}
 
 		/// <summary>
@@ -53,14 +48,12 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, SerializationType type, Module module, bool @override, bool append)
+		public void Save(object obj, string name, SerializationType type, Module module, bool @override, bool append)
 		{
 			string json = Serialize(obj, type);
 			SavedObject savedObject = new SavedObject(name, $".{type.ToString()}", module, obj.GetType());
 
-			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
-			AddToCache((name, module.ID), savedObject, @override);
-			SaveObjectList();
+			Save(savedObject, json, @override, append);
 		}
 
 		/// <summary>
@@ -73,14 +66,12 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, string extension, Func<object, string> serializer, Module module, bool @override, bool append)
+		public void Save(object obj, string name, string extension, Func<object, string> serializer, Module module, bool @override, bool append)
 		{
 			string json = serializer(obj);
 			SavedObject savedObject = new SavedObject(name, extension, module, obj.GetType());
 
-			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
-			AddToCache((name, module.ID), savedObject, @override);
-			SaveObjectList();
+			Save(savedObject, json, @override, append);
 		}
 
 		/// <summary>
@@ -124,14 +115,21 @@ namespace YahurrFramework.Managers
 		/// <param name="type">Type to check for</param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		public async Task<bool> IsValid(string name, Type type, Module module)
+		public bool IsValid(string name, Type type, Module module)
 		{
 			if (savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
 			{
-				return await savedObject.IsValid(type).ConfigureAwait(false);
+				return savedObject.IsValid(type);
 			}
 
 			return false;
+		}
+
+		void Save(SavedObject savedObject, string json, bool @override, bool append)
+		{
+			WriteToFile(savedObject, json, @override, append);
+			AddSavedObject((savedObject.Name, savedObject.ModuleID), savedObject, @override);
+			SaveObjectList();
 		}
 
 		/// <summary>
@@ -144,43 +142,37 @@ namespace YahurrFramework.Managers
 		/// <param name="override"></param>
 		/// <param name="append"></param>
 		/// <returns></returns>
-		async Task WriteToFile(SavedObject savedObject, string toWrite, bool @override, bool append)
+		void WriteToFile(SavedObject savedObject, string toWrite, bool @override, bool append)
 		{
 			string path = savedObject.Path;
 
-			lock (fileLock)
+			if (@override || append)
 			{
-				if (!File.Exists(path))
-					fileStream = File.Create(path);
-				else if (@override || append)
-					fileStream = new FileStream(path, append ? FileMode.Append : FileMode.OpenOrCreate);
-
-				using (StreamWriter writer = new StreamWriter(fileStream))
+				using (FileStream fileStream = new FileStream(path, append ? FileMode.Append : FileMode.OpenOrCreate))
 				{
-					writer.Write(toWrite);
+					using (StreamWriter writer = new StreamWriter(fileStream))
+						writer.Write(toWrite);
 				}
-
-				fileStream.Close();
 			}
-
-			await Task.CompletedTask;
 		}
 
+		/// <summary>
+		/// Save list of all stored objects.
+		/// </summary>
 		void SaveObjectList()
 		{
-			string json = JsonConvert.SerializeObject(savedObjects.Values);
+			string json = JsonConvert.SerializeObject(savedObjects.Values, Formatting.Indented);
 			string path = "Saves/SavedObjects.json";
-
-			lock (fileLock)
+			using (FileStream fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write))
 			{
-				fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write);
 				using (StreamWriter writer = new StreamWriter(fileStream))
 					writer.Write(json);
-				
-				fileStream.Close();
 			}
 		}
 
+		/// <summary>
+		/// Load dictionary of all saved objects.
+		/// </summary>
 		void LoadObjectList()
 		{
 			string path = "Saves/SavedObjects.json";
@@ -188,13 +180,10 @@ namespace YahurrFramework.Managers
 
 			if (File.Exists(path))
 			{
-				lock (fileLock)
+				using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 				{
-					fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 					using (StreamReader reader = new StreamReader(fileStream))
 						json = reader.ReadToEnd();
-
-					fileStream.Close();
 				}
 
 				List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
@@ -212,7 +201,7 @@ namespace YahurrFramework.Managers
 		/// <param name="key"></param>
 		/// <param name="savedObject"></param>
 		/// <param name="override"></param>
-		void AddToCache((string name, int moduleID) key, SavedObject savedObject, bool @override)
+		void AddSavedObject((string name, int moduleID) key, SavedObject savedObject, bool @override)
 		{
 			if (savedObjects.TryGetValue(key, out SavedObject so))
 			{
