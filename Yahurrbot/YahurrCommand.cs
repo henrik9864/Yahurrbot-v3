@@ -71,25 +71,24 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public bool VerifyParameters(List<string> parameters)
 		{
+			Console.WriteLine(parameters.Count);
+			Console.WriteLine(Structure.Count);
+
 			if (parameters.Count - Structure.Count == Parameters.Count)
 				return true;
 
 			for (int i = 0; i < Parameters.Count; i++)
 			{
-				int index = Structure.Count + i;
-				CommandParameterInfo param = Parameters[index];
-				string input;
+				int index = i + Structure.Count;
+				CommandParameterInfo param = Parameters[i];
 
-				if (index < parameters.Count)
-					input = parameters[index];
-				else if (param.IsOptional || param.HasDefaultValue || param.IsParam)
+				if (parameters.Count > index)
 					continue;
-				else
-					return false;
-
-				if (parameters.Count > Parameters.Count && param.IsParam)
+				else if (param.IsOptional || param.HasDefaultValue)
+					continue;
+				else if (param.IsParam)
 					return true;
-				else if (parameters.Count > Parameters.Count)
+				else
 					return false;
 			}
 
@@ -151,7 +150,6 @@ namespace YahurrFramework
 			catch (AggregateException e)
 			{
 				await context.Message.Channel.SendMessageAsync($"```Error: Command threw an exception:\n{e.InnerException.Message}```").ConfigureAwait(false);
-				throw e.InnerException;
 			}
 
 			await Task.CompletedTask;

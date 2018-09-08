@@ -108,7 +108,6 @@ namespace YahurrFramework
 			else
 			{
 				int index = MatchCommand(command, depth + 1);
-				Console.WriteLine(index);
 				return commands[index];
 			}
 		}

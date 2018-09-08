@@ -148,7 +148,20 @@ namespace YahurrFramework.Managers
 
 			if (@override || append)
 			{
-				using (FileStream fileStream = new FileStream(path, append ? FileMode.Append : FileMode.OpenOrCreate))
+				using (FileStream fileStream = new FileStream(path, append ? FileMode.Append : FileMode.OpenOrCreate, FileAccess.Write))
+				{
+					using (StreamWriter writer = new StreamWriter(fileStream))
+					{
+						if (@override)
+							fileStream.SetLength(0);
+
+						writer.Write(toWrite);
+					}
+				}
+			}
+			else if (!File.Exists(path))
+			{
+				using (FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
 				{
 					using (StreamWriter writer = new StreamWriter(fileStream))
 						writer.Write(toWrite);
@@ -163,8 +176,11 @@ namespace YahurrFramework.Managers
 		{
 			string json = JsonConvert.SerializeObject(savedObjects.Values, Formatting.Indented);
 			string path = "Saves/SavedObjects.json";
+
 			using (FileStream fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write))
 			{
+				fileStream.SetLength(0);
+
 				using (StreamWriter writer = new StreamWriter(fileStream))
 					writer.Write(json);
 			}
@@ -181,10 +197,8 @@ namespace YahurrFramework.Managers
 			if (File.Exists(path))
 			{
 				using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-				{
-					using (StreamReader reader = new StreamReader(fileStream))
-						json = reader.ReadToEnd();
-				}
+				using (StreamReader reader = new StreamReader(fileStream))
+					json = reader.ReadToEnd();
 
 				List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
 				savedObjects = objects.ToDictionary(a => (a.Name, a.ModuleID));
