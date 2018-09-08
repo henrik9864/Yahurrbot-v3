@@ -19,27 +19,28 @@ namespace YahurrBot.Structs
 
 		public string Extension { get; private set; }
 
+		[JsonIgnore]
 		public Type Type { get; private set; }
 
 		public string ModuleID { get; private set; }
 
 		public string Path { get; private set; }
 
-		[JsonIgnore]
+		[JsonProperty]
 		string typeName;
 
 		[JsonConstructor]
-		private SavedObject(string Name, string Extension, string ModuleID, Type Type, string Path)
+		private SavedObject(string Name, string Extension, string ModuleID, string typeName, string Path)
 		{
 			this.Name = Name;
-			this.Type = Type;
+			this.Type = Type.GetType(typeName, false, true);
 			this.ModuleID = ModuleID;
 			this.Extension = Extension;
 			this.Path = Path;
-			this.typeName = Type.Name;
+			this.typeName = typeName;
 		}
 
-		public SavedObject(string name, string ex, Module module, Type type) : this(name, ex, module.ID, type, $"Saves/{SanetizeName(module.Name)}/{name}{ex}")
+		public SavedObject(string name, string ex, Module module, Type type) : this(name, ex, module.ID, type.FullName, $"Saves/{SanetizeName(module.Name)}/{name}{ex}")
 		{
 			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
 		}

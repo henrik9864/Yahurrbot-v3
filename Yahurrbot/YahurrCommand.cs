@@ -71,9 +71,6 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public bool VerifyParameters(List<string> parameters)
 		{
-			Console.WriteLine(parameters.Count);
-			Console.WriteLine(Structure.Count);
-
 			if (parameters.Count - Structure.Count == Parameters.Count)
 				return true;
 

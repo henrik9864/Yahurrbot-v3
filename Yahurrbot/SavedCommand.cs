@@ -130,8 +130,6 @@ namespace YahurrFramework
 
 		int MatchCommand(List<string> command, int paramStart)
 		{
-			Console.WriteLine("Matching params...");
-
 			if (commands.Count == 0)
 				return -1;
 
