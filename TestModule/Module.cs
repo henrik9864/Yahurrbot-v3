@@ -24,8 +24,9 @@ namespace TestModule
 		public async override Task MessageReceived(SocketMessage message)
 		{
 			await Save("test1", message.Content, true, false).ConfigureAwait(false);
-			await Save("test2", message.Content, true, false).ConfigureAwait(false);
+			await Save("test2", new List<string>() { "s1", "s2" }, true, false).ConfigureAwait(false);
 			string msg = await Load<string>("test1").ConfigureAwait(false);
+			var msg1 = await Load<List<string>>("test2").ConfigureAwait(false);
 			bool valid = IsValid<string>("test1");
 			bool exists = await Exists("test1").ConfigureAwait(false);
 
