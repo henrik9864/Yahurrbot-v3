@@ -14,11 +14,11 @@ namespace YahurrFramework.Managers
 {
 	internal class FileManager : BaseManager
 	{
-		Dictionary<(string name, int moduleID), SavedObject> savedObjects;
+		Dictionary<(string name, string moduleID), SavedObject> savedObjects;
 
 		public FileManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			savedObjects = new Dictionary<(string, int), SavedObject>();
+			savedObjects = new Dictionary<(string, string), SavedObject>();
 			Directory.CreateDirectory("Saves");
 			LoadObjectList();
 		}
@@ -150,11 +150,11 @@ namespace YahurrFramework.Managers
 			{
 				using (FileStream fileStream = new FileStream(path, append ? FileMode.Append : FileMode.OpenOrCreate, FileAccess.Write))
 				{
+					if (@override && !append)
+						fileStream.SetLength(0);
+
 					using (StreamWriter writer = new StreamWriter(fileStream))
 					{
-						if (@override)
-							fileStream.SetLength(0);
-
 						writer.Write(toWrite);
 					}
 				}
@@ -215,7 +215,7 @@ namespace YahurrFramework.Managers
 		/// <param name="key"></param>
 		/// <param name="savedObject"></param>
 		/// <param name="override"></param>
-		void AddSavedObject((string name, int moduleID) key, SavedObject savedObject, bool @override)
+		void AddSavedObject((string name, string moduleID) key, SavedObject savedObject, bool @override)
 		{
 			if (savedObjects.TryGetValue(key, out SavedObject so))
 			{

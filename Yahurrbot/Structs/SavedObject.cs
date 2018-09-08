@@ -22,7 +22,7 @@ namespace YahurrBot.Structs
 		[JsonIgnore]
 		public Type Type { get; private set; }
 
-		public int ModuleID { get; private set; }
+		public string ModuleID { get; private set; }
 
 		public string Path { get; private set; }
 
@@ -30,7 +30,7 @@ namespace YahurrBot.Structs
 		string typeName;
 
 		[JsonConstructor]
-		private SavedObject(string Name, string Extension, int ModuleID, string typeName, string Path)
+		private SavedObject(string Name, string Extension, string ModuleID, string typeName, string Path)
 		{
 			this.Name = Name;
 			this.Type = Type.GetType(typeName);

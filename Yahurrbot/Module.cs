@@ -24,11 +24,11 @@ namespace YahurrFramework
 			}
 		}
 
-		public int ID
+		public string ID
 		{
 			get
 			{
-				return Name.GetHashCode();
+				return GetType().Name;
 			}
 		}
 
