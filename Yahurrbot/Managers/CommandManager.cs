@@ -147,7 +147,7 @@ namespace YahurrFramework.Managers
 			RoleFilter roleFilter = command.GetMethodAttribute<RoleFilter>(true);
 
 			if (channel == null || guildUser == null)
-				return false;
+				return true;
 
 			if (channelFilter != null && !channelFilter.IsFiltered(channel.Id))
 				return false;
