@@ -89,6 +89,14 @@ namespace YahurrFramework.Managers
 			return await savedObject.Deserialize<T>(null).ConfigureAwait(false);
 		}
 
+		/// <summary>
+		/// Load object from cache or file.
+		/// </summary>
+		/// <typeparam name="T">Class you have saved</typeparam>
+		/// <param name="name">Identefier</param>
+		/// <param name="deserializer"></param>
+		/// <param name="module"></param>
+		/// <returns></returns>
 		public async Task<T> Load<T>(string name, Func<string, T> deserializer, Module module)
 		{
 			if (!savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
