@@ -19,28 +19,27 @@ namespace YahurrBot.Structs
 
 		public string Extension { get; private set; }
 
-		[JsonIgnore]
 		public Type Type { get; private set; }
 
 		public string ModuleID { get; private set; }
 
 		public string Path { get; private set; }
 
-		[JsonProperty]
+		[JsonIgnore]
 		string typeName;
 
 		[JsonConstructor]
-		private SavedObject(string Name, string Extension, string ModuleID, string typeName, string Path)
+		private SavedObject(string Name, string Extension, string ModuleID, Type type, string Path)
 		{
 			this.Name = Name;
-			this.Type = Type.GetType(typeName);
+			this.Type = type;
 			this.ModuleID = ModuleID;
 			this.Extension = Extension;
 			this.Path = Path;
-			this.typeName = typeName;
+			this.typeName = type.Name;
 		}
 
-		public SavedObject(string name, string ex, Module module, Type type) : this(name, ex, module.ID, type.FullName, $"Saves/{SanetizeName(module.Name)}/{name}{ex}")
+		public SavedObject(string name, string ex, Module module, Type type) : this(name, ex, module.ID, type, $"Saves/{SanetizeName(module.Name)}/{name}{ex}")
 		{
 			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
 		}
@@ -54,7 +53,7 @@ namespace YahurrBot.Structs
 		{
 			Type generic = typeof(T);
 			if (!generic.IsAssignableFrom(Type))
-				throw new Exception($"{Name} is saved as {Type.Name} not {generic.Name}");
+				throw new Exception($"{Name} is saved as {Type?.Name} not {generic?.Name}");
 
 			string json;
 			using (StreamReader reader = new StreamReader(Path))
