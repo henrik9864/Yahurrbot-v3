@@ -66,6 +66,10 @@ namespace YahurrFramework
 			if (!succsess)
 				return ReturnCode.Error;
 
+			// Load all savefiles
+			await LoggingManager.LogMessage(LogLevel.Message, $"Loading save files...", "Startup").ConfigureAwait(false);
+			await FileManager.LoadObjectList();
+
 			// Load all modules onto memory
 			await ModuleManager.LoadModules("Modules").ConfigureAwait(false);
 

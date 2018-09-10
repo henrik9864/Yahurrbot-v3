@@ -20,7 +20,6 @@ namespace YahurrFramework.Managers
 		{
 			savedObjects = new Dictionary<(string, string), SavedObject>();
 			Directory.CreateDirectory("Saves");
-			LoadObjectList();
 		}
 
 		/// <summary>
@@ -197,7 +196,7 @@ namespace YahurrFramework.Managers
 		/// <summary>
 		/// Load dictionary of all saved objects.
 		/// </summary>
-		void LoadObjectList()
+		internal async Task LoadObjectList()
 		{
 			string path = "Saves/SavedObjects.json";
 			string json;
@@ -206,7 +205,7 @@ namespace YahurrFramework.Managers
 			{
 				using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 				using (StreamReader reader = new StreamReader(fileStream))
-					json = reader.ReadToEnd();
+					json = await reader.ReadToEndAsync();
 
 				List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
 				savedObjects = objects.ToDictionary(a => (a.Name, a.ModuleID));
