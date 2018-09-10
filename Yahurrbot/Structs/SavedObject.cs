@@ -53,9 +53,11 @@ namespace YahurrBot.Structs
 		/// <returns></returns>
 		public async Task<T> Deserialize<T>(Func<string, T> deserializer)
 		{
+			/*
 			Type generic = typeof(T);
 			if (!generic.IsAssignableFrom(Type))
 				throw new Exception($"{Name} is saved as {Type?.Name} not {generic?.Name}");
+			*/
 
 			string json;
 			using (StreamReader reader = new StreamReader(Path))
