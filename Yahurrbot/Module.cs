@@ -40,12 +40,15 @@ namespace YahurrFramework
 
 		internal YahurrBot Bot { get; private set; }
 
-		internal async Task InitModule(DiscordSocketClient client, YahurrBot bot, object config)
+		internal void LoadModule(DiscordSocketClient client, YahurrBot bot, object config)
 		{
 			this.Client = client;
 			this.Bot = bot;
 			this.Config = config;
+		}
 
+		internal async Task InitModule()
+		{
 			try
 			{
 				await Init().ConfigureAwait(false);
@@ -73,7 +76,7 @@ namespace YahurrFramework
 		/// <returns></returns>
 		protected Task Save(string name, object obj, bool @override = true, bool append = false)
 		{
-			return Task.Run(() => Bot.FileManager.Save(obj, name, this, @override, append));
+			return Bot.FileManager.Save(obj, name, this, @override, append);
 		}
 
 		/// <summary>
@@ -86,12 +89,12 @@ namespace YahurrFramework
 		/// <returns></returns>
 		protected Task Save(string name, object obj, SerializationType type, bool @override = true, bool append = false)
 		{
-			return Task.Run(() => Bot.FileManager.Save(obj, name, type, this, @override, append));
+			return Bot.FileManager.Save(obj, name, type, this, @override, append);
 		}
 
 		protected Task Save(string name, object obj, string extension, Func<object, string> serializer, bool @override = true, bool append = false)
 		{
-			return Task.Run(() => Bot.FileManager.Save(obj, name, extension, serializer, this, @override, append));
+			return Bot.FileManager.Save(obj, name, extension, serializer, this, @override, append);
 		}
 
 		/// <summary>

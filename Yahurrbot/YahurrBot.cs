@@ -43,10 +43,10 @@ namespace YahurrFramework
 		{
 			client = new DiscordSocketClient();
 
+			LoggingManager = new LoggingManager(this, client);
 			ModuleManager = new ModuleManager(this, client);
 			EventManager = new EventManager(this, client);
 			CommandManager = new CommandManager(this, client);
-			LoggingManager = new LoggingManager(this, client);
 			FileManager = new FileManager(this, client);
 
 			LoggingManager.Log += Log;
@@ -66,12 +66,16 @@ namespace YahurrFramework
 			if (!succsess)
 				return ReturnCode.Error;
 
-			// Load all savefiles
-			await LoggingManager.LogMessage(LogLevel.Message, $"Loading save files...", "Startup").ConfigureAwait(false);
-			await FileManager.LoadObjectList();
-
 			// Load all modules onto memory
 			await ModuleManager.LoadModules("Modules").ConfigureAwait(false);
+
+			// Load all savefiles
+			await LoggingManager.LogMessage(LogLevel.Message, $"Loading save files...", "Startup").ConfigureAwait(false);
+			await FileManager.LoadObjectList().ConfigureAwait(false);
+
+			// Start all loaded modules
+			await LoggingManager.LogMessage(LogLevel.Message, $"Initializing modules...", "Startup").ConfigureAwait(false);
+			await ModuleManager.InitializeModules().ConfigureAwait(false);
 
 			// Continue this as main loop.
 			await LoggingManager.LogMessage(LogLevel.Message, $"Done", "Startup").ConfigureAwait(false);

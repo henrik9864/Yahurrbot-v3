@@ -49,6 +49,15 @@ namespace YahurrFramework.Managers
 			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count} module{(LoadedModules.Count == 1 ? "" : "s")}...", "ModuleManager").ConfigureAwait(false);
 		}
 
+		internal async Task InitializeModules()
+		{
+			for (int i = 0; i < LoadedModules.Count; i++)
+			{
+				Module module = LoadedModules[i];
+				await module.InitModule().ConfigureAwait(false);
+			}
+		}
+
 		/// <summary>
 		/// Run a method on all modules
 		/// </summary>
@@ -113,7 +122,7 @@ namespace YahurrFramework.Managers
 					Task task = new Task(() => {
 						Module module = (Module)Activator.CreateInstance(type);
 						object config = LoadConfig(module).GetAwaiter().GetResult();
-						module.InitModule(Client, Bot, config).GetAwaiter().GetResult();
+						module.LoadModule(Client, Bot, config);
 						modules.Add(module);
 					});
 					task.Start();
@@ -132,7 +141,7 @@ namespace YahurrFramework.Managers
 				string taskName = tasks.Find(a => a.task.Exception != null).name;
 
 				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {taskName}:", "ModuleManager").ConfigureAwait(false);
-				await Bot.LoggingManager.LogMessage(ex?.InnerException?.InnerException, "ModuleManager").ConfigureAwait(false);
+				await Bot.LoggingManager.LogMessage(ex?.InnerException, "ModuleManager").ConfigureAwait(false);
 			}
 
 			tokenSource.Cancel();

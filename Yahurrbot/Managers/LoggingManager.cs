@@ -44,7 +44,7 @@ namespace YahurrFramework.Managers
 		{
 			LogMessage msg = new LogMessage(exception, source);
 
-			await LogMessage(msg);
+			await LogMessage(msg).ConfigureAwait(false);
 		}
 
 		/// <summary>

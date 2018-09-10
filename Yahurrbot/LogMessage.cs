@@ -29,7 +29,7 @@ namespace YahurrFramework
 		{
 			Exception = exception;
 			Source = source;
-			Message = exception.Message;
+			Message = exception?.Message ?? "Unknown";
 			LogLevel = LogLevel.Error;
 			Timestamp = DateTime.Now;
 		}

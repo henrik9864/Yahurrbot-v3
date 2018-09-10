@@ -30,12 +30,12 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public void Save(object obj, string name, Module module, bool @override, bool append)
+		public async Task Save(object obj, string name, Module module, bool @override, bool append)
 		{
 			string json = Serialize(obj, SerializationType.JSON);
 			SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
 
-			Save(savedObject, json, @override, append);
+			await SaveAsync(savedObject, json, @override, append).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -47,12 +47,12 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public void Save(object obj, string name, SerializationType type, Module module, bool @override, bool append)
+		public async Task Save(object obj, string name, SerializationType type, Module module, bool @override, bool append)
 		{
 			string json = Serialize(obj, type);
 			SavedObject savedObject = new SavedObject(name, $".{type.ToString()}", module, obj.GetType());
 
-			Save(savedObject, json, @override, append);
+			await SaveAsync(savedObject, json, @override, append).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -65,12 +65,12 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public void Save(object obj, string name, string extension, Func<object, string> serializer, Module module, bool @override, bool append)
+		public async Task Save(object obj, string name, string extension, Func<object, string> serializer, Module module, bool @override, bool append)
 		{
 			string json = serializer(obj);
 			SavedObject savedObject = new SavedObject(name, extension, module, obj.GetType());
 
-			Save(savedObject, json, @override, append);
+			await SaveAsync(savedObject, json, @override, append).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -132,11 +132,11 @@ namespace YahurrFramework.Managers
 			return false;
 		}
 
-		void Save(SavedObject savedObject, string json, bool @override, bool append)
+		async Task SaveAsync(SavedObject savedObject, string json, bool @override, bool append)
 		{
-			WriteToFile(savedObject, json, @override, append);
+			await WriteToFile(savedObject, json, @override, append).ConfigureAwait(false);
 			AddSavedObject((savedObject.Name, savedObject.ModuleID), savedObject, @override);
-			SaveObjectList();
+			await SaveObjectList();
 		}
 
 		/// <summary>
@@ -149,7 +149,7 @@ namespace YahurrFramework.Managers
 		/// <param name="override"></param>
 		/// <param name="append"></param>
 		/// <returns></returns>
-		void WriteToFile(SavedObject savedObject, string toWrite, bool @override, bool append)
+		async Task WriteToFile(SavedObject savedObject, string toWrite, bool @override, bool append)
 		{
 			string path = savedObject.Path;
 
@@ -162,7 +162,7 @@ namespace YahurrFramework.Managers
 
 					using (StreamWriter writer = new StreamWriter(fileStream))
 					{
-						writer.Write(toWrite);
+						await writer.WriteAsync(toWrite).ConfigureAwait(false);
 					}
 				}
 			}
@@ -171,7 +171,7 @@ namespace YahurrFramework.Managers
 				using (FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
 				{
 					using (StreamWriter writer = new StreamWriter(fileStream))
-						writer.Write(toWrite);
+						await writer.WriteAsync(toWrite).ConfigureAwait(false);
 				}
 			}
 		}
@@ -179,7 +179,7 @@ namespace YahurrFramework.Managers
 		/// <summary>
 		/// Save list of all stored objects.
 		/// </summary>
-		void SaveObjectList()
+		async Task SaveObjectList()
 		{
 			string json = JsonConvert.SerializeObject(savedObjects.Values, Formatting.Indented);
 			string path = "Saves/SavedObjects.json";
@@ -189,7 +189,7 @@ namespace YahurrFramework.Managers
 				fileStream.SetLength(0);
 
 				using (StreamWriter writer = new StreamWriter(fileStream))
-					writer.Write(json);
+					await writer.WriteAsync(json).ConfigureAwait(false);
 			}
 		}
 
@@ -205,14 +205,14 @@ namespace YahurrFramework.Managers
 			{
 				using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 				using (StreamReader reader = new StreamReader(fileStream))
-					json = await reader.ReadToEndAsync();
+					json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
 				List<SavedObject> objects = JsonConvert.DeserializeObject<List<SavedObject>>(json);
 				savedObjects = objects.ToDictionary(a => (a.Name, a.ModuleID));
 			}
 			else
 			{
-				SaveObjectList();
+				await SaveObjectList();
 			}
 		}
 

@@ -32,7 +32,7 @@ namespace TestModule
 
 			if (message.Content == "Ping")
 			{
-				await message.Channel.SendMessageAsync(Config?.PingResponse ?? "Error").ConfigureAwait(false);
+				await message.Channel.SendMessageAsync(msg ?? "Error").ConfigureAwait(false);
 			}
 		}
 
