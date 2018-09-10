@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using YahurrBot.Enums;
 using YahurrFramework;
+using YahurrFramework.Managers;
 
 namespace YahurrBot.Structs
 {
@@ -33,7 +34,7 @@ namespace YahurrBot.Structs
 		private SavedObject(string Name, string Extension, string ModuleID, string typeName, string Path)
 		{
 			this.Name = Name;
-			this.Type = Type.GetType(typeName, false, true);
+			this.Type = ModuleManager.GetType(typeName);
 			this.ModuleID = ModuleID;
 			this.Extension = Extension;
 			this.Path = Path;

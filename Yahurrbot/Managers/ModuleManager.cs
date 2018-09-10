@@ -17,11 +17,14 @@ namespace YahurrFramework.Managers
 {
 	internal class ModuleManager : BaseManager
 	{
+		static List<Assembly> LoadedAssemblies;
+
 		public List<Module> LoadedModules { get; }
 
 		public ModuleManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
 			LoadedModules = new List<Module>();
+			LoadedAssemblies = new List<Assembly>();
 		}
 
 		/// <summary>
@@ -83,6 +86,27 @@ namespace YahurrFramework.Managers
 			}
 		}
 
+		static internal Type GetType(string typeName)
+		{
+			if (LoadedAssemblies == null)
+				return null;
+
+			Type type = Type.GetType(typeName, false, true);
+			if (type != null)
+				return type;
+
+			for (int i = 0; i < LoadedAssemblies.Count; i++)
+			{
+				Assembly assembly = LoadedAssemblies[i];
+				type = assembly.GetType(typeName, false, true);
+
+				if (type != null)
+					return type;
+			}
+
+			return null;
+		}
+
 		/// <summary>
 		/// Load all YahurrModule classes from a dll file.
 		/// </summary>
@@ -98,6 +122,7 @@ namespace YahurrFramework.Managers
 			Assembly dll = Assembly.LoadFile(path);
 			bool loaded = LoadReferences(dll);
 			Type[] types = dll.GetTypes();
+			LoadedAssemblies.Add(dll);
 
 			// Add all types that extent yahurrmodule
 			for (int i = 0; i < types.Length; i++)
