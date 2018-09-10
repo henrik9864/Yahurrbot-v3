@@ -49,6 +49,16 @@ namespace YahurrFramework.Managers
 			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count} module{(LoadedModules.Count == 1 ? "" : "s")}...", "ModuleManager").ConfigureAwait(false);
 		}
 
+		internal async Task InitializeModules()
+		{
+			for (int i = 0; i < LoadedModules.Count; i++)
+			{
+				Module module = LoadedModules[i];
+				object config = await LoadConfig(module);
+				await module.InitModule(Client, Bot, config);
+			}
+		}
+
 		/// <summary>
 		/// Run a method on all modules
 		/// </summary>
@@ -112,8 +122,6 @@ namespace YahurrFramework.Managers
 					// Creat a new task and start running it.
 					Task task = new Task(() => {
 						Module module = (Module)Activator.CreateInstance(type);
-						object config = LoadConfig(module).GetAwaiter().GetResult();
-						module.InitModule(Client, Bot, config).GetAwaiter().GetResult();
 						modules.Add(module);
 					});
 					task.Start();
