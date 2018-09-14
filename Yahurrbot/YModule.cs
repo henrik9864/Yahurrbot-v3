@@ -111,9 +111,9 @@ namespace YahurrFramework
 		/// <param name="message"></param>
 		/// <param name="isTTS"></param>
 		/// <returns></returns>
-		public Task RespondAsync(string message, bool isTTS = false)
+		public async Task<IUserMessage> RespondAsync(string message, bool isTTS = false)
 		{
-			return Context?.Channel?.SendMessageAsync(message, isTTS);
+			return await Context?.Channel?.SendMessageAsync(message, isTTS);
 		}
 
 		/// <summary>
