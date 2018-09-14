@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using YahurrFramework.Structs;
+using YFramework.Structs;
 
-namespace YahurrFramework
+namespace YFramework
 {
     class Program
     {

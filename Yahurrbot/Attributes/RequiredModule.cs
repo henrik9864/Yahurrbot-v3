@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using YFramework.Enums;
 
 namespace YFramework.Attributes
 {
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-	public class ServerFilter : BaseFilter
+	public class RequiredModule : Attribute
 	{
-		public ServerFilter(FilterType type, params ulong[] serverIDs) : base(type, serverIDs)
+		public List<Type> Types;
+
+		public RequiredModule(params Type[] types)
 		{
+			Types = new List<Type>();
+			Types.AddRange(types);
 		}
 	}
 }

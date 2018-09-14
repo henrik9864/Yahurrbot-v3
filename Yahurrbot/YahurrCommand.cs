@@ -6,9 +6,9 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using YahurrFramework.Attributes;
+using YFramework.Attributes;
 
-namespace YahurrFramework
+namespace YFramework
 {
 	public class YahurrCommand
 	{
@@ -18,7 +18,7 @@ namespace YahurrFramework
 
 		public string Summary { get; }
 
-		public Module Module { get; }
+		public YModule Module { get; }
 
 		public string Name
 		{
@@ -31,7 +31,7 @@ namespace YahurrFramework
 		MethodInfo method;
 		int parameterCount;
 
-		public YahurrCommand(MethodInfo method, Module module)
+		public YahurrCommand(MethodInfo method, YModule module)
 		{
 			Attributes.Command cmd = method.GetCustomAttribute<Attributes.Command>();
 			Summary summary = method.GetCustomAttribute<Summary>();

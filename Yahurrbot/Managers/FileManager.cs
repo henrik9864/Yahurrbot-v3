@@ -6,11 +6,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using ServiceStack.Text;
 using YahurrBot.Enums;
 using YahurrBot.Structs;
 
-namespace YahurrFramework.Managers
+namespace YFramework.Managers
 {
 	internal class FileManager : BaseManager
 	{
@@ -30,7 +29,7 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, Module module, bool @override, bool append)
+		public async Task Save(object obj, string name, YModule module, bool @override, bool append)
 		{
 			string json = Serialize(obj, SerializationType.JSON);
 			SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
@@ -47,7 +46,7 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, SerializationType type, Module module, bool @override, bool append)
+		public async Task Save(object obj, string name, SerializationType type, YModule module, bool @override, bool append)
 		{
 			string json = Serialize(obj, type);
 			SavedObject savedObject = new SavedObject(name, $".{type.ToString()}", module, obj.GetType());
@@ -65,7 +64,7 @@ namespace YahurrFramework.Managers
 		/// <param name="module"></param>
 		/// <param name="override"></param>
 		/// <returns></returns>
-		public async Task Save(object obj, string name, string extension, Func<object, string> serializer, Module module, bool @override, bool append)
+		public async Task Save(object obj, string name, string extension, Func<object, string> serializer, YModule module, bool @override, bool append)
 		{
 			string json = serializer(obj);
 			SavedObject savedObject = new SavedObject(name, extension, module, obj.GetType());
@@ -80,7 +79,7 @@ namespace YahurrFramework.Managers
 		/// <param name="name">Identefier</param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		public async Task<T> Load<T>(string name, Module module)
+		public async Task<T> Load<T>(string name, YModule module)
 		{
 			if (!savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
 				return default(T);
@@ -96,7 +95,7 @@ namespace YahurrFramework.Managers
 		/// <param name="deserializer"></param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		public async Task<T> Load<T>(string name, Func<string, T> deserializer, Module module)
+		public async Task<T> Load<T>(string name, Func<string, T> deserializer, YModule module)
 		{
 			if (!savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
 				return default(T);
@@ -110,7 +109,7 @@ namespace YahurrFramework.Managers
 		/// <param name="name">Save identefier.</param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		public Task<bool> Exists(string name, Module module)
+		public Task<bool> Exists(string name, YModule module)
 		{
 			return Task.Run(() => savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject));
 		}
@@ -122,7 +121,7 @@ namespace YahurrFramework.Managers
 		/// <param name="type">Type to check for</param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		public bool IsValid(string name, Type type, Module module)
+		public bool IsValid(string name, Type type, YModule module)
 		{
 			if (savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
 			{
@@ -247,10 +246,6 @@ namespace YahurrFramework.Managers
 			{
 				case SerializationType.JSON:
 					return JsonConvert.SerializeObject(obj);
-				case SerializationType.JSV:
-					return TypeSerializer.SerializeToString(obj, obj.GetType());
-				case SerializationType.CSV:
-					return CsvSerializer.SerializeToString(obj);
 				default:
 					return null;
 			}

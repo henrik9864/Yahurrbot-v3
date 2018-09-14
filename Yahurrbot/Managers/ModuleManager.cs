@@ -10,21 +10,27 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using YahurrFramework.Attributes;
-using YahurrFramework.Enums;
+using YFramework.Attributes;
+using YFramework.Enums;
 
-namespace YahurrFramework.Managers
+namespace YFramework.Managers
 {
 	internal class ModuleManager : BaseManager
 	{
+		/// <summary>
+		/// List of all loaded assmblies
+		/// </summary>
 		static List<Assembly> LoadedAssemblies;
 
-		public List<Module> LoadedModules { get; }
+		public List<YModule> LoadedModules { get; }
+
+		Dictionary<Type, YModule> Modules;
 
 		public ModuleManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			LoadedModules = new List<Module>();
+			LoadedModules = new List<YModule>();
 			LoadedAssemblies = new List<Assembly>();
+			Modules = new Dictionary<Type, YModule>();
 		}
 
 		/// <summary>
@@ -32,7 +38,7 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="folder">Path to folder containing dll's.</param>
 		/// <returns></returns>
-		internal async Task LoadModules(string folder)
+		internal async Task LoadModulesAsync(string folder)
 		{
 			DirectoryInfo directory = Directory.CreateDirectory(folder);
 			FileInfo[] files = directory.GetFiles();
@@ -44,20 +50,54 @@ namespace YahurrFramework.Managers
 			{
 				FileInfo file = files[i];
 
-				// Load and add all modules in dll
-				List<Module> modules = await LoadModule(file.FullName).ConfigureAwait(false);
-				AddModules(modules);
+				// New system
+				List<Type> Modules = new List<Type>();
+				LoadDLL(file.FullName, ref Modules);
+				await LoadModules(Modules).ConfigureAwait(false);
 			}
 
-			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count} module{(LoadedModules.Count == 1 ? "" : "s")}...", "ModuleManager").ConfigureAwait(false);
+			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count}/{Modules.Count} module{(Modules.Count == 1 ? "" : "s")}...", "ModuleManager").ConfigureAwait(false);
 		}
 
+		/// <summary>
+		/// Startup all modules.
+		/// </summary>
+		/// <returns></returns>
 		internal async Task InitializeModules()
 		{
 			for (int i = 0; i < LoadedModules.Count; i++)
 			{
-				Module module = LoadedModules[i];
+				YModule module = LoadedModules[i];
+				RequiredModule requiredModule = module.GetType().GetCustomAttribute<RequiredModule>();
+
+				if (requiredModule != null)
+				{
+					for (int a = 0; a < requiredModule.Types.Count; a++)
+					{
+						Type type = requiredModule.Types[a];
+
+						if (!LoadedModules.Exists(m => m.GetType() == type))
+						{
+							await Bot.LoggingManager.LogMessage(LogLevel.Warning, $"Unable to initalize module {module.Name} it requires {type.Name} wich is not loaded.", "ModuleManager").ConfigureAwait(false);
+							return;
+						}
+					}
+				}
+
 				await module.InitModule().ConfigureAwait(false);
+			}
+		}
+
+		/// <summary>
+		/// Shut down all modules.
+		/// </summary>
+		/// <returns></returns>
+		internal async Task ShutdownModules()
+		{
+			for (int i = 0; i < LoadedModules.Count; i++)
+			{
+				YModule module = LoadedModules[i];
+				await module.RunMethod("Shutdown");
 			}
 		}
 
@@ -67,25 +107,30 @@ namespace YahurrFramework.Managers
 		/// <param name="name"></param>
 		/// <param name="parameters"></param>
 		/// <returns></returns>
-		internal async Task RunMethod(string name, Func<Module, bool> validate, params object[] parameters)
+		internal async Task RunMethod(string name, Func<YModule, bool> validate, params object[] parameters)
 		{
 			for (int i = 0; i < LoadedModules.Count; i++)
 			{
-				Module module = LoadedModules[i];
+				YModule module = LoadedModules[i];
 
 				if (!validate(module))
 					continue;
 
-				Task task = (Task)module.GetType().GetMethod(name).Invoke(module, parameters);
+				Exception ex = await module.RunMethod(name, parameters);
 
-				if (task.Exception != null)
+				if (ex != null)
 				{
 					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run method {name}:", "ModuleManager").ConfigureAwait(false);
-					await Bot.LoggingManager.LogMessage(task.Exception.InnerException, "ModuleManager").ConfigureAwait(false);
+					await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
 				}
 			}
 		}
 
+		/// <summary>
+		/// Get any type from this or any loaded assembly.
+		/// </summary>
+		/// <param name="typeName"></param>
+		/// <returns></returns>
 		static internal Type GetType(string typeName)
 		{
 			if (LoadedAssemblies == null)
@@ -108,21 +153,15 @@ namespace YahurrFramework.Managers
 		}
 
 		/// <summary>
-		/// Load all YahurrModule classes from a dll file.
+		/// Load DLL onto memory and extract all YModule classes.
 		/// </summary>
-		/// <param name="path">Full path to dll.</param>
-		/// <returns></returns>
-		async Task<List<Module>> LoadModule(string path)
+		/// <param name="path"></param>
+		/// <param name="ModuleTypes"></param>
+		void LoadDLL(string path, ref List<Type> ModuleTypes)
 		{
-			// List to have all modules in this dll.
-			List<Module> modules = new List<Module>();
-			List<(Task task, string name)> tasks = new List<(Task task, string name)>();
-
-			// Get types from the dll.
 			Assembly dll = Assembly.LoadFile(path);
-			bool loaded = LoadReferences(dll);
 			Type[] types = dll.GetTypes();
-			LoadedAssemblies.Add(dll);
+			LoadReferences(dll);
 
 			// Add all types that extent yahurrmodule
 			for (int i = 0; i < types.Length; i++)
@@ -130,29 +169,38 @@ namespace YahurrFramework.Managers
 				Type type = types[i];
 
 				// Check if type found is a YahurrModule
-				if (typeof(Module).IsAssignableFrom(type))
+				if (typeof(YModule).IsAssignableFrom(type))
 				{
-					int index = LoadedModules.FindIndex(a => a.GetType() == type);
-					if (index >= 0)
-						LoadedModules.RemoveAt(index);
-
-					ConstructorInfo[] constructorInfo = type.GetConstructors();
-					if (constructorInfo.Length > 1 || constructorInfo[0].GetParameters().Length > 0)
-					{
-						await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {type.Name}, type can only have 1 constrcot with 0 arguments.", "ModuleManager").ConfigureAwait(false);
-						continue;
-					}
-
-					// Creat a new task and start running it.
-					Task task = new Task(() => {
-						Module module = (Module)Activator.CreateInstance(type);
-						object config = LoadConfig(module).GetAwaiter().GetResult();
-						module.LoadModule(Client, Bot, config);
-						modules.Add(module);
-					});
-					task.Start();
-					tasks.Add((task, type.Name));
+					ModuleTypes.Add(type);
 				}
+			}
+		}
+
+		/// <summary>
+		/// Create an instance of all modues in list.
+		/// </summary>
+		/// <param name="Modules">Modules to create an instance of.</param>
+		/// <returns></returns>
+		async Task LoadModules(List<Type> Modules)
+		{
+			List<YModule> YModules = new List<YModule>();
+			List<(Task task, string name)> tasks = new List<(Task task, string name)>();
+
+			for (int i = 0; i < Modules.Count; i++)
+			{
+				Type moduleType = Modules[i];
+
+				ConstructorInfo[] constructorInfo = moduleType.GetConstructors();
+				if (constructorInfo.Length > 1 || constructorInfo[0].GetParameters().Length > 0)
+				{
+					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {moduleType.Name}, type can only have 1 constrcot with 0 arguments.", "ModuleManager").ConfigureAwait(false);
+					continue;
+				}
+
+				// Creat a new task and start running it.
+				Task task = LoadModule(moduleType);
+				//task.Start();
+				tasks.Add((task, moduleType.Name));
 			}
 
 			// Wait for all remaining tasks with 1 second timeout
@@ -163,45 +211,53 @@ namespace YahurrFramework.Managers
 			}
 			catch (Exception ex)
 			{
-				string taskName = tasks.Find(a => a.task.Exception != null).name;
+				for (int i = 0; i < tasks.Count; i++)
+				{
+					(Task task, string name) task = tasks[i];
 
-				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {taskName}:", "ModuleManager").ConfigureAwait(false);
-				await Bot.LoggingManager.LogMessage(ex?.InnerException, "ModuleManager").ConfigureAwait(false);
+					if (task.task.Exception == null)
+						continue;
+
+					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {task.name}:", "ModuleManager").ConfigureAwait(false);
+					await Bot.LoggingManager.LogMessage(ex?.InnerException, "ModuleManager").ConfigureAwait(false);
+				}
 			}
 
 			tokenSource.Cancel();
-			return modules;
+		}
+
+		/// <summary>
+		/// Create instance of module.
+		/// </summary>
+		/// <param name="type">Module type.</param>
+		/// <returns></returns>
+		Task LoadModule(Type type)
+		{
+			return Task.Run(() =>
+			{
+				YModule module = (YModule)Activator.CreateInstance(type);
+				object config = LoadConfig(module).GetAwaiter().GetResult();
+				module.LoadModule(Client, Bot, config);
+
+				Modules.Add(type, module);
+				AddModule(module);
+			});
 		}
 
 		/// <summary>
 		/// Load all references for a dll
 		/// </summary>
-		bool LoadReferences(Assembly assembly)
+		void LoadReferences(Assembly assembly)
 		{
 			List<Assembly> loadeAssemeblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
 			AssemblyName[] names = assembly.GetReferencedAssemblies();
+
 			for (int i = 0; i < names.Length; i++)
 			{
 				AssemblyName assemblyName = names[i];
+
 				if (!loadeAssemeblies.Exists(a => a.GetName() == assemblyName))
-					Assembly.Load(assemblyName);
-			}
-
-			return true;
-		}
-
-		/// <summary>
-		/// Load and add all modules to loadedmodules.
-		/// </summary>
-		/// <param name="modules">Listof modules.</param>
-		void AddModules(List<Module> modules)
-		{
-			for (int i = 0; i < modules.Count; i++)
-			{
-				Module module = modules[i];
-
-				if (!LoadedModules.Exists(a => a.Name == module.Name))
-					AddModule(module);
+					assembly = AppDomain.CurrentDomain.Load(assemblyName);
 			}
 		}
 
@@ -209,14 +265,14 @@ namespace YahurrFramework.Managers
 		/// Bind module to client events.
 		/// </summary>
 		/// <param name="module"></param>
-		void AddModule(Module module)
+		void AddModule(YModule module)
 		{
 			MethodInfo[] methods = module.GetType().GetMethods();
 			for (int i = 0; i < methods.Length; i++)
 			{
 				MethodInfo method = methods[i];
 
-				if (method.GetCustomAttribute<Attributes.Command>() != null)
+				if (method.GetCustomAttribute<Command>() != null)
 					Bot.CommandManager.AddCommand(module, method);
 			}
 
@@ -228,7 +284,7 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		async Task<object> LoadConfig(Module module)
+		async Task<object> LoadConfig(YModule module)
 		{
 			Config configAttribute = module.GetType().GetCustomAttribute<Config>();
 

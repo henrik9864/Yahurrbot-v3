@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace YahurrFramework.Structs
+namespace YFramework.Structs
 {
     class ClientToken
     {

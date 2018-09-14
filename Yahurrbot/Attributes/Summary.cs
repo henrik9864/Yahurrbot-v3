@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace YahurrFramework.Attributes
+namespace YFramework.Attributes
 {
 	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter | AttributeTargets.Class)]
     public class Summary : Attribute

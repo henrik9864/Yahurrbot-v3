@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Reflection;
-using YahurrFramework.Attributes;
+using YFramework.Attributes;
 
-namespace YahurrFramework
+namespace YFramework
 {
 	public class CommandParameterInfo
 	{

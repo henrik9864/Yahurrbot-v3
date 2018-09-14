@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YahurrFramework
+namespace YFramework
 {
     public class YahurrLoadedModule
     {
-		public Module Module { get; }
+		public YModule Module { get; }
 
-		public YahurrLoadedModule(Module module)
+		public YahurrLoadedModule(YModule module)
 		{
 			this.Module = module;
 		}

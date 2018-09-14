@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace YahurrFramework
+namespace YFramework
 {
     public class SavedCommand
     {

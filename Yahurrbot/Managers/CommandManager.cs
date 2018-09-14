@@ -5,23 +5,23 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using Discord.WebSocket;
-using YahurrFramework;
-using YahurrFramework.Enums;
-using YahurrFramework.Attributes;
+using YFramework;
+using YFramework.Enums;
+using YFramework.Attributes;
 
-namespace YahurrFramework.Managers
+namespace YFramework.Managers
 {
 	internal class CommandManager : BaseManager
 	{
 		internal char CommandPrefix { get; }
 
 		Dictionary<string, SavedCommand> savedCommands;
-		Dictionary<Module, List<YahurrCommand>> sortedCommands;
+		Dictionary<YModule, List<YahurrCommand>> sortedCommands;
 
 		public CommandManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
 			savedCommands = new Dictionary<string, SavedCommand>();
-			sortedCommands = new Dictionary<Module, List<YahurrCommand>>();
+			sortedCommands = new Dictionary<YModule, List<YahurrCommand>>();
 			CommandPrefix = '!';
 		}
 
@@ -47,7 +47,7 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="module"></param>
 		/// <param name="method"></param>
-		internal void AddCommand(Module module, MethodInfo method)
+		internal void AddCommand(YModule module, MethodInfo method)
 		{
 			AddCommand(new YahurrCommand(method, module));
 		}
@@ -268,7 +268,7 @@ namespace YahurrFramework.Managers
 			}
 			else
 			{
-				Module module = Bot.ModuleManager.LoadedModules.Find(a => a.Name == commands[1]);
+				YModule module = Bot.ModuleManager.LoadedModules.Find(a => a.Name == commands[1]);
 				return DisplayModule(module);
 			}
 		}
@@ -312,7 +312,7 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="module">Module to display</param>
 		/// <returns></returns>
-		string DisplayModule(Module module)
+		string DisplayModule(YModule module)
 		{
 			string output = "```";
 			output += $"{module.Name}:\n";

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using YahurrFramework.Enums;
+using YFramework.Enums;
 
-namespace YahurrFramework.Attributes
+namespace YFramework.Attributes
 {
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 	public class RoleFilter : BaseFilter

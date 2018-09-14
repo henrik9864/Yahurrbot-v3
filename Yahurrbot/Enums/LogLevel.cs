@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace YahurrFramework.Enums
+namespace YFramework.Enums
 {
     public enum LogLevel
     {

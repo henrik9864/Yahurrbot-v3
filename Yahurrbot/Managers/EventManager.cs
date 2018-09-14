@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using YahurrFramework.Attributes;
+using YFramework.Attributes;
 
-namespace YahurrFramework.Managers
+namespace YFramework.Managers
 {
     internal class EventManager : BaseManager
     {
@@ -135,10 +135,10 @@ namespace YahurrFramework.Managers
 		/// <typeparam name="T">Parameter type.</typeparam>
 		/// <param name="p">Parameter</param>
 		/// <returns></returns>
-		Func<Module, bool> Validate<T>(T p)
+		Func<YModule, bool> Validate<T>(T p)
 		{
 			// Substitute switch statement
-			var @switch = new Dictionary<Type, Func<Module, bool>>
+			var @switch = new Dictionary<Type, Func<YModule, bool>>
 			{
 				{ typeof(SocketGuild), m => ValidateGuild(p as SocketGuild, m) },
 				{ typeof(SocketGuildUser), m => ValidateGuild((p as SocketGuildUser)?.Guild, m) },
@@ -146,7 +146,7 @@ namespace YahurrFramework.Managers
 				{ typeof(SocketGuildChannel), m => ValidateGuild((p as SocketGuildChannel)?.Guild, m) }
 			};
 
-			if (@switch.TryGetValue(p.GetType(), out Func<Module, bool> func))
+			if (@switch.TryGetValue(p.GetType(), out Func<YModule, bool> func))
 				return func;
 			else
 				return _ => true;
@@ -158,7 +158,7 @@ namespace YahurrFramework.Managers
 		/// <param name="guild">Guild to access</param>
 		/// <param name="module">Module</param>
 		/// <returns></returns>
-		bool ValidateGuild(SocketGuild guild, Module module)
+		bool ValidateGuild(SocketGuild guild, YModule module)
 		{
 			List<ServerFilter> filterAttributes = module.GetType().GetCustomAttributes<ServerFilter>().ToList();
 			for (int i = 0; i < filterAttributes.Count; i++)
@@ -172,7 +172,7 @@ namespace YahurrFramework.Managers
 			return true;
 		}
 
-		bool ValidateMessage(SocketUserMessage message, Module module)
+		bool ValidateMessage(SocketUserMessage message, YModule module)
 		{
 			SocketGuildChannel channel = message.Channel as SocketGuildChannel;
 

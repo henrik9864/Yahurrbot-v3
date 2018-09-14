@@ -6,20 +6,20 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YahurrFramework
+namespace YFramework
 {
 	public class CommandContext
 	{
 		public SocketGuild Guild { get; }
 
-		public SocketChannel Channel { get; }
+		public ISocketMessageChannel Channel { get; }
 
 		public SocketMessage Message { get; }
 
 		public CommandContext(SocketMessage context)
 		{
 			Guild = (context.Channel as SocketGuildChannel)?.Guild;
-			Channel = context.Channel as SocketChannel;
+			Channel = context.Channel;
 			Message = context;
 		}
 	}

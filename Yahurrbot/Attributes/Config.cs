@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace YahurrFramework.Attributes
+namespace YFramework.Attributes
 {
 	[AttributeUsage(AttributeTargets.Class)]
     public class Config : Attribute

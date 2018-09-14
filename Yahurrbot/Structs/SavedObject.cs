@@ -2,15 +2,14 @@
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
-using ServiceStack.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using YahurrBot.Enums;
-using YahurrFramework;
-using YahurrFramework.Managers;
+using YFramework;
+using YFramework.Managers;
 
 namespace YahurrBot.Structs
 {
@@ -41,7 +40,7 @@ namespace YahurrBot.Structs
 			this.typeName = typeName;
 		}
 
-		public SavedObject(string name, string ex, Module module, Type type) : this(name, ex, module.ID, type.FullName, $"Saves/{SanetizeName(module.Name)}/{name}{ex}")
+		public SavedObject(string name, string ex, YModule module, Type type) : this(name, ex, module.ID, type.FullName, $"Saves/{SanetizeName(module.Name)}/{name}{ex}")
 		{
 			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
 		}
@@ -50,20 +49,13 @@ namespace YahurrBot.Structs
 		/// Deserialize Object JSON to type.
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
+		/// <param name="deserializer"></param>
 		/// <returns></returns>
 		public async Task<T> Deserialize<T>(Func<string, T> deserializer)
 		{
-			/*
-			Type generic = typeof(T);
-			if (!generic.IsAssignableFrom(Type))
-				throw new Exception($"{Name} is saved as {Type?.Name} not {generic?.Name}");
-			*/
-
 			string json;
 			using (StreamReader reader = new StreamReader(Path))
-			{
 				json = await reader.ReadToEndAsync().ConfigureAwait(false);
-			}
 
 			SerializationType type = (SerializationType)Enum.Parse(typeof(SerializationType), Extension.Replace(".", ""), true);
 
@@ -96,10 +88,6 @@ namespace YahurrBot.Structs
 			{
 				case SerializationType.JSON:
 					return JsonConvert.DeserializeObject<T>(json);
-				case SerializationType.JSV:
-					return TypeSerializer.DeserializeFromString<T>(json);
-				case SerializationType.CSV:
-					return CsvSerializer.DeserializeFromString<T>(json);
 				default:
 					return default(T);
 			}

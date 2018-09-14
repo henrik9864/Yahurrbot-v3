@@ -10,11 +10,11 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
 using YahurrBot.Enums;
-using YahurrFramework.Enums;
-using YahurrFramework.Managers;
-using YahurrFramework.Structs;
+using YFramework.Enums;
+using YFramework.Managers;
+using YFramework.Structs;
 
-namespace YahurrFramework
+namespace YFramework
 {
     public class YahurrBot
     {
@@ -51,6 +51,7 @@ namespace YahurrFramework
 
 			LoggingManager.Log += Log;
 			LoggingManager.Read += GetInput;
+			AppDomain.CurrentDomain.ProcessExit += async (a, b) => await StopAsync().ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -67,7 +68,7 @@ namespace YahurrFramework
 				return ReturnCode.Error;
 
 			// Load all modules onto memory
-			await ModuleManager.LoadModules("Modules").ConfigureAwait(false);
+			await ModuleManager.LoadModulesAsync("Modules").ConfigureAwait(false);
 
 			// Load all savefiles
 			await LoggingManager.LogMessage(LogLevel.Message, $"Loading save files...", "Startup").ConfigureAwait(false);
@@ -91,9 +92,12 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public async Task StopAsync()
 		{
-			await LoggingManager.LogMessage(LogLevel.Message, "Shutting down Yahurrbot...", "Shutdown");
+			await LoggingManager.LogMessage(LogLevel.Message, "Shutting down Yahurrbot...", "Shutdown").ConfigureAwait(false);
+
+			await ModuleManager.ShutdownModules().ConfigureAwait(false);
 			await client.StopAsync().ConfigureAwait(false);
-			await LoggingManager.LogMessage(LogLevel.Message, "Goodbye.", "Shutdown");
+
+			await LoggingManager.LogMessage(LogLevel.Message, "Goodbye.", "Shutdown").ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -126,7 +130,7 @@ namespace YahurrFramework
 						if (commands.Length > 1)
 							folder = commands[1];
 
-						await ModuleManager.LoadModules(folder);
+						await ModuleManager.LoadModulesAsync(folder);
 						break;
 					case "reload config":
 						folder = "Config";
