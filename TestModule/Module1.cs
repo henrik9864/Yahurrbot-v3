@@ -39,13 +39,13 @@ namespace TestModule
 		[Command("print", "int")]
 		public async Task SayInt([Summary("Number to print")]int number)
 		{
-			//await Context.Message.Channel.SendMessageAsync(number.ToString());
+			await RespondAsync(number.ToString()).ConfigureAwait(false);
 		}
 
 		[Command("print", "string"), Summary("Prints a string.")]
 		public async Task SayString([Summary("String to print")]string str)
 		{
-			//await Context.Message.Channel.SendMessageAsync(str);
+			await RespondAsync(str).ConfigureAwait(false);
 		}
 
 		[ChannelFilter(FilterType.Blacklist, 293381166365540353)]
@@ -53,17 +53,17 @@ namespace TestModule
 		[Command("add"), Summary("Adds two numbers together.")]
 		public async Task AddInt([Summary("Number 1.")]int n1, [Summary("Number 2.")]int n2)
 		{
-			//await Context.Message.Channel.SendMessageAsync((n1 * n2).ToString());
+			await RespondAsync((n1 * n2).ToString()).ConfigureAwait(false);
 		}
 
 		[Command("param"), Summary("Parameter test")]
 		public async Task ParamTest(params string[] strs)
 		{
-			//await Context.Message.Channel.SendMessageAsync("Length: " + strs.Length);
+			await RespondAsync("Length: " + strs.Length).ConfigureAwait(false);
 
 			foreach (var item in strs)
 			{
-				//await Context.Message.Channel.SendMessageAsync("	" + item);
+				await RespondAsync("	" + item).ConfigureAwait(false);
 			}
 
 			throw new Exception("Nooo");

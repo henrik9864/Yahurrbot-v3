@@ -116,7 +116,7 @@ namespace YFramework.Managers
 				if (!validate(module))
 					continue;
 
-				Exception ex = await module.RunMethod(name, parameters);
+				Exception ex = await module.RunMethod(name, parameters).ConfigureAwait(false);
 
 				if (ex != null)
 				{

@@ -64,7 +64,7 @@ namespace YFramework.Managers
 		/// <returns></returns>
 		async Task RunEvent(string name)
 		{
-			await RunCommand(name);
+			await RunCommand(name).ConfigureAwait(false);
 			await Bot.ModuleManager.RunMethod(name, _ => true).ConfigureAwait(false);
 		}
 
@@ -77,7 +77,7 @@ namespace YFramework.Managers
 		/// <returns></returns>
 		async Task RunEvent<P>(string name, P p)
 		{
-			await RunCommand(name, p);
+			await RunCommand(name, p).ConfigureAwait(false);
 			await Bot.ModuleManager.RunMethod(name, Validate(p), p).ConfigureAwait(false);
 		}
 
@@ -92,7 +92,7 @@ namespace YFramework.Managers
 		/// <returns></returns>
 		async Task RunEvent<P, P1>(string name, P p, P1 p1)
 		{
-			await RunCommand(name, p, p1);
+			await RunCommand(name, p, p1).ConfigureAwait(false);
 			await Bot.ModuleManager.RunMethod(name, m => Validate(p)(m) && Validate(p1)(m), p, p1).ConfigureAwait(false);
 		}
 
@@ -109,7 +109,7 @@ namespace YFramework.Managers
 		/// <returns></returns>
 		async Task RunEvent<P, P1, P2>(string name, P p, P1 p1, P2 p2)
 		{
-			await RunCommand(name, p, p1, p2);
+			await RunCommand(name, p, p1, p2).ConfigureAwait(false);
 			await Bot.ModuleManager.RunMethod(name, m => Validate(p)(m) && Validate(p1)(m) && Validate(p2)(m), p, p1, p2).ConfigureAwait(false);
 		}
 

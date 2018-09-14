@@ -43,10 +43,8 @@ namespace YFramework
 
 		protected SocketMessage Message { get; private set; }
 
-
-		private CommandContext Context { get; set; }
-
-		private YahurrBot Bot { get; set; }
+		CommandContext Context;
+		YahurrBot Bot;
 
 		internal void LoadModule(DiscordSocketClient client, YahurrBot bot, object config)
 		{
@@ -76,7 +74,8 @@ namespace YFramework
 		/// <returns></returns>
 		internal async Task<Exception> RunMethod(string name, params object[] param)
 		{
-			MethodInfo method = GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.IgnoreCase);
+			BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.IgnoreCase;
+			MethodInfo method = GetType().GetMethod(name, flags);
 
 			if (method != null)
 			{
@@ -97,9 +96,9 @@ namespace YFramework
 		{
 			Context = context;
 
-			Guild = context.Guild;
-			Channel = context.Channel;
-			Message = context.Message;
+			Guild = context?.Guild;
+			Channel = context?.Channel;
+			Message = context?.Message;
 		}
 
 		#region Helper functions
