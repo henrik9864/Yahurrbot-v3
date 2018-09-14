@@ -10,10 +10,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using YFramework.Attributes;
-using YFramework.Enums;
+using YahurrFramework.Attributes;
+using YahurrFramework.Enums;
 
-namespace YFramework.Managers
+namespace YahurrFramework.Managers
 {
 	internal class ModuleManager : BaseManager
 	{

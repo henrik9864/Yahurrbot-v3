@@ -6,9 +6,9 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using YFramework.Attributes;
+using YahurrFramework.Attributes;
 
-namespace YFramework
+namespace YahurrFramework
 {
 	public class YahurrCommand
 	{

@@ -8,8 +8,8 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using YahurrBot.Enums;
-using YFramework;
-using YFramework.Managers;
+using YahurrFramework;
+using YahurrFramework.Managers;
 
 namespace YahurrBot.Structs
 {

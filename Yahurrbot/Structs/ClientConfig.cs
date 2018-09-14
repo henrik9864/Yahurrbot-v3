@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using YFramework.Enums;
+using YahurrFramework.Enums;
 
-namespace YFramework.Structs
+namespace YahurrFramework.Structs
 {
     internal class ClientConfig
     {

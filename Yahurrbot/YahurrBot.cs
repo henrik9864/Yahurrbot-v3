@@ -10,11 +10,11 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
 using YahurrBot.Enums;
-using YFramework.Enums;
-using YFramework.Managers;
-using YFramework.Structs;
+using YahurrFramework.Enums;
+using YahurrFramework.Managers;
+using YahurrFramework.Structs;
 
-namespace YFramework
+namespace YahurrFramework
 {
     public class YahurrBot
     {

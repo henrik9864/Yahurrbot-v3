@@ -7,10 +7,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using YahurrBot.Enums;
-using YFramework.Attributes;
-using YFramework.Enums;
+using YahurrFramework.Attributes;
+using YahurrFramework.Enums;
 
-namespace YFramework
+namespace YahurrFramework
 {
     public class YModule
     {

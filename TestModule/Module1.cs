@@ -4,9 +4,9 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using YahurrBot.Enums;
-using YFramework;
-using YFramework.Attributes;
-using YFramework.Enums;
+using YahurrFramework;
+using YahurrFramework.Attributes;
+using YahurrFramework.Enums;
 
 namespace TestModule
 {

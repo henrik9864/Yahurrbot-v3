@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Discord.WebSocket;
 
-namespace YFramework.Managers
+namespace YahurrFramework.Managers
 {
     internal class BaseManager
     {

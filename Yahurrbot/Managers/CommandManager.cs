@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using Discord.WebSocket;
-using YFramework;
-using YFramework.Enums;
-using YFramework.Attributes;
+using YahurrFramework;
+using YahurrFramework.Enums;
+using YahurrFramework.Attributes;
 
-namespace YFramework.Managers
+namespace YahurrFramework.Managers
 {
 	internal class CommandManager : BaseManager
 	{

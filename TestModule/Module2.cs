@@ -4,7 +4,7 @@ using System.Text;
 
 namespace TestModule
 {
-	partial class Module2 : YFramework.YModule
+	partial class Module2 : YahurrFramework.YModule
 	{
 	}
 }

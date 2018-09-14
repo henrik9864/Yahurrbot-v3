@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using YahurrBot.Enums;
 using YahurrBot.Structs;
 
-namespace YFramework.Managers
+namespace YahurrFramework.Managers
 {
 	internal class FileManager : BaseManager
 	{

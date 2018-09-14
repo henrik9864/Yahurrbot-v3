@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using YFramework.Attributes;
+using YahurrFramework.Attributes;
 
-namespace YFramework.Managers
+namespace YahurrFramework.Managers
 {
     internal class EventManager : BaseManager
     {

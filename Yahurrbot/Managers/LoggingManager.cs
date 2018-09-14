@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
-using YFramework.Enums;
-using YFramework.Structs;
+using YahurrFramework.Enums;
+using YahurrFramework.Structs;
 
-namespace YFramework.Managers
+namespace YahurrFramework.Managers
 {
 	internal class LoggingManager : BaseManager
 	{
