@@ -57,12 +57,13 @@ namespace YahurrBot.Structs
 			using (StreamReader reader = new StreamReader(Path))
 				json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
-			SerializationType type = (SerializationType)Enum.Parse(typeof(SerializationType), Extension.Replace(".", ""), true);
-
 			if (deserializer != null)
 				return deserializer(json);
 			else
+			{
+				SerializationType type = (SerializationType)Enum.Parse(typeof(SerializationType), Extension.Replace(".", ""), true);
 				return Deserialize<T>(json, type);
+			}
 		}
 
 		/// <summary>
