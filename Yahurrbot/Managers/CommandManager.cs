@@ -152,6 +152,9 @@ namespace YahurrFramework.Managers
 			if (channelFilter != null && !channelFilter.IsFiltered(channel.Id))
 				return false;
 
+			if (command.IsDM && !(context.Channel is SocketDMChannel))
+				return false;
+
 			if (roleFilter != null)
 			{
 				foreach (SocketRole role in guildUser.Roles)

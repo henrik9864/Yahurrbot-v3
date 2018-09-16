@@ -62,7 +62,7 @@ namespace YahurrFramework
 			catch (Exception e)
 			{
 				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to initialize module {Name}:", "YahurrModule").ConfigureAwait(false);
-				await Bot.LoggingManager.LogMessage(e?.InnerException?.InnerException, "ModuleManager").ConfigureAwait(false);
+				await Bot.LoggingManager.LogMessage(e, "ModuleManager").ConfigureAwait(false);
 			}
 		}
 
@@ -275,6 +275,18 @@ namespace YahurrFramework
 					return type.IsAssignableFrom(a.GetType());
 				});
 			});
+		}
+
+		/// <summary>
+		/// Get response from user.
+		/// </summary>
+		/// <returns></returns>
+		protected Task<SocketMessage> GetResponseAsync()
+		{
+			var tcs = new TaskCompletionSource<SocketMessage>();
+			Bot.EventManager.ResponseEvents.Add(tcs);
+
+			return tcs.Task;
 		}
 
 		#endregion

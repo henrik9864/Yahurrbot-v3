@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -97,7 +98,7 @@ namespace YahurrFramework.Managers
 			for (int i = 0; i < LoadedModules.Count; i++)
 			{
 				YModule module = LoadedModules[i];
-				await module.RunMethod("Shutdown");
+				await module.RunMethod("Shutdown").ConfigureAwait(false);
 			}
 		}
 
@@ -159,9 +160,8 @@ namespace YahurrFramework.Managers
 		/// <param name="ModuleTypes"></param>
 		void LoadDLL(string path, ref List<Type> ModuleTypes)
 		{
-			Assembly dll = Assembly.LoadFile(path);
+			Assembly dll = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
 			Type[] types = dll.GetTypes();
-			LoadReferences(dll);
 
 			// Add all types that extent yahurrmodule
 			for (int i = 0; i < types.Length; i++)
@@ -242,23 +242,6 @@ namespace YahurrFramework.Managers
 				Modules.Add(type, module);
 				AddModule(module);
 			});
-		}
-
-		/// <summary>
-		/// Load all references for a dll
-		/// </summary>
-		void LoadReferences(Assembly assembly)
-		{
-			List<Assembly> loadeAssemeblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
-			AssemblyName[] names = assembly.GetReferencedAssemblies();
-
-			for (int i = 0; i < names.Length; i++)
-			{
-				AssemblyName assemblyName = names[i];
-
-				if (!loadeAssemeblies.Exists(a => a.GetName() == assemblyName))
-					assembly = AppDomain.CurrentDomain.Load(assemblyName);
-			}
 		}
 
 		/// <summary>

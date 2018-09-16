@@ -28,18 +28,21 @@ namespace YahurrFramework
 			}
 		}
 
+		public bool IsDM { get; }
+
 		MethodInfo method;
 		int parameterCount;
 
 		public YahurrCommand(MethodInfo method, YModule module)
 		{
-			Attributes.Command cmd = method.GetCustomAttribute<Attributes.Command>();
+			Command cmd = method.GetCustomAttribute<Command>();
 			Summary summary = method.GetCustomAttribute<Summary>();
 
 			this.Structure = cmd.CommandStructure;
 			this.Summary = summary?.Value ?? "Not specefied";
 			this.method = method;
 			this.Module = module;
+			this.IsDM = cmd.IsDM;
 
 			Parameters = LoadParameters(method);
 		}

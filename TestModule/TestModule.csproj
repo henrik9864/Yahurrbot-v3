@@ -15,4 +15,10 @@
     <ProjectReference Include="..\Yahurrbot\YahurrBot.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="OpenAPI">
+      <HintPath>..\..\..\..\Dropbox\C#\OpenAPI\bin\Release\OpenAPI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

@@ -13,8 +13,12 @@ namespace YahurrFramework.Managers
 {
     internal class EventManager : BaseManager
     {
+		public List<TaskCompletionSource<SocketMessage>> ResponseEvents { get; private set; }
+
 		public EventManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
+			ResponseEvents = new List<TaskCompletionSource<SocketMessage>>();
+
 			BindEvents();
 		}
 
@@ -45,6 +49,7 @@ namespace YahurrFramework.Managers
 			Client.UserJoined += (a) => RunEvent("UserJoined", a);
 			Client.MessageUpdated += async (a, b, c) => await RunEvent("MessageUpdated", await FromCache(a, c), b, c);
 			Client.LatencyUpdated += (a, b) => RunEvent("LatencyUpdated", a, b);
+			Client.MessageReceived += MessageReceived;
 			Client.MessageReceived += (a) => RunEvent("MessageReceived", a);
 			Client.MessageDeleted += async (a, b) => await RunEvent("MessageDeleted", await FromCache(a, b), b);
 			Client.Connected += () => RunEvent("Connected");
@@ -127,6 +132,22 @@ namespace YahurrFramework.Managers
 					await Bot.CommandManager.RunCommand(paremeters[0] as SocketMessage).ConfigureAwait(false);
 					break;
 			}
+		}
+
+		/// <summary>
+		/// Updated any registerd get response events.
+		/// </summary>
+		/// <param name="message"></param>
+		/// <returns></returns>
+		async Task MessageReceived(SocketMessage message)
+		{
+			for (int i = 0; i < ResponseEvents.Count; i++)
+			{
+				var e = ResponseEvents[i];
+				e.SetResult(message);
+		}
+
+			await Task.CompletedTask;
 		}
 
 		/// <summary>

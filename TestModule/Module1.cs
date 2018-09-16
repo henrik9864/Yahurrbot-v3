@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Discord.WebSocket;
+using OpenAPI;
 using YahurrBot.Enums;
 using YahurrFramework;
 using YahurrFramework.Attributes;
@@ -19,6 +20,15 @@ namespace TestModule
 			{
 				return (ModuleConfig)base.Config;
 			}
+		}
+
+		Spec spec;
+
+		protected override async Task Init()
+		{
+			spec = Spec.Instance;
+
+			await LogAsync(LogLevel.Message, spec?.basePath ?? "null1");
 		}
 
 		protected async override Task MessageReceived(SocketMessage message)
