@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using OpenAPI;
 using YahurrBot.Enums;
@@ -11,7 +12,7 @@ using YahurrFramework.Enums;
 
 namespace TestModule
 {
-	[Config(typeof(ModuleConfig)), RequiredModule(typeof(Module2))]
+	[Config(typeof(ModuleConfig)), RequiredModule(typeof(ScottModule))]
     public class Module1 : YModule
 	{
 		public new ModuleConfig Config
@@ -31,7 +32,13 @@ namespace TestModule
 			await LogAsync(LogLevel.Message, spec?.basePath ?? "null1");
 		}
 
-		protected async override Task MessageReceived(SocketMessage message)
+        protected override async Task Shutdown()
+        {
+            Console.WriteLine("yay");
+            await Task.CompletedTask;
+        }
+
+        protected async override Task MessageReceived(SocketMessage message)
 		{
 			await SaveAsync("test1", message.Content, true, false).ConfigureAwait(false);
 			await SaveAsync("test2", new List<string>() { "s1", "s2" }, true, false).ConfigureAwait(false);
@@ -44,6 +51,12 @@ namespace TestModule
 			{
 				await message.Channel.SendMessageAsync(Config.PingResponse ?? "Error").ConfigureAwait(false);
 			}
+		}
+
+		protected override async Task MessageDeleted(IMessage message, ISocketMessageChannel channel)
+		{
+			Console.WriteLine("Hello");
+			await Task.CompletedTask;
 		}
 
 		[Command("print", "int")]

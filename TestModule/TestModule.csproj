@@ -17,7 +17,10 @@
 
   <ItemGroup>
     <Reference Include="OpenAPI">
-      <HintPath>..\..\..\..\Dropbox\C#\OpenAPI\bin\Release\OpenAPI.dll</HintPath>
+      <HintPath>..\..\OpenAPI-Reader.net\bin\Release\OpenAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="ScottServer">
+      <HintPath>..\..\..\ScottServer\ScottServer\bin\Release\netcoreapp2.1\ScottServer.dll</HintPath>
     </Reference>
   </ItemGroup>
 

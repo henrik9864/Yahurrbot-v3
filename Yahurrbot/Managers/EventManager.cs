@@ -158,13 +158,16 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		Func<YModule, bool> Validate<T>(T p)
 		{
+			if (p == null)
+				return _ => true;
+
 			// Substitute switch statement
 			var @switch = new Dictionary<Type, Func<YModule, bool>>
 			{
-				{ typeof(SocketGuild), m => ValidateGuild(p as SocketGuild, m) },
-				{ typeof(SocketGuildUser), m => ValidateGuild((p as SocketGuildUser)?.Guild, m) },
-				{ typeof(SocketUserMessage), m => ValidateMessage(p as SocketUserMessage, m) },
-				{ typeof(SocketGuildChannel), m => ValidateGuild((p as SocketGuildChannel)?.Guild, m) }
+				{ typeof(IGuild), m => ValidateGuild(p as IGuild, m) },
+				{ typeof(IUser), m => ValidateUser((p as IUser), m) },
+				{ typeof(IMessage), m => ValidateMessage(p as IMessage, m) },
+				{ typeof(IChannel), m => ValidateChannel((p as IChannel), m) }
 			};
 
 			if (@switch.TryGetValue(p.GetType(), out Func<YModule, bool> func))
@@ -173,13 +176,29 @@ namespace YahurrFramework.Managers
 				return _ => true;
 		}
 
+		private bool ValidateChannel(IChannel channel, YModule module)
+		{
+			if (channel is SocketGuildChannel)
+				return ValidateGuild((channel as SocketGuildChannel).Guild, module);
+			else
+				return true;
+		}
+
+		bool ValidateUser(IUser user, YModule module)
+		{
+			if (user is SocketGuildUser)
+				return ValidateGuild((user as SocketGuildUser).Guild, module);
+			else
+				return true;
+		}
+
 		/// <summary>
 		/// Validata a module can access a guild.
 		/// </summary>
 		/// <param name="guild">Guild to access</param>
 		/// <param name="module">Module</param>
 		/// <returns></returns>
-		bool ValidateGuild(SocketGuild guild, YModule module)
+		bool ValidateGuild(IGuild guild, YModule module)
 		{
 			List<ServerFilter> filterAttributes = module.GetType().GetCustomAttributes<ServerFilter>().ToList();
 			for (int i = 0; i < filterAttributes.Count; i++)
@@ -193,11 +212,12 @@ namespace YahurrFramework.Managers
 			return true;
 		}
 
-		bool ValidateMessage(SocketUserMessage message, YModule module)
+		bool ValidateMessage(IMessage message, YModule module)
 		{
-			SocketGuildChannel channel = message.Channel as SocketGuildChannel;
-
-			return ValidateGuild(channel?.Guild, module);
+			if (message.Channel is SocketGuildChannel)
+				return ValidateGuild((message.Channel as SocketGuildChannel).Guild, module);
+			else
+				return true;
 		}
 
 		/// <summary>
@@ -209,7 +229,7 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		Task<IMessage> FromCache<T>(Cacheable<T, ulong> cache, ISocketMessageChannel channel) where T : IEntity<ulong>
 		{
-			return channel.GetMessageAsync(cache.Id);
+			return channel.GetMessageAsync(cache.Id, CacheMode.AllowDownload);
 		}
 	}
 }

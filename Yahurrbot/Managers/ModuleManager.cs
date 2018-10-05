@@ -98,7 +98,7 @@ namespace YahurrFramework.Managers
 			for (int i = 0; i < LoadedModules.Count; i++)
 			{
 				YModule module = LoadedModules[i];
-				await module.RunMethod("Shutdown").ConfigureAwait(false);
+				await Task.Run(() => module.RunMethod("Shutdown")).ConfigureAwait(false); // Make sure one slow shutdown stops every other module from getting the call
 			}
 		}
 
@@ -114,8 +114,12 @@ namespace YahurrFramework.Managers
 			{
 				YModule module = LoadedModules[i];
 
+				//Console.WriteLine(name);
+
 				if (!validate(module))
 					continue;
+
+				//Console.WriteLine("Validated!");
 
 				Exception ex = await module.RunMethod(name, parameters).ConfigureAwait(false);
 

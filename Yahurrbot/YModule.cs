@@ -129,7 +129,7 @@ namespace YahurrFramework
 			if (!partial)
 				return Users.Find(a => a.Nickname == name || a.Username == name);
 			else
-				return Users.Find(a => a.Nickname.Contains(name) || a.Username.Contains(name));
+				return Users.Find(a => a?.Nickname?.Contains(name) ?? false || a.Username.Contains(name));
 		}
 
 		/// <summary>
@@ -145,7 +145,7 @@ namespace YahurrFramework
 			if (!partial)
 				return Users.FindAll(a => a.Nickname == name || a.Username == name);
 			else
-				return Users.FindAll(a => a.Nickname.Contains(name) || a.Username.Contains(name));
+				return Users.FindAll(a => a?.Nickname?.Contains(name) ?? false || a.Username.Contains(name));
 		}
 
 		/// <summary>
@@ -161,7 +161,7 @@ namespace YahurrFramework
 			if (!partial)
 				return Users.Find(a => a.Name == name);
 			else
-				return Users.Find(a => a.Name.Contains(name));
+				return Users.Find(a => a?.Name?.Contains(name) ?? false);
 		}
 
 		/// <summary>
@@ -177,7 +177,7 @@ namespace YahurrFramework
 			if (!partial)
 				return Users.FindAll(a => a.Name == name);
 			else
-				return Users.FindAll(a => a.Name.Contains(name));
+				return Users.FindAll(a => a?.Name?.Contains(name) ?? false);
 		}
 
 		/// <summary>
@@ -216,7 +216,7 @@ namespace YahurrFramework
 			if (!partial)
 				return Users.Find(a => a.Name == name && typeof(T).IsAssignableFrom(a.GetType())) as T;
 			else
-				return Users.Find(a => a.Name.Contains(name) && typeof(T).IsAssignableFrom(a.GetType())) as T;
+				return Users.Find(a => a?.Name?.Contains(name) ?? false && typeof(T).IsAssignableFrom(a.GetType())) as T;
 		}
 
 		#endregion

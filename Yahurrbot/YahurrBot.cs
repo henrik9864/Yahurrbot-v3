@@ -82,7 +82,6 @@ namespace YahurrFramework
 			await LoggingManager.LogMessage(LogLevel.Message, $"Done", "Startup").ConfigureAwait(false);
 
 			// Run command and main loop
-			MainLoop();
 			return await CommandLoop().ConfigureAwait(false);
 		}
 
@@ -94,19 +93,10 @@ namespace YahurrFramework
 		{
 			await LoggingManager.LogMessage(LogLevel.Message, "Shutting down Yahurrbot...", "Shutdown").ConfigureAwait(false);
 
-			await ModuleManager.ShutdownModules().ConfigureAwait(false);
-			await client.StopAsync().ConfigureAwait(false);
+            await ModuleManager.ShutdownModules().ConfigureAwait(false);
+            await client.StopAsync().ConfigureAwait(false);
 
 			await LoggingManager.LogMessage(LogLevel.Message, "Goodbye.", "Shutdown").ConfigureAwait(false);
-		}
-
-		/// <summary>
-		/// Main yahurrbot loop
-		/// </summary>
-		/// <returns></returns>
-		async Task MainLoop()
-		{
-			await Task.Delay(-1);
 		}
 
 		/// <summary>
@@ -125,15 +115,8 @@ namespace YahurrFramework
 
 				switch (input)
 				{
-					case "reload modules":
-						string folder = "Modules";
-						if (commands.Length > 1)
-							folder = commands[1];
-
-						await ModuleManager.LoadModulesAsync(folder);
-						break;
 					case "reload config":
-						folder = "Config";
+						string folder = "Config";
 						if (commands.Length > 1)
 							folder = commands[1];
 
@@ -147,8 +130,8 @@ namespace YahurrFramework
 						}
 						break;
 					case "exit":
-						await StopAsync().ConfigureAwait(false);
-						return ReturnCode.OK;
+                        Environment.Exit(1);
+                        return ReturnCode.OK;
 					case "reboot":
 						await StopAsync().ConfigureAwait(false);
 						return ReturnCode.Reboot;
