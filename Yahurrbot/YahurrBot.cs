@@ -44,9 +44,9 @@ namespace YahurrFramework
 			client = new DiscordSocketClient();
 
 			LoggingManager = new LoggingManager(this, client);
+			CommandManager = new CommandManager(this, client);
 			ModuleManager = new ModuleManager(this, client);
 			EventManager = new EventManager(this, client);
-			CommandManager = new CommandManager(this, client);
 			FileManager = new FileManager(this, client);
 
 			LoggingManager.Log += Log;

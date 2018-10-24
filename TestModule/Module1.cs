@@ -12,7 +12,7 @@ using YahurrFramework.Enums;
 
 namespace TestModule
 {
-	[Config(typeof(ModuleConfig)), RequiredModule(typeof(ScottModule))]
+	[Config(typeof(ModuleConfig))]
     public class Module1 : YModule
 	{
 		public new ModuleConfig Config
@@ -49,7 +49,8 @@ namespace TestModule
 
 			if (message.Content == "Ping")
 			{
-				await message.Channel.SendMessageAsync(Config.PingResponse ?? "Error").ConfigureAwait(false);
+				await RespondAsync(Config.PingResponse ?? "Error");
+				//await message.Channel.SendMessageAsync(Config.PingResponse ?? "Error").ConfigureAwait(false);
 			}
 		}
 
@@ -68,7 +69,14 @@ namespace TestModule
 		[Command("print", "string"), Summary("Prints a string.")]
 		public async Task SayString([Summary("String to print")]string str)
 		{
-			await RespondAsync(str).ConfigureAwait(false);
+			try
+			{
+				await RespondAsync(str).ConfigureAwait(false);
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+			}
 		}
 
 		[ChannelFilter(FilterType.Blacklist, 293381166365540353)]

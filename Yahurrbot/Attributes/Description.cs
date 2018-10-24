@@ -5,13 +5,16 @@ using System.Text;
 namespace YahurrFramework.Attributes
 {
 	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter | AttributeTargets.Class)]
-	public class Summary : Attribute
-	{
-		public string Value { get; }
+    public class Description : Attribute
+    {
+		public string Name { get; }
 
-		public Summary(string summary)
+		public string Summary { get; }
+
+		public Description(string name, string summary)
 		{
-			this.Value = summary;
+			this.Name = name;
+			this.Summary = summary;
 		}
-	}
+    }
 }

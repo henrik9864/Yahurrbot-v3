@@ -34,7 +34,7 @@ namespace YahurrFramework.Managers
 			Client.RoleDeleted += (a) => RunEvent("RoleDeleted", a);
 			Client.RoleUpdated += (a, b) => RunEvent("RoleUpdated", a, b);
 			Client.JoinedGuild += (a) => RunEvent("JoinedGuild", a);
-			Client.UserIsTyping += (a, b) => RunEvent("RoleUpdated", a, b);
+			Client.UserIsTyping += (a, b) => RunEvent("UserIsTyping", a, b);
 			Client.CurrentUserUpdated += (a, b) => RunEvent("CurrentUserUpdated", a, b);
 			Client.UserVoiceStateUpdated += (a, b, c) => RunEvent("UserVoiceStateUpdated", a, b, c);
 			Client.GuildMemberUpdated += (a, b) => RunEvent("GuildMemberUpdated", a, b);

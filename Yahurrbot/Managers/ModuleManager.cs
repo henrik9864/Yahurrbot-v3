@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -42,7 +43,7 @@ namespace YahurrFramework.Managers
 		internal async Task LoadModulesAsync(string folder)
 		{
 			DirectoryInfo directory = Directory.CreateDirectory(folder);
-			FileInfo[] files = directory.GetFiles();
+			FileInfo[] files = directory.GetFiles("*.dll");
 
 			// Load all found modules
 			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loading modules...", "ModuleManager").ConfigureAwait(false);
@@ -110,20 +111,37 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		internal async Task RunMethod(string name, Func<YModule, bool> validate, params object[] parameters)
 		{
+			IGuild guild = null;
+			ISocketMessageChannel channel = null;
+			IMessage message = null;
+
+			foreach (object item in parameters)
+			{
+				if (item is IGuild)
+					guild = item as IGuild;
+
+				if (item is ISocketMessageChannel)
+					channel = item as ISocketMessageChannel;
+
+				if (item is IMessage)
+					message = item as IMessage;
+			}
+
+			MethodContext context = new MethodContext(guild, channel, message);
+
 			for (int i = 0; i < LoadedModules.Count; i++)
 			{
 				YModule module = LoadedModules[i];
 
-				//Console.WriteLine(name);
-
 				if (!validate(module))
 					continue;
 
-				//Console.WriteLine("Validated!");
-
-				Exception ex = await module.RunMethod(name, parameters).ConfigureAwait(false);
-
-				if (ex != null)
+				try
+				{
+					module.SetContext(context);
+					await module.RunMethod(name, parameters).ConfigureAwait(false);
+				}
+				catch (Exception ex)
 				{
 					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run method {name}:", "ModuleManager").ConfigureAwait(false);
 					await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);

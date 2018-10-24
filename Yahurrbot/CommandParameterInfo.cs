@@ -42,14 +42,14 @@ namespace YahurrFramework
 
 		public CommandParameterInfo(ParameterInfo param)
 		{
-			Summary summary = param.GetCustomAttribute<Summary>();
+			Description summary = param.GetCustomAttribute<Description>();
 			Name name = param.GetCustomAttribute<Name>();
 			var isParams = param.GetCustomAttribute<ParamArrayAttribute>();
 
 			this.parameterInfo = param;
 			Name = name?.Value ?? param.Name;
 			Type = param.ParameterType;
-			Summary = summary?.Value;
+			Summary = summary?.Summary;
 			IsParam = isParams != null;
 		}
 	}

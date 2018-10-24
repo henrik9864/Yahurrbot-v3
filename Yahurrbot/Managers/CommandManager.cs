@@ -8,6 +8,7 @@ using Discord.WebSocket;
 using YahurrFramework;
 using YahurrFramework.Enums;
 using YahurrFramework.Attributes;
+using YahurrFramework.Commands;
 
 namespace YahurrFramework.Managers
 {
@@ -15,13 +16,11 @@ namespace YahurrFramework.Managers
 	{
 		internal char CommandPrefix { get; }
 
-		Dictionary<string, SavedCommand> savedCommands;
-		Dictionary<YModule, List<YahurrCommand>> sortedCommands;
+		Dictionary<int, CommandNode> savedCommands;
 
 		public CommandManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			savedCommands = new Dictionary<string, SavedCommand>();
-			sortedCommands = new Dictionary<YModule, List<YahurrCommand>>();
+			savedCommands = new Dictionary<int, CommandNode>();
 			CommandPrefix = '!';
 		}
 
@@ -29,27 +28,24 @@ namespace YahurrFramework.Managers
 		/// Add command to list of all commands.
 		/// </summary>
 		/// <param name="command"></param>
-		internal void AddCommand(YahurrCommand command)
+		internal void AddCommand(YCommand command)
 		{
-			if (savedCommands.TryGetValue(command.Structure[0], out SavedCommand cmd))
-				cmd.AddCommand(command);
-			else
-				savedCommands.Add(command.Structure[0], new SavedCommand(command));
+			int structureLength = command.Structure.Count;
 
-			if (sortedCommands.TryGetValue(command.Module, out List<YahurrCommand> commands))
-				commands.Add(command);
+			if (savedCommands.TryGetValue(structureLength, out CommandNode node))
+				node.Add(command);
 			else
-				sortedCommands.Add(command.Module, new List<YahurrCommand>() { command });
+			{
+				node = new CommandNode(structureLength);
+				node.Add(command);
+
+				savedCommands.Add(structureLength, node);
+			}
 		}
 
-		/// <summary>
-		/// Add method from module to list of commands.
-		/// </summary>
-		/// <param name="module"></param>
-		/// <param name="method"></param>
 		internal void AddCommand(YModule module, MethodInfo method)
 		{
-			AddCommand(new YahurrCommand(method, module));
+			AddCommand(new YCommand(method, module));
 		}
 
 		/// <summary>
@@ -87,7 +83,7 @@ namespace YahurrFramework.Managers
 			switch (command[0])
 			{
 				case "help":
-					output = HelpCommand(command);
+					//output = HelpCommand(command);
 					break;
 			}
 
@@ -103,31 +99,36 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		async Task<bool> RunCommand(SocketMessage context, List<string> command)
 		{
-			SavedCommand savedCommand;
-			if (!this.savedCommands.TryGetValue(command[0], out savedCommand))
-				return false;
-
-			if (savedCommand.Validate(command))
+			YCommand savedCommand = null;
+			for (int i = 0; i < command.Count; i++)
 			{
-				YahurrCommand cmd = savedCommand.GetCommand(command);
+				if (savedCommands.TryGetValue(i, out CommandNode node))
+				{
+					if (node.TryGetCommand(command, out savedCommand))
+						break;
+				}
+			}
 
-				// Check if user can run command
-				if (!ValidateCommand(context, cmd))
-				{
-					await context.Channel.SendMessageAsync("You do not have permission to run that command!").ConfigureAwait(false);
-					return false;
-				}
+			if (savedCommand is null)
+			{
+				await context.Channel.SendMessageAsync("Command not found.").ConfigureAwait(false);
+			}
 
-				try
-				{
-					command.RemoveRange(0, cmd.Structure.Count);
-					await cmd.Invoke(command, new CommandContext(context)).ConfigureAwait(false);
-				}
-				catch (Exception ex)
-				{
-					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {cmd.Name}:", "ModuleManager").ConfigureAwait(false);
-					await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
-				}
+			// Check if user can run command
+			if (!ValidateCommand(context, savedCommand))
+			{
+				await context.Channel.SendMessageAsync("You do not have permission to run that command!").ConfigureAwait(false);
+				return false;
+			}
+
+			try
+			{
+				await savedCommand.Invoke(command, new MethodContext(context)).ConfigureAwait(false);
+			}
+			catch (Exception ex)
+			{
+				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {savedCommand.Name}:", "ModuleManager").ConfigureAwait(false);
+				await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
 			}
 
 			return true;
@@ -139,12 +140,12 @@ namespace YahurrFramework.Managers
 		/// <param name="context"></param>
 		/// <param name="command"></param>
 		/// <returns></returns>
-		bool ValidateCommand(SocketMessage context, YahurrCommand command)
+		bool ValidateCommand(SocketMessage context, YCommand command)
 		{
 			SocketGuildChannel channel = context.Channel as SocketGuildChannel;
 			SocketGuildUser guildUser = context.Author as SocketGuildUser;
-			ChannelFilter channelFilter = command.GetMethodAttribute<ChannelFilter>(true);
-			RoleFilter roleFilter = command.GetMethodAttribute<RoleFilter>(true);
+			ChannelFilter channelFilter = command.GetAttribute<ChannelFilter>(true);
+			RoleFilter roleFilter = command.GetAttribute<RoleFilter>(true);
 
 			if (channel == null || guildUser == null)
 				return true;
@@ -168,6 +169,9 @@ namespace YahurrFramework.Managers
 
 			return true;
 		}
+
+		// Need to fix
+		/*
 
 		// Commands hardcoded into the bot.
 		#region InternalCommands
@@ -355,5 +359,7 @@ namespace YahurrFramework.Managers
 		}
 
 		#endregion
+
+		*/
 	}
 }

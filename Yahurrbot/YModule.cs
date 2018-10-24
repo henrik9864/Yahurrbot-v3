@@ -2,9 +2,12 @@
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using YahurrBot.Enums;
 using YahurrFramework.Attributes;
@@ -37,13 +40,31 @@ namespace YahurrFramework
 
 		protected object Config { get; private set; }
 
-		protected SocketGuild Guild { get; private set; }
+		protected IGuild Guild
+		{
+			get
+			{
+				return AsyncContext.Value.Guild;
+			}
+		}
 
-		protected ISocketMessageChannel Channel { get; private set; }
+		protected ISocketMessageChannel Channel
+		{
+			get
+			{
+				return AsyncContext.Value.Channel;
+			}
+		}
 
-		protected SocketMessage Message { get; private set; }
+		protected IMessage Message
+		{
+			get
+			{
+				return AsyncContext.Value.Message;
+			}
+		}
 
-		CommandContext Context;
+		AsyncLocal<MethodContext> AsyncContext = new AsyncLocal<MethodContext>();
 		YahurrBot Bot;
 
 		internal void LoadModule(DiscordSocketClient client, YahurrBot bot, object config)
@@ -72,33 +93,40 @@ namespace YahurrFramework
 		/// <param name="name">Name of module</param>
 		/// <param name="param">Method parameters</param>
 		/// <returns></returns>
-		internal async Task<Exception> RunMethod(string name, params object[] param)
+		internal async Task RunMethod(string name, params object[] param)
 		{
-			BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.IgnoreCase;
+			BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.IgnoreCase;
 			MethodInfo method = GetType().GetMethod(name, flags);
 
 			if (method != null)
 			{
-				Task task = (Task)method.Invoke(this, param ?? new object[0]);
+				try
+				{
+					object output = method.Invoke(this, param ?? new object[0]);
 
-				await task;
-				return task.Exception;
+					if (output is Task)
+						await (output as Task);
+				}
+				catch (Exception)
+				{
+					string userResponse = "```";
+					userResponse += $"Fatal error in command {name} see bot log for more info.";
+					await RespondAsync(userResponse + "```");
+
+					throw;
+				}
 			}
 			else
-				return new MissingMethodException($"Method {name} not found.");
+				throw new MissingMethodException($"Method {name} not found.");
 		}
 
 		/// <summary>
 		/// Set context for any command.
 		/// </summary>
 		/// <param name="context"></param>
-		internal void SetContext(CommandContext context)
+		internal void SetContext(MethodContext context)
 		{
-			Context = context;
-
-			Guild = context?.Guild;
-			Channel = context?.Channel;
-			Message = context?.Message;
+			AsyncContext.Value = context;
 		}
 
 		#region Helper functions
@@ -113,7 +141,7 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public async Task<IUserMessage> RespondAsync(string message, bool isTTS = false)
 		{
-			return await Context?.Channel?.SendMessageAsync(message, isTTS);
+			return await Channel?.SendMessageAsync(message, isTTS);
 		}
 
 		/// <summary>
@@ -124,7 +152,7 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public SocketGuildUser GetUser(string name, bool partial)
 		{
-			List<SocketGuildUser> Users = Context?.Guild?.Users.ToList();
+			List<SocketGuildUser> Users = (Guild as SocketGuild)?.Users.ToList();
 
 			if (!partial)
 				return Users.Find(a => a.Nickname == name || a.Username == name);
@@ -140,7 +168,7 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public List<SocketGuildUser> GetUsers(string name, bool partial)
 		{
-			List<SocketGuildUser> Users = Context?.Guild?.Users.ToList();
+			List<SocketGuildUser> Users = (Guild as SocketGuild)?.Users.ToList();
 
 			if (!partial)
 				return Users.FindAll(a => a.Nickname == name || a.Username == name);
@@ -156,7 +184,7 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public SocketRole GetRole(string name, bool partial)
 		{
-			List<SocketRole> Users = Context?.Guild?.Roles.ToList();
+			List<SocketRole> Users = (Guild as SocketGuild)?.Roles.ToList();
 
 			if (!partial)
 				return Users.Find(a => a.Name == name);
@@ -172,7 +200,7 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public List<SocketRole> GetRoles(string name, bool partial)
 		{
-			List<SocketRole> Users = Context?.Guild?.Roles.ToList();
+			List<SocketRole> Users = (Guild as SocketGuild)?.Roles.ToList();
 
 			if (!partial)
 				return Users.FindAll(a => a.Name == name);
@@ -187,7 +215,7 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public T GetCannel<T>() where T : SocketGuildChannel
 		{
-			List<SocketGuildChannel> Users = Context?.Guild?.Channels.ToList();
+			List<SocketGuildChannel> Users = (Guild as SocketGuild)?.Channels.ToList();
 			return Users.Find(a => typeof(T).IsAssignableFrom(a.GetType())) as T;
 		}
 
@@ -199,7 +227,7 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public T GetChannel<T>(ulong id) where T : SocketGuildChannel
 		{
-			return Context?.Guild?.GetChannel(id) as T;
+			return (Guild as SocketGuild)?.GetChannel(id) as T;
 		}
 
 		/// <summary>
@@ -211,7 +239,7 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public T GetChannel<T>(string name, bool partial) where T : SocketGuildChannel
 		{
-			List<SocketGuildChannel> Users = Context?.Guild?.Channels.ToList();
+			List<SocketGuildChannel> Users = (Guild as SocketGuild)?.Channels.ToList();
 
 			if (!partial)
 				return Users.Find(a => a.Name == name && typeof(T).IsAssignableFrom(a.GetType())) as T;

@@ -8,15 +8,22 @@ using System.Threading.Tasks;
 
 namespace YahurrFramework
 {
-	public class CommandContext
+	public class MethodContext
 	{
-		public SocketGuild Guild { get; }
+		public IGuild Guild { get; }
 
 		public ISocketMessageChannel Channel { get; }
 
-		public SocketMessage Message { get; }
+		public IMessage Message { get; }
 
-		public CommandContext(SocketMessage context)
+		public MethodContext(IGuild guild, ISocketMessageChannel channel, IMessage message)
+		{
+			Guild = guild;
+			Channel = channel;
+			Message = message;
+		}
+
+		public MethodContext(SocketMessage context)
 		{
 			Guild = (context.Channel as SocketGuildChannel)?.Guild;
 			Channel = context.Channel;

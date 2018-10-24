@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
+using YahurrBot.Structs;
 using YahurrFramework.Structs;
 
 namespace YahurrFramework
