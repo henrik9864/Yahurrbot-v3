@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace YahurrFramework.Commands
 {
@@ -40,8 +41,23 @@ namespace YahurrFramework.Commands
 					return list.TryGetCommand(command, out yCommand);
 			}
 
+			Console.WriteLine("hmm");
+
 			yCommand = null;
 			return false;
+		}
+
+		public bool TryGetCommands(List<string> command, out List<YCommand> yCommand)
+		{
+			yCommand = new List<YCommand>();
+
+			for (int i = 0; i <= command.Count; i++)
+			{
+				if (savedCommands.TryGetValue(i, out CommandList list))
+					yCommand.AddRange(list.SavedCommands);
+			}
+
+			return yCommand.Count > 0;
 		}
 	}
 }

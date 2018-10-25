@@ -10,30 +10,34 @@ namespace YahurrFramework.Commands
 
 		public int ParameterLength { get; }
 
-		List<YCommand> savedCommands;
+		public List<YCommand> SavedCommands { get; }
 
 		public CommandList(int structureLength, int parameterLength)
 		{
-			savedCommands = new List<YCommand>();
+			SavedCommands = new List<YCommand>();
 			StructureLength = structureLength;
 			ParameterLength = parameterLength;
 		}
 
 		public void Add(YCommand command)
 		{
-			savedCommands.Add(command);
+			SavedCommands.Add(command);
 
-			//Console.WriteLine($"{savedCommands.Count} commands added: {StructureLength}:{ParameterLength}");
+			Console.WriteLine($"Command {command.Name} added with structure {StructureLength} and pLength {ParameterLength}");
 		}
 
 		public bool TryGetCommand(List<string> command, out YCommand yCommand)
 		{
-			for (int i = 0; i < savedCommands.Count; i++)
+			for (int i = 0; i < SavedCommands.Count; i++)
 			{
-				yCommand = savedCommands[i];
+				yCommand = SavedCommands[i];
+
+				Console.WriteLine($"	Checking command {yCommand.Name}");
 
 				if (ValidateCommand(command, yCommand))
 					return true;
+
+				Console.WriteLine($"	Not valid");
 			}
 
 			yCommand = null;

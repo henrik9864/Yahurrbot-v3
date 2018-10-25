@@ -64,8 +64,9 @@ namespace YahurrFramework.Managers
 			List<string> cmd = new List<string>();
 			cmd.AddRange(msg.Split(' '));
 
-			await RunInternalCommand(command, cmd).ConfigureAwait(false);
-			await RunCommand(command, cmd).ConfigureAwait(false);
+			if (!await RunInternalCommand(command, cmd).ConfigureAwait(false))
+				await RunCommand(command, cmd).ConfigureAwait(false);
+
 			return true;
 		}
 
@@ -75,20 +76,31 @@ namespace YahurrFramework.Managers
 		/// <param name="context">Context for command</param>
 		/// <param name="command">Command to run</param>
 		/// <returns></returns>
-		async Task RunInternalCommand(SocketMessage context, List<string> command)
+		async Task<bool> RunInternalCommand(SocketMessage context, List<string> command)
 		{
+			// En kommando på villspor
+			// Validere kommando navn
 			string output = "";
+			int succsess = -1;
 
 			// Might improve later
 			switch (command[0])
 			{
 				case "help":
-					//output = HelpCommand(command);
+					succsess = HelpCommand(command, ref output) ? 1 : 0;
 					break;
 			}
 
-			if (!string.IsNullOrEmpty(output))
+			if (succsess == 1)
 				await context.Channel.SendMessageAsync(output).ConfigureAwait(false);
+			else if (succsess == 0)
+				await context.Channel.SendMessageAsync("```" +
+														"Oppsie woopsie our code made a do do, our code monekys are working hard to fix it.\n" +
+														"In the mean time have a laugh at this hilarious joke.\n" +
+														"Why did the monky fall out of the tree? Because it was DEAD.\n" +
+														"```").ConfigureAwait(false);
+
+			return succsess != -1;
 		}
 
 		/// <summary>
@@ -99,25 +111,14 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		async Task<bool> RunCommand(SocketMessage context, List<string> command)
 		{
-			YCommand savedCommand = null;
-			for (int i = 0; i < command.Count; i++)
-			{
-				if (savedCommands.TryGetValue(i, out CommandNode node))
-				{
-					if (node.TryGetCommand(command, out savedCommand))
-						break;
-				}
-			}
-
-			if (savedCommand is null)
-			{
+			if (!GetCommand(command, out YCommand savedCommand))
 				await context.Channel.SendMessageAsync("Command not found.").ConfigureAwait(false);
-			}
 
 			// Check if user can run command
-			if (!ValidateCommand(context, savedCommand))
+			string reason = "";
+			if (!ValidateCommand(context, savedCommand, ref reason))
 			{
-				await context.Channel.SendMessageAsync("You do not have permission to run that command!").ConfigureAwait(false);
+				await context.Channel.SendMessageAsync(reason).ConfigureAwait(false);
 				return false;
 			}
 
@@ -140,21 +141,24 @@ namespace YahurrFramework.Managers
 		/// <param name="context"></param>
 		/// <param name="command"></param>
 		/// <returns></returns>
-		bool ValidateCommand(SocketMessage context, YCommand command)
+		bool ValidateCommand(SocketMessage context, YCommand command, ref string reason)
 		{
 			SocketGuildChannel channel = context.Channel as SocketGuildChannel;
 			SocketGuildUser guildUser = context.Author as SocketGuildUser;
 			ChannelFilter channelFilter = command.GetAttribute<ChannelFilter>(true);
 			RoleFilter roleFilter = command.GetAttribute<RoleFilter>(true);
 
-			if (channel == null || guildUser == null)
-				return true;
-
-			if (channelFilter != null && !channelFilter.IsFiltered(channel.Id))
+			if (channelFilter != null && !channelFilter.IsFiltered(channel?.Id ?? 0))
+			{
+				reason = "This command cannot be run in this channel.";
 				return false;
+			}
 
 			if (command.IsDM && !(context.Channel is SocketDMChannel))
+			{
+				reason = "This is a DM only command.";
 				return false;
+			}
 
 			if (roleFilter != null)
 			{
@@ -164,11 +168,62 @@ namespace YahurrFramework.Managers
 						return true;
 				}
 
+				reason = "You do not have permission to run this command.";
 				return false;
 			}
 
+			// Assume valid untill proven othervise
 			return true;
 		}
+
+		bool GetCommand(List<string> command, out YCommand savedCommand)
+		{
+			for (int i = 0; i < command.Count; i++)
+			{
+				Console.WriteLine(i + 1);
+
+				if (savedCommands.TryGetValue(i + 1, out CommandNode node))
+				{
+					if (node.TryGetCommand(command, out savedCommand))
+						return true;
+				}
+			}
+
+			savedCommand = null;
+			return false;
+		}
+
+		bool GetCommands(List<string> command, out List<YCommand> savedCommands)
+		{
+			if (this.savedCommands.TryGetValue(command.Count, out CommandNode node))
+				return node.TryGetCommands(command, out savedCommands);
+
+			savedCommands = null;
+			return false;
+		}
+
+		#region Internal Command
+
+		bool HelpCommand(List<string> command, ref string output)
+		{
+			command.RemoveAt(0);
+
+			if (!GetCommands(command, out List<YCommand> savedCommands))
+				return false;
+
+			output = "```";
+			output += $"{savedCommands.Count} command{(savedCommands.Count==1?"":"s")} found.\n";
+
+			foreach (var cmd in savedCommands)
+			{
+				output += $"	{cmd.Name}\n";
+			}
+
+			output += "```";
+			return true;
+		}
+
+		#endregion
 
 		// Need to fix
 		/*

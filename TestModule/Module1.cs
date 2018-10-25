@@ -91,5 +91,12 @@ namespace TestModule
 
 			throw new Exception("Nooo");
 		}
+
+		[Command("say")]
+		public async void SaySomething()
+		{
+			await RespondAsync("Hello World!");
+			await Task.CompletedTask;
+		}
 	}
 }
