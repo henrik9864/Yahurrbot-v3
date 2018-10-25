@@ -50,7 +50,6 @@ namespace TestModule
 			if (message.Content == "Ping")
 			{
 				await RespondAsync(Config.PingResponse ?? "Error");
-				//await message.Channel.SendMessageAsync(Config.PingResponse ?? "Error").ConfigureAwait(false);
 			}
 		}
 
@@ -69,14 +68,7 @@ namespace TestModule
 		[Command("print", "string"), Summary("Prints a string.")]
 		public async Task SayString([Summary("String to print")]string str)
 		{
-			try
-			{
-				await RespondAsync(str).ConfigureAwait(false);
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-			}
+			await RespondAsync(str).ConfigureAwait(false);
 		}
 
 		[ChannelFilter(FilterType.Blacklist, 293381166365540353)]
