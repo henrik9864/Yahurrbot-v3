@@ -48,9 +48,7 @@ namespace TestModule
 			bool exists = await ExistsAsync("test1").ConfigureAwait(false);
 
 			if (message.Content == "Ping")
-			{
 				await RespondAsync(Config.PingResponse ?? "Error");
-			}
 		}
 
 		protected override async Task MessageDeleted(IMessage message, ISocketMessageChannel channel)

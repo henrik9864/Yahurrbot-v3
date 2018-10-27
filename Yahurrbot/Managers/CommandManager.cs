@@ -178,11 +178,9 @@ namespace YahurrFramework.Managers
 
 		bool GetCommand(List<string> command, out YCommand savedCommand)
 		{
-			for (int i = 0; i < command.Count; i++)
+			for (int i = 1; i < command.Count; i++)
 			{
-				Console.WriteLine(i + 1);
-
-				if (savedCommands.TryGetValue(i + 1, out CommandNode node))
+				if (savedCommands.TryGetValue(i, out CommandNode node))
 				{
 					if (node.TryGetCommand(command, out savedCommand))
 						return true;

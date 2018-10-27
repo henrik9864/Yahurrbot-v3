@@ -23,7 +23,8 @@ namespace YahurrFramework.Commands
 		{
 			SavedCommands.Add(command);
 
-			Console.WriteLine($"Command {command.Name} added with structure {StructureLength} and pLength {ParameterLength}");
+			// Dont remove, this has come in handy way to many times
+			//Console.WriteLine($"Command {command.Name} added with structure {StructureLength} and pLength {ParameterLength}");
 		}
 
 		public bool TryGetCommand(List<string> command, out YCommand yCommand)
@@ -32,12 +33,8 @@ namespace YahurrFramework.Commands
 			{
 				yCommand = SavedCommands[i];
 
-				Console.WriteLine($"	Checking command {yCommand.Name}");
-
 				if (ValidateCommand(command, yCommand))
 					return true;
-
-				Console.WriteLine($"	Not valid");
 			}
 
 			yCommand = null;

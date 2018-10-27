@@ -97,6 +97,7 @@ namespace YahurrFramework
             await client.StopAsync().ConfigureAwait(false);
 
 			await LoggingManager.LogMessage(LogLevel.Message, "Goodbye.", "Shutdown").ConfigureAwait(false);
+			await Task.Delay(1000);
 		}
 
 		/// <summary>
@@ -271,7 +272,7 @@ namespace YahurrFramework
 		{
 			if (config == null)
 			{
-				Console.WriteLine($"{message.Timestamp.ToString("hh:mm:ss")}: {message.Message}");
+				Console.WriteLine($"{message.Timestamp.ToString("hh:mm:ss")} {message.Source}: {message.Message}");
 				return Task.CompletedTask;
 			}
 
@@ -281,7 +282,7 @@ namespace YahurrFramework
 			if (message.Exception != null && config.ThrowExceptions)
 				Console.WriteLine(message.Exception);
 			else
-				Console.WriteLine($"{message.Timestamp.ToString("HH:mm:ss")}: {message.Message}");
+				Console.WriteLine($"{message.Timestamp.ToString("HH:mm:ss")} {message.Source}: {message.Message}");
 
 			return Task.CompletedTask;
 		}

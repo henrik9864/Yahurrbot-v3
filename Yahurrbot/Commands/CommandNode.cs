@@ -38,10 +38,11 @@ namespace YahurrFramework.Commands
 			for (int i = 0; i <= pLength; i++)
 			{
 				if (savedCommands.TryGetValue(i, out CommandList list))
-					return list.TryGetCommand(command, out yCommand);
+				{
+					if (list.TryGetCommand(command, out yCommand))
+						return true;
+				}
 			}
-
-			Console.WriteLine("hmm");
 
 			yCommand = null;
 			return false;
@@ -51,10 +52,9 @@ namespace YahurrFramework.Commands
 		{
 			yCommand = new List<YCommand>();
 
-			for (int i = 0; i <= command.Count; i++)
+			foreach (var item in savedCommands)
 			{
-				if (savedCommands.TryGetValue(i, out CommandList list))
-					yCommand.AddRange(list.SavedCommands);
+				yCommand.AddRange(item.Value.SavedCommands);
 			}
 
 			return yCommand.Count > 0;
