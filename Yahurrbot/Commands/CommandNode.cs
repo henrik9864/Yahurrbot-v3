@@ -35,6 +35,8 @@ namespace YahurrFramework.Commands
 		{
 			int pLength = command.Count - StructureLength;
 
+			Console.WriteLine($"Plength: {pLength}");
+			
 			for (int i = 0; i <= pLength; i++)
 			{
 				if (savedCommands.TryGetValue(i, out CommandList list))

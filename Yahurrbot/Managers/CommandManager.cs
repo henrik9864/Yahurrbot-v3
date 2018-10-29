@@ -182,7 +182,7 @@ namespace YahurrFramework.Managers
 
 		bool GetCommand(List<string> command, out YCommand savedCommand)
 		{
-			for (int i = 1; i < command.Count; i++)
+			for (int i = 1; i <= command.Count; i++)
 			{
 				if (savedCommands.TryGetValue(i, out CommandNode node))
 				{

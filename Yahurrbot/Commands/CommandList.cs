@@ -54,12 +54,12 @@ namespace YahurrFramework.Commands
 
 		bool ValidateCommand(List<string> command, YCommand yCommand)
 		{
-			//Console.WriteLine($"Validating {yCommand.Name}");
-			//Console.WriteLine($"Structure length: {StructureLength}");
+			Console.WriteLine($"Validating {yCommand.Name}");
+			Console.WriteLine($"Structure length: {StructureLength}");
 			for (int i = 0; i < command.Count; i++)
 			{
-				//Console.WriteLine($"Index: {i}");
-				//Console.WriteLine($"	{command[i]}:{yCommand.Structure[i]}");
+				Console.WriteLine($"Index: {i}");
+				Console.WriteLine($"	{command[i]}:{yCommand.Structure[i]}");
 
 				if (i >= StructureLength)
 					return ValidateParams(command, yCommand);
@@ -68,25 +68,28 @@ namespace YahurrFramework.Commands
 					return false;
 			}
 
-			//Console.WriteLine("Valid");
+			Console.WriteLine("Valid");
 			
 			return true;
 		}
 
 		bool ValidateParams(List<string> command, YCommand yCommand)
 		{
+			Console.WriteLine("Parameters");
+
 			for (int i = 0; i < command.Count - ParameterLength; i++)
 			{
-				if (i > ParameterLength)
+				if (i >= ParameterLength)
 				{
 					if (yCommand.IsParam)
 						return true;
 					else
 						return false;
 				}
+
+				// type check here
 			}
 
-			// Type check here
 			return true;
 		}
 	}
