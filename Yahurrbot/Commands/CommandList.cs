@@ -24,7 +24,7 @@ namespace YahurrFramework.Commands
 			SavedCommands.Add(command);
 
 			// Dont remove, this has come in handy way to many times
-			//Console.WriteLine($"Command {command.Name} added with structure {StructureLength} and pLength {ParameterLength}");
+			Console.WriteLine($"Command {command.Name} added with structure {StructureLength} and pLength {ParameterLength}");
 		}
 
 		public bool TryGetCommand(List<string> command, out YCommand yCommand)
@@ -41,14 +41,52 @@ namespace YahurrFramework.Commands
 			return false;
 		}
 
+		public void TryGetCommands(List<string> command, ref List<YCommand> commands)
+		{
+			for (int i = 0; i < SavedCommands.Count; i++)
+			{
+				YCommand cmd = SavedCommands[i];
+
+				if (ValidateCommand(command, cmd))
+					commands.Add(cmd);
+			}
+		}
+
 		bool ValidateCommand(List<string> command, YCommand yCommand)
 		{
-			for (int i = 0; i < yCommand.Structure.Count; i++)
+			//Console.WriteLine($"Validating {yCommand.Name}");
+			//Console.WriteLine($"Structure length: {StructureLength}");
+			for (int i = 0; i < command.Count; i++)
 			{
-				if (yCommand.Structure[i] != command[i])
+				//Console.WriteLine($"Index: {i}");
+				//Console.WriteLine($"	{command[i]}:{yCommand.Structure[i]}");
+
+				if (i >= StructureLength)
+					return ValidateParams(command, yCommand);
+
+				if (command[i] != yCommand.Structure[i])
 					return false;
 			}
 
+			//Console.WriteLine("Valid");
+			
+			return true;
+		}
+
+		bool ValidateParams(List<string> command, YCommand yCommand)
+		{
+			for (int i = 0; i < command.Count - ParameterLength; i++)
+			{
+				if (i > ParameterLength)
+				{
+					if (yCommand.IsParam)
+						return true;
+					else
+						return false;
+				}
+			}
+
+			// Type check here
 			return true;
 		}
 	}

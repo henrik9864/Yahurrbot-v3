@@ -48,16 +48,12 @@ namespace YahurrFramework.Commands
 			return false;
 		}
 
-		public bool TryGetCommands(List<string> command, out List<YCommand> yCommand)
+		public void TryGetCommands(List<string> command, ref List<YCommand> foundCommands)
 		{
-			yCommand = new List<YCommand>();
-
-			foreach (var item in savedCommands)
+			foreach (var cmdList in savedCommands)
 			{
-				yCommand.AddRange(item.Value.SavedCommands);
+				cmdList.Value.TryGetCommands(command, ref foundCommands);
 			}
-
-			return yCommand.Count > 0;
 		}
 	}
 }

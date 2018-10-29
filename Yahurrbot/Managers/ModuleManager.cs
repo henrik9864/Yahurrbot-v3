@@ -58,7 +58,7 @@ namespace YahurrFramework.Managers
 				await LoadModules(Modules).ConfigureAwait(false);
 			}
 
-			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count}/{Modules.Count} module{(Modules.Count == 1 ? "" : "s")}...", "ModuleManager").ConfigureAwait(false);
+			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count}/{Modules.Count} module{(Modules.Count == 1 ? "" : "s")}", "ModuleManager").ConfigureAwait(false);
 		}
 
 		/// <summary>

@@ -110,8 +110,12 @@ namespace YahurrFramework
 				catch (Exception)
 				{
 					string userResponse = "```";
-					userResponse += $"Fatal error in command {name} see bot log for more info.";
-					await RespondAsync(userResponse + "```");
+					Random rng = new Random();
+
+					if (rng.Next(0, 101) == 69)
+						userResponse += $"oopsie Woopsie {name} did a fucky wucky!";
+					else
+						userResponse += $"Fatal error in command {name} see bot log for more info.";
 
 					throw;
 				}
@@ -213,7 +217,7 @@ namespace YahurrFramework
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
-		public T GetCannel<T>() where T : SocketGuildChannel
+		public T GetChannel<T>() where T : SocketGuildChannel
 		{
 			List<SocketGuildChannel> Users = (Guild as SocketGuild)?.Channels.ToList();
 			return Users.Find(a => typeof(T).IsAssignableFrom(a.GetType())) as T;

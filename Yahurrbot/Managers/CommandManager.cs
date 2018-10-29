@@ -16,6 +16,7 @@ namespace YahurrFramework.Managers
 	{
 		internal char CommandPrefix { get; }
 
+		int maxLength = 0;
 		Dictionary<int, CommandNode> savedCommands;
 
 		public CommandManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
@@ -31,6 +32,9 @@ namespace YahurrFramework.Managers
 		internal void AddCommand(YCommand command)
 		{
 			int structureLength = command.Structure.Count;
+
+			if (structureLength > maxLength)
+				maxLength = structureLength;
 
 			if (savedCommands.TryGetValue(structureLength, out CommandNode node))
 				node.Add(command);
@@ -193,11 +197,15 @@ namespace YahurrFramework.Managers
 
 		bool GetCommands(List<string> command, out List<YCommand> savedCommands)
 		{
-			if (this.savedCommands.TryGetValue(command.Count, out CommandNode node))
-				return node.TryGetCommands(command, out savedCommands);
+			List<YCommand> foundCommands = new List<YCommand>();
+			for (int i = 0; i <= maxLength; i++)
+			{
+				if (this.savedCommands.TryGetValue(i, out CommandNode node))
+					node.TryGetCommands(command, ref foundCommands);
+			}
 
-			savedCommands = null;
-			return false;
+			savedCommands = foundCommands;
+			return foundCommands.Count > 0;
 		}
 
 		#region Internal Command

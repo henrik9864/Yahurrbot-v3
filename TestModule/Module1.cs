@@ -90,7 +90,7 @@ namespace TestModule
 			throw new Exception("Nooo");
 		}
 
-		[Command("say")]
+		[Command("say", "something")]
 		public async void SaySomething()
 		{
 			await RespondAsync("Hello World!");
