@@ -115,28 +115,39 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		async Task<bool> RunCommand(SocketMessage context, List<string> command)
 		{
-			if (!GetCommand(command, out YCommand savedCommand))
-				await context.Channel.SendMessageAsync("Command not found.").ConfigureAwait(false);
-
-			// Check if user can run command
-			string reason = "";
-			if (!ValidateCommand(context, savedCommand, ref reason))
-			{
-				await context.Channel.SendMessageAsync(reason).ConfigureAwait(false);
-				return false;
-			}
-
 			try
 			{
-				await savedCommand.Invoke(command, new MethodContext(context)).ConfigureAwait(false);
-			}
-			catch (Exception ex)
-			{
-				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {savedCommand.Name}:", "ModuleManager").ConfigureAwait(false);
-				await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
-			}
+				if (!GetCommand(command, out YCommand savedCommand))
+				{
+					await context.Channel.SendMessageAsync("Command not found.").ConfigureAwait(false);
+					return false;
+				}
 
-			return true;
+				// Check if user can run command
+				string reason = "";
+				if (!ValidateCommand(context, savedCommand, ref reason))
+				{
+					await context.Channel.SendMessageAsync(reason).ConfigureAwait(false);
+					return false;
+				}
+
+				try
+				{
+					await savedCommand.Invoke(command, new MethodContext(context)).ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {savedCommand.Name}:", "ModuleManager").ConfigureAwait(false);
+					await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
+				}
+
+				return true;
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+				throw;
+			}
 		}
 
 		/// <summary>
@@ -182,7 +193,7 @@ namespace YahurrFramework.Managers
 
 		bool GetCommand(List<string> command, out YCommand savedCommand)
 		{
-			for (int i = 1; i <= command.Count; i++)
+			for (int i = 0; i <= command.Count; i++)
 			{
 				if (savedCommands.TryGetValue(i, out CommandNode node))
 				{

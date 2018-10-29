@@ -35,7 +35,7 @@ namespace YahurrFramework.Commands
 		{
 			int pLength = command.Count - StructureLength;
 
-			Console.WriteLine($"Plength: {pLength}");
+			//Console.WriteLine($"Plength: {pLength}");
 			
 			for (int i = 0; i <= pLength; i++)
 			{
