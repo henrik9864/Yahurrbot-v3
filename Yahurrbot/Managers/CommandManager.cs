@@ -9,6 +9,7 @@ using YahurrFramework;
 using YahurrFramework.Enums;
 using YahurrFramework.Attributes;
 using YahurrFramework.Commands;
+using System.Linq;
 
 namespace YahurrFramework.Managers
 {
@@ -91,7 +92,7 @@ namespace YahurrFramework.Managers
 			switch (command[0])
 			{
 				case "help":
-					succsess = HelpCommand(command, ref output) ? 1 : 0;
+					succsess = HelpCommand(command, 6, ref output) ? 1 : 0;
 					break;
 			}
 
@@ -124,7 +125,7 @@ namespace YahurrFramework.Managers
 				}
 
 				// Check if user can run command
-				string reason = "";
+				string reason = "You cannot run this command, unknown reason.";
 				if (!ValidateCommand(context, savedCommand, ref reason))
 				{
 					await context.Channel.SendMessageAsync(reason).ConfigureAwait(false);
@@ -206,210 +207,150 @@ namespace YahurrFramework.Managers
 			return false;
 		}
 
-		bool GetCommands(List<string> command, out List<YCommand> savedCommands)
+		bool GetCommands(List<string> command, bool	validate, out List<YCommand> savedCommands)
 		{
 			List<YCommand> foundCommands = new List<YCommand>();
 			for (int i = 0; i <= maxLength; i++)
 			{
 				if (this.savedCommands.TryGetValue(i, out CommandNode node))
-					node.TryGetCommands(command, ref foundCommands);
+					node.TryGetCommands(command, validate, ref foundCommands);
 			}
 
 			savedCommands = foundCommands;
 			return foundCommands.Count > 0;
 		}
 
-		#region Internal Command
+		#region Internal Commands
 
-		bool HelpCommand(List<string> command, ref string output)
+		/// <summary>
+		/// Run help command
+		/// </summary>
+		/// <param name="command"></param>
+		/// <param name="perPage"></param>
+		/// <param name="output"></param>
+		/// <returns></returns>
+		bool HelpCommand(List<string> command, int perPage, ref string output)
+		{
+			int page = 1; // Starts with one cus user prefernce
+			if (command.Count == 1 || int.TryParse(command[1], out page))
+			{
+				if (page < 1)
+					page = 1;
+
+				GetCommands(command, false, out List<YCommand> savedCommands);
+				// Lets just not touch this anymore
+				List<YCommand> selectedCommands = savedCommands.Where((_, i) => i < page * perPage && i >= (page - 1) * perPage).ToList();
+
+				output = "```";
+				output += "!help <page> -- To change page.\n";
+				output += "!help <command> -- To view a command or module in more detail.\n\n";
+				output += $"Page {page}:\n";
+
+				foreach (YCommand cmd in selectedCommands)
+				{
+					string name = string.Join(' ', cmd.Structure);
+
+					output += $"	!{name}\n";
+				}
+
+				output += "```";
+
+				return true;
+			}
+
+			return HelpSpecificCommand(command, ref output);
+		}
+
+		/// <summary>
+		/// Find specefied command and display detail view of that command.
+		/// </summary>
+		/// <param name="command"></param>
+		/// <param name="output"></param>
+		/// <returns></returns>
+		bool HelpSpecificCommand(List<string> command, ref string output)
 		{
 			command.RemoveAt(0);
 
-			if (!GetCommands(command, out List<YCommand> savedCommands))
+			if (!GetCommands(command, true, out List<YCommand> savedCommands))
 				return false;
 
-			output = "```";
-			output += $"{savedCommands.Count} command{(savedCommands.Count==1?"":"s")} found.\n";
-
-			foreach (var cmd in savedCommands)
+			if (savedCommands.Count == 1)
 			{
-				output += $"	{cmd.Name}\n";
+				return DisplayCommand(savedCommands[0], ref output);
+			}
+			else if (savedCommands.Count > 1)
+			{
+				output = "```";
+				output += $"{savedCommands.Count} command{(savedCommands.Count == 1 ? "" : "s")} found, please be more spesific\n";
+
+				foreach (YCommand cmd in savedCommands)
+				{
+					string name = string.Join(' ', cmd.Structure);
+
+					output += $"	!{name}\n";
+				}
+
+				output += "```";
+			}
+			else
+			{
+				output = "```";
+				output += "No commands found with that structure.";
+				output += "```";
 			}
 
-			output += "```";
 			return true;
-		}
-
-		#endregion
-
-		// Need to fix
-		/*
-
-		// Commands hardcoded into the bot.
-		#region InternalCommands
-		
-		/// <summary>
-		/// Start help command.
-		/// </summary>
-		/// <param name="commands"></param>
-		/// <returns></returns>
-		string HelpCommand(List<string> commands)
-		{
-			if (commands.Count == 1)
-				return HelpAllCommand(0, 3);
-
-			int page;
-			bool succsess = int.TryParse(commands[1], out page);
-
-			if (succsess && page > 0)
-				return HelpAllCommand(page - 1, 3);
-			else
-				return HelpDetailCommand(commands);
-		}
-
-		/// <summary>
-		/// Creats a string showing all commands for all modules
-		/// </summary>
-		/// <param name="commands"></param>
-		/// <returns></returns>
-		string HelpAllCommand(int page, int perPage)
-		{
-			int index = 0;
-			string output = "```";
-			output += "!help <page> -- View all commands sorted by module.\n";
-			output += "!help <command|module> <module> -- To view a command or module in more detail.\n\n";
-			output += "List of all commands by module:\n\n";
-
-			foreach (var moduleList in sortedCommands)
-			{
-				if (index/perPage < page)
-					continue;
-
-				output += $"{moduleList.Key.Name}:\n";
-
-				for (int i = 0; i < moduleList.Value.Count; i++)
-				{
-					YahurrCommand cmd = moduleList.Value[i];
-					string cmdString = "	";
-
-					cmd.Structure.ForEach(a => cmdString += $"{a} ");
-					cmd.Parameters.ForEach(a => cmdString += $"<{TypeToShorthand(a.Type.Name).ToLower()}> ");
-					cmdString += $"--- {cmd.Summary}\n";
-
-					output += cmdString;
-				}
-
-				index++;
-			}
-
-			return output + "```";
-		}
-
-		/// <summary>
-		/// Display detailed view of command or module.
-		/// </summary>
-		/// <param name="commands"></param>
-		/// <returns></returns>
-		string HelpDetailCommand(List<string> commands)
-		{
-			string name = commands[1];
-
-			if (this.savedCommands.TryGetValue(name, out SavedCommand savedCommand))
-			{
-				commands.RemoveRange(0, 1);
-				List<YahurrCommand> cmds = savedCommand.GetCommands(commands);
-				int index = 1;
-
-				if (cmds.Count > 1 && !int.TryParse(commands[commands.Count - 1], out index))
-				{
-					string output = "```";
-
-					output += "Multiple results found please specify by adding an index at the end of the command.\n";
-					output += "Commands found:\n";
-
-					for (int i = 0; i < cmds.Count; i++)
-					{
-						YahurrCommand cmd = cmds[i];
-						output += $"{DisplayCommandSmall(cmd)}\n";
-					}
-
-					return output + "```";
-				}
-
-				// Convert from natural number
-				index--;
-				if (cmds.Count > 1 && (index < 0 || index >= cmds.Count))
-				{
-					return "```Invalid index!```";
-				}
-
-				return DisplayCommand(cmds[index]);
-			}
-			else
-			{
-				YModule module = Bot.ModuleManager.LoadedModules.Find(a => a.Name == commands[1]);
-				return DisplayModule(module);
-			}
 		}
 
 		/// <summary>
 		/// Display detailed view of command.
 		/// </summary>
-		/// <param name="command">Command to display</param>
+		/// <param name="command"></param>
+		/// <param name="output"></param>
 		/// <returns></returns>
-		string DisplayCommand(YahurrCommand command)
+		bool DisplayCommand(YCommand command, ref string output)
 		{
-			string output = "```";
+			string joinedParams = ConcatParameters(command);
+			string joinedName = string.Join(' ', command.Structure);
+			string commandSummary = !string.IsNullOrWhiteSpace(command.Summary) ? command.Summary + "\n" : "No description.\n";
 
-			output += $"Child command of {command.Module.Name}:\n";
-			command.Structure.ForEach(a => output += $"{a} ");
-			command.Parameters.ForEach(a => output += $"<{TypeToShorthand(a.Type.Name).ToLower()}> ");
-			output += $" -- {command.Summary}";
-			command.Parameters.ForEach(a => output += $"\n	<{(a.IsParam ? "params " : "")}{(a.IsOptional ? "?" : "")}{TypeToShorthand(a.Type.Name).ToLower()}> -- {a.Summary ?? a.Name ?? "Not defined."}");
+			output = "```";
+			output += $"{command.Name}:\n";
+			output += commandSummary;
+			output += $"	!{joinedName} {joinedParams}\n";
 
-			return output + "```";
+			for (int i = 0; i < command.Parameters.Count; i++)
+			{
+				YParameter parameter = command.Parameters[i];
+				string parameterSummary = parameter.Summary == null ? "No description." : parameter.Summary;
+
+				output += $"	 - {parameter.Name},	{parameterSummary}\n";
+			}
+
+			output += "```";
+
+			return true;
 		}
 
 		/// <summary>
-		/// Display one line version of command.
+		/// Converts yCommand parameters into one continious string.
 		/// </summary>
 		/// <param name="command"></param>
 		/// <returns></returns>
-		string DisplayCommandSmall(YahurrCommand command)
+		string ConcatParameters(YCommand command)
 		{
 			string output = "";
 
-			command.Structure.ForEach(a => output += $"{a} ");
-			command.Parameters.ForEach(a => output += $"<{TypeToShorthand(a.Type.Name).ToLower()}> ");
-			output += $" -- {command.Summary}";
-
-			return output;
-		}
-
-		/// <summary>
-		/// Display detailed view of module.
-		/// </summary>
-		/// <param name="module">Module to display</param>
-		/// <returns></returns>
-		string DisplayModule(YModule module)
-		{
-			string output = "```";
-			output += $"{module.Name}:\n";
-
-			List<YahurrCommand> modules = sortedCommands[module];
-			for (int i = 0; i < modules.Count; i++)
+			for (int i = 0; i < command.Parameters.Count; i++)
 			{
-				YahurrCommand cmd = modules[i];
-				string cmdString = "	";
+				YParameter parameter = command.Parameters[i];
+				string hasParam = parameter.IsParam ? "params " : "";
+				string shorthandType = TypeToShorthand(parameter.Type.Name).ToLower();
 
-				cmd.Structure.ForEach(a => cmdString += $"{a} ");
-				cmd.Parameters.ForEach(a => cmdString += $"<{TypeToShorthand(a.Type.Name).ToLower()}> ");
-				cmdString += $"--- {cmd.Summary}\n";
-
-				output += cmdString;
+				output += $"<{hasParam}{shorthandType} {parameter.Name.ToLower()}> ";
 			}
 
-			return output + "```";
+			return output;
 		}
 
 		/// <summary>
@@ -431,7 +372,5 @@ namespace YahurrFramework.Managers
 		}
 
 		#endregion
-
-		*/
 	}
 }

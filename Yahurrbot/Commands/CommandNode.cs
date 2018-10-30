@@ -35,8 +35,6 @@ namespace YahurrFramework.Commands
 		{
 			int pLength = command.Count - StructureLength;
 
-			//Console.WriteLine($"Plength: {pLength}");
-			
 			for (int i = 0; i <= pLength; i++)
 			{
 				if (savedCommands.TryGetValue(i, out CommandList list))
@@ -50,11 +48,11 @@ namespace YahurrFramework.Commands
 			return false;
 		}
 
-		public void TryGetCommands(List<string> command, ref List<YCommand> foundCommands)
+		public void TryGetCommands(List<string> command, bool validate, ref List<YCommand> foundCommands)
 		{
 			foreach (var cmdList in savedCommands)
 			{
-				cmdList.Value.TryGetCommands(command, ref foundCommands);
+				cmdList.Value.TryGetCommands(command, validate, ref foundCommands);
 			}
 		}
 	}

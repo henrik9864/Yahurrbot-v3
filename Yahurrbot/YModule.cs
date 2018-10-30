@@ -317,7 +317,7 @@ namespace YahurrFramework
 		{
 			var tcs = new TaskCompletionSource<SocketMessage>();
 			Bot.EventManager.ResponseEvents.Add(tcs);
-
+			
 			return tcs.Task;
 		}
 

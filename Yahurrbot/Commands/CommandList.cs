@@ -41,47 +41,35 @@ namespace YahurrFramework.Commands
 			return false;
 		}
 
-		public void TryGetCommands(List<string> command, ref List<YCommand> commands)
+		public void TryGetCommands(List<string> command, bool validate, ref List<YCommand> commands)
 		{
 			for (int i = 0; i < SavedCommands.Count; i++)
 			{
 				YCommand cmd = SavedCommands[i];
 
-				if (ValidateCommand(command, cmd))
+				if (!validate || ValidateCommand(command, cmd))
 					commands.Add(cmd);
-
 			}
 		}
 
 		bool ValidateCommand(List<string> command, YCommand yCommand)
 		{
-			//Console.WriteLine($"Validating {yCommand.Name}");
-			//Console.WriteLine($"Structure length: {StructureLength}");
 			for (int i = 0; i < command.Count; i++)
 			{
 				if (i >= StructureLength)
 					return ValidateParams(command, yCommand);
 
-				//Console.WriteLine($"Index: {i}");
-				//Console.WriteLine($"	{command[i]}:{yCommand.Structure[i]}");
-
 				if (command[i] != yCommand.Structure[i])
 					return false;
 			}
 
-			//Console.WriteLine("Valid");
-			
 			return true;
 		}
 
 		bool ValidateParams(List<string> command, YCommand yCommand)
 		{
-			//Console.WriteLine("Parameters");
-
 			for (int i = 0; i < command.Count - ParameterLength - 1; i++)
 			{
-				Console.WriteLine($"Index {i}: {yCommand.Parameters[i]}");
-
 				if (i >= ParameterLength)
 				{
 					if (yCommand.IsParam)
@@ -92,8 +80,6 @@ namespace YahurrFramework.Commands
 
 				// type check here
 			}
-
-			//Console.WriteLine("Valid");
 
 			return true;
 		}

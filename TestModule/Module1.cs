@@ -63,7 +63,7 @@ namespace TestModule
 			await RespondAsync(number.ToString()).ConfigureAwait(false);
 		}
 
-		[Command("print", "string"), Summary("Prints a string.")]
+		[Command("print", "string"), Summary("Prints a string."), Name("Print String")]
 		public async Task SayString([Summary("String to print")]string str)
 		{
 			await RespondAsync(str).ConfigureAwait(false);
@@ -72,9 +72,9 @@ namespace TestModule
 		[ChannelFilter(FilterType.Blacklist, 293381166365540353)]
 		[RoleFilter(FilterType.Whitelist, 288627464450736128)]
 		[Command("add"), Summary("Adds two numbers together.")]
-		public async Task AddInt([Summary("Number 1.")]int n1, [Summary("Number 2.")]int n2)
+		public async Task AddInt([Summary("Number 1."), Name("Number1")]int n1, [Summary("Number 2.")]int Number2)
 		{
-			await RespondAsync((n1 * n2).ToString()).ConfigureAwait(false);
+			await RespondAsync((n1 * Number2).ToString()).ConfigureAwait(false);
 		}
 
 		[Command("param"), Summary("Parameter test")]

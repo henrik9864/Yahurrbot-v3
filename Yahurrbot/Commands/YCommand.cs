@@ -11,6 +11,8 @@ namespace YahurrFramework.Commands
 	{
 		public string Name { get; }
 
+		public string Summary { get; }
+
 		public List<string> Structure { get; }
 
 		public List<YParameter> Parameters { get; }
@@ -19,20 +21,24 @@ namespace YahurrFramework.Commands
 
 		public bool IsDM { get; }
 
-		YModule module;
+		public YModule Parent { get; }
+
 		MemberInfo method;
 
 		public YCommand(MethodInfo method, YModule module)
 		{
 			Command command = method.GetCustomAttribute<Command>();
+			Summary summary = method.GetCustomAttribute<Summary>();
+			Name name = method.GetCustomAttribute<Name>();
 			ParameterInfo[] parameters = method.GetParameters();
 
 			Structure = command.CommandStructure;
 			Parameters = new List<YParameter>();
 			IsParam = false;
 			IsDM = command.IsDM;
-			Name = method.Name;
-			this.module = module;
+			Name = name?.Value ?? method.Name;
+			Summary = summary?.Value;
+			this.Parent = module;
 			this.method = method;
 
 			for (int i = 0; i < parameters.Length; i++)
@@ -79,8 +85,8 @@ namespace YahurrFramework.Commands
 				formattedParameters[i] = command[i];
 			}
 
-			module.SetContext(context);
-			await module.RunMethod(Name, formattedParameters);
+			Parent.SetContext(context);
+			await Parent.RunMethod(Name, formattedParameters);
 		}
 
 		bool TryParseParameter(Type type, string param, out object parsed)
