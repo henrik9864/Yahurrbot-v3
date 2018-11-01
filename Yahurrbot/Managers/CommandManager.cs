@@ -63,8 +63,6 @@ namespace YahurrFramework.Managers
 			if (!TryFindCommand(command.Content, out string msg))
 				return false;
 
-			Console.WriteLine(msg);
-
 			List<string> cmd = new List<string>();
 			cmd.AddRange(msg.Split(' '));
 
