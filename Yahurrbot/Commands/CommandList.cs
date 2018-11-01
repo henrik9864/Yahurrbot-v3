@@ -27,18 +27,25 @@ namespace YahurrFramework.Commands
 			//Console.WriteLine($"Command {command.Name} added with structure {StructureLength} and pLength {ParameterLength}");
 		}
 
-		public bool TryGetCommand(List<string> command, out YCommand yCommand)
+		public int TryGetCommand(List<string> command, out YCommand yCommand)
 		{
+			int best = -1;
+			YCommand bestCommand = null;
+
 			for (int i = 0; i < SavedCommands.Count; i++)
 			{
-				yCommand = SavedCommands[i];
+				YCommand cmd = SavedCommands[i];
 
-				if (ValidateCommand(command, yCommand))
-					return true;
+				int match = ValidateCommand(command, cmd);
+				if (match > best)
+				{
+					bestCommand = cmd;
+					best = match;
+				}
 			}
 
-			yCommand = null;
-			return false;
+			yCommand = bestCommand;
+			return best;
 		}
 
 		public void TryGetCommands(List<string> command, bool validate, ref List<YCommand> commands)
@@ -47,23 +54,25 @@ namespace YahurrFramework.Commands
 			{
 				YCommand cmd = SavedCommands[i];
 
-				if (!validate || ValidateCommand(command, cmd))
+				int match = ValidateCommand(command, cmd);
+				if (!validate || match > 0)
 					commands.Add(cmd);
 			}
 		}
 
-		bool ValidateCommand(List<string> command, YCommand yCommand)
+		int ValidateCommand(List<string> command, YCommand yCommand)
 		{
-			for (int i = 0; i < command.Count; i++)
+			int i = 0;
+			for (i = 0; i < command.Count; i++)
 			{
 				if (i >= StructureLength)
-					return ValidateParams(command, yCommand);
+					return ValidateParams(command, yCommand) ? StructureLength : -1;
 
 				if (command[i] != yCommand.Structure[i])
-					return false;
+					return -1;
 			}
 
-			return true;
+			return i;
 		}
 
 		bool ValidateParams(List<string> command, YCommand yCommand)

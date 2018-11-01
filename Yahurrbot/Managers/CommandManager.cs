@@ -58,13 +58,12 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="command"></param>
 		/// <returns></returns>
-		internal async Task<bool> RunCommand(SocketMessage command)
+		internal async Task<bool> RunMessageCommand(SocketMessage command)
 		{
-			string msg = command.Content;
-			if (msg[0] != CommandPrefix)
+			if (!TryFindCommand(command.Content, out string msg))
 				return false;
-			else
-				msg = msg.Substring(1);
+
+			Console.WriteLine(msg);
 
 			List<string> cmd = new List<string>();
 			cmd.AddRange(msg.Split(' '));
@@ -194,17 +193,25 @@ namespace YahurrFramework.Managers
 
 		bool GetCommand(List<string> command, out YCommand savedCommand)
 		{
+			int best = -1;
+			YCommand bestCommand = null;
+
 			for (int i = 0; i <= command.Count; i++)
 			{
 				if (savedCommands.TryGetValue(i, out CommandNode node))
 				{
-					if (node.TryGetCommand(command, out savedCommand))
-						return true;
+					int match = node.TryGetCommand(command, out YCommand cmd);
+					
+					if (match > best)
+					{
+						bestCommand = cmd;
+						best = match;
+					}
 				}
 			}
 
-			savedCommand = null;
-			return false;
+			savedCommand = bestCommand;
+			return best != -1;
 		}
 
 		bool GetCommands(List<string> command, bool	validate, out List<YCommand> savedCommands)
@@ -218,6 +225,33 @@ namespace YahurrFramework.Managers
 
 			savedCommands = foundCommands;
 			return foundCommands.Count > 0;
+		}
+
+		bool TryFindCommand(string message, out string command)
+		{
+			if (message[0] == CommandPrefix)
+			{
+				command = message.Substring(1);
+				return true;
+			}
+
+			int bracketStart = message.IndexOf('{');
+			if (bracketStart > -1)
+			{
+				int bracketEnd = message.IndexOf('}');
+
+				if (bracketEnd > -1)
+				{
+					command = message.Substring(bracketStart + 1, bracketEnd - bracketStart - 1);
+					if (command[0] == CommandPrefix)
+						command = command.Substring(1);
+
+					return true;
+				}
+			}
+
+			command = null;
+			return false;
 		}
 
 		#region Internal Commands

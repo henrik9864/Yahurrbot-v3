@@ -86,7 +86,7 @@ namespace YahurrFramework.Commands
 			}
 
 			Parent.SetContext(context);
-			await Parent.RunMethod(Name, formattedParameters);
+			await Parent.RunMethod(method.Name, formattedParameters);
 		}
 
 		bool TryParseParameter(Type type, string param, out object parsed)

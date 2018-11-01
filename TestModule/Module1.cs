@@ -90,6 +90,19 @@ namespace TestModule
 			throw new Exception("Nooo");
 		}
 
+		[Command("param", "noe"), Summary("Parameter test")]
+		public async Task ParamTest1(params string[] strs)
+		{
+			await RespondAsync("Length: " + strs.Length).ConfigureAwait(false);
+
+			foreach (var item in strs)
+			{
+				await RespondAsync("	" + item).ConfigureAwait(false);
+			}
+
+			throw new Exception("Nooo");
+		}
+
 		[Command("say", "something")]
 		public async void SaySomething()
 		{

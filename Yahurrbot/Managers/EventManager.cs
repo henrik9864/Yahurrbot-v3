@@ -129,7 +129,7 @@ namespace YahurrFramework.Managers
 			switch (name)
 			{
 				case "MessageReceived":
-					await Bot.CommandManager.RunCommand(paremeters[0] as SocketMessage).ConfigureAwait(false);
+					await Bot.CommandManager.RunMessageCommand(paremeters[0] as SocketMessage).ConfigureAwait(false);
 					break;
 			}
 		}

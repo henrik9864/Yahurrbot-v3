@@ -18,34 +18,41 @@ namespace YahurrFramework.Commands
 
 		public void Add(YCommand command)
 		{
-			int parameterLength = command.Parameters.Count;
+			int pLength = command.Parameters.Count;
 
-			if (savedCommands.TryGetValue(parameterLength, out CommandList list))
+			if (savedCommands.TryGetValue(pLength, out CommandList list))
 				list.Add(command);
 			else
 			{
-				list = new CommandList(StructureLength, parameterLength);
+				list = new CommandList(StructureLength, pLength);
 				list.Add(command);
 
-				savedCommands.Add(parameterLength, list);
+				savedCommands.Add(pLength, list);
 			}
 		}
 
-		public bool TryGetCommand(List<string> command, out YCommand yCommand)
+		public int TryGetCommand(List<string> command, out YCommand yCommand)
 		{
 			int pLength = command.Count - StructureLength;
+			int best = -1;
+			YCommand bestCommand = null;
 
 			for (int i = 0; i <= pLength; i++)
 			{
 				if (savedCommands.TryGetValue(i, out CommandList list))
 				{
-					if (list.TryGetCommand(command, out yCommand))
-						return true;
+					int match = list.TryGetCommand(command, out YCommand cmd);
+
+					if (match > best)
+					{
+						bestCommand = cmd;
+						best = match;
+					}
 				}
 			}
 
-			yCommand = null;
-			return false;
+			yCommand = bestCommand;
+			return best;
 		}
 
 		public void TryGetCommands(List<string> command, bool validate, ref List<YCommand> foundCommands)
