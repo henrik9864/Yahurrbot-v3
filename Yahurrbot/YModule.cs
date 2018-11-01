@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Http;
 using YahurrBot.Enums;
 using YahurrFramework.Attributes;
 using YahurrFramework.Enums;
@@ -37,6 +38,14 @@ namespace YahurrFramework
 		}
 
 		protected DiscordSocketClient Client { get; private set; }
+
+		protected HttpClient WebClient
+		{
+			get
+			{
+				return Bot.HttpClient;
+			}
+		}
 
 		protected object Config { get; private set; }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
@@ -26,6 +27,8 @@ namespace YahurrFramework
 		public string Version { get; } = "1.1.0";
 
 		internal ClientConfig Config { get; private set; } = new ClientConfig();
+
+		internal HttpClient HttpClient { get; private set; } = new HttpClient();
 
 		internal ModuleManager ModuleManager { get; }
 
