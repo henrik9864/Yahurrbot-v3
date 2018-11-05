@@ -82,7 +82,7 @@ namespace YahurrFramework
 			await ModuleManager.InitializeModules().ConfigureAwait(false);
 
 			// Continue this as main loop.
-			await LoggingManager.LogMessage(LogLevel.Message, $"Done", "Startup").ConfigureAwait(false);
+			await LoggingManager.LogMessage(LogLevel.Message, $"Complete.", "Startup").ConfigureAwait(false);
 
 			// Run command and main loop
 			return await CommandLoop().ConfigureAwait(false);

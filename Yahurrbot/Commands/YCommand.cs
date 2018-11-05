@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
@@ -54,35 +55,31 @@ namespace YahurrFramework.Commands
 
 		internal async Task Invoke(List<string> command, MethodContext context)
 		{
-			command.RemoveRange(0, Structure.Count);
+			command.RemoveRange(0, Structure.Count); // Remove uneded structure part of command
 			object[] formattedParameters = new object[Parameters.Count];
 
 			for (int i = 0; i < Parameters.Count; i++)
 			{
 				YParameter parameter = Parameters[i];
 
-				if (i >= command.Count || command[i] == null && parameter.IsOptional)
+				if (i >= command.Count || (command[i] == null && parameter.IsOptional))
 					formattedParameters[i] = parameter.HasDefault ? parameter.Default : null;
 
 				if (parameter.IsParam)
 				{
 					Type indexType = parameter.Type.GetElementType();
-					object[] param = (object[])Activator.CreateInstance(parameter.Type, new object[] { command.Count - i });//new string[command.Count - i];
+					object[] param = (object[])Activator.CreateInstance(parameter.Type, new object[] { command.Count - i });
 
 					for (int a = 0; a < command.Count - i; a++)
 					{
-						param[a] = command[i + a];
-						//bool succsess = TryParseParameter(indexType, command[i + a], out param[a]);
-
-						//if (!succsess)
-						//	throw new InvalidCastException($"Cannot convert {command[i + a]} to {indexType.Name}");
+						param[a] = JsonConvert.DeserializeObject(command[i + a], indexType);
 					}
 
 					formattedParameters[i] = param;
 					break;
 				}
 
-				formattedParameters[i] = command[i];
+				formattedParameters[i] = JsonConvert.DeserializeObject(command[i], parameter.Type);
 			}
 
 			Parent.SetContext(context);
