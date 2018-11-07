@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using YahurrBot.Interfaces;
 using YahurrFramework.Attributes;
 
 namespace YahurrFramework.Commands
@@ -71,41 +72,52 @@ namespace YahurrFramework.Commands
 					object[] param = (object[])Activator.CreateInstance(parameter.Type, new object[] { command.Count - i });
 
 					for (int a = 0; a < command.Count - i; a++)
-					{
-						param[a] = JsonConvert.DeserializeObject(command[i + a], indexType);
-					}
+						param[a] = ParseParameter(command[i + a], indexType);
+						//param[a] = JsonConvert.DeserializeObject(command[i + a], indexType);
 
 					formattedParameters[i] = param;
 					break;
 				}
 
-				formattedParameters[i] = JsonConvert.DeserializeObject(command[i], parameter.Type);
+				//formattedParameters[i] = JsonConvert.DeserializeObject(command[i], parameter.Type);
+				formattedParameters[i] = ParseParameter(command[i], parameter.Type);
 			}
 
 			Parent.SetContext(context);
 			await Parent.RunMethod(method.Name, formattedParameters);
 		}
 
-		bool TryParseParameter(Type type, string param, out object parsed)
+		object ParseParameter(string param, Type paramType)
 		{
-			int intParsed = 0;
-			object objParsed = null;
-			var @switch = new Dictionary<Type, Func<string, bool>>
-			{
-				{ typeof(int), m => int.TryParse(m, out intParsed) },
-			};
+			if (int.TryParse(param, out int result))
+				return result;
 
-			if (@switch.TryGetValue(type, out Func<string, bool> func))
+			if (bool.TryParse(param, out bool boolResult))
+				return result;
+
+			if (typeof(Enum).IsAssignableFrom(paramType))
 			{
-				if (func(param))
+				object enumResult = null;
+				Enum.TryParse(paramType, param, out enumResult);
+
+				return enumResult;
+			}
+			else if(typeof(IParseable).IsAssignableFrom(paramType))
+			{
+				try
 				{
-					parsed = objParsed ?? intParsed;
-					return true;
+					IParseable obj = (IParseable)Activator.CreateInstance(paramType);
+					obj.Parse(param);
+
+					return obj;
+				}
+				catch (Exception)
+				{
+					return null;
 				}
 			}
 
-			parsed = objParsed;
-			return false;
+			return param;
 		}
 
 		internal T GetAttribute<T>(bool inherit) where T : Attribute

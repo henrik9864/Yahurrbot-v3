@@ -252,12 +252,33 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public T GetChannel<T>(string name, bool partial) where T : SocketGuildChannel
 		{
+			if (TryParseIdentefier(name, out ulong id))
+				return GetChannel<T>(id);
+
 			List<SocketGuildChannel> Users = (Guild as SocketGuild)?.Channels.ToList();
 
 			if (!partial)
 				return Users.Find(a => a.Name == name && typeof(T).IsAssignableFrom(a.GetType())) as T;
 			else
 				return Users.Find(a => a?.Name?.Contains(name) ?? false && typeof(T).IsAssignableFrom(a.GetType())) as T;
+		}
+
+		bool TryParseIdentefier(string identefier, out ulong id)
+		{
+			if (identefier[0] == '<' && identefier[identefier.Length - 1] == '>')
+			{
+				char second = identefier[2];
+
+				if (!char.IsDigit(second))
+					identefier = identefier.Substring(3, identefier.Length - 4);
+				else
+					identefier = identefier.Substring(2, identefier.Length - 3);
+
+				return ulong.TryParse(identefier, out id);
+			}
+
+			id = 0;
+			return false;
 		}
 
 		#endregion
