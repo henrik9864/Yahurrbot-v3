@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 
 namespace YahurrFramework.Managers
 {
-    internal class BaseManager
+	internal class BaseManager
     {
 		protected YahurrBot Bot { get; }
 

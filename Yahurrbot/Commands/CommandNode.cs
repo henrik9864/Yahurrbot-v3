@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 
 namespace YahurrFramework.Commands
 {
@@ -55,11 +53,11 @@ namespace YahurrFramework.Commands
 			return best;
 		}
 
-		public void TryGetCommands(List<string> command, bool validate, ref List<YCommand> foundCommands)
+		public void TryGetCommands(List<string> command, bool validate, bool validateParam, ref List<YCommand> foundCommands)
 		{
 			foreach (var cmdList in savedCommands)
 			{
-				cmdList.Value.TryGetCommands(command, validate, ref foundCommands);
+				cmdList.Value.TryGetCommands(command, validate, validateParam, ref foundCommands);
 			}
 		}
 	}

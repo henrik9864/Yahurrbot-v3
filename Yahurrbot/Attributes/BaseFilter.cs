@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using YahurrFramework.Enums;
 
 namespace YahurrFramework.Attributes
 {
-    public abstract class BaseFilter : Attribute
+	public abstract class BaseFilter : Attribute
     {
 		protected HashSet<ulong> IDs { get; }
 

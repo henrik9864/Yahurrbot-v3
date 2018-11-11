@@ -2,11 +2,8 @@
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
@@ -16,7 +13,7 @@ using YahurrFramework.Enums;
 
 namespace YahurrFramework
 {
-    public class YModule
+	public class YModule
     {
 		/// <summary>
 		/// Name of module.
@@ -167,6 +164,9 @@ namespace YahurrFramework
 		{
 			List<SocketGuildUser> Users = (Guild as SocketGuild)?.Users.ToList();
 
+			if (TryParseIdentefier(name, out ulong id))
+				return (Guild as SocketGuild).GetUser(id);
+
 			if (!partial)
 				return Users.Find(a => a.Nickname == name || a.Username == name);
 			else
@@ -198,6 +198,9 @@ namespace YahurrFramework
 		public SocketRole GetRole(string name, bool partial)
 		{
 			List<SocketRole> Users = (Guild as SocketGuild)?.Roles.ToList();
+
+			if (TryParseIdentefier(name, out ulong id))
+				return (Guild as SocketGuild).GetRole(id);
 
 			if (!partial)
 				return Users.Find(a => a.Name == name);

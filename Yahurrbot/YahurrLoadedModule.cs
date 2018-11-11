@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace YahurrFramework
+﻿namespace YahurrFramework
 {
-    public class YahurrLoadedModule
+	public class YahurrLoadedModule
     {
 		public YModule Module { get; }
 

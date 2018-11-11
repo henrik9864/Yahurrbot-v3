@@ -1,16 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
-using Newtonsoft.Json;
-using YahurrBot.Structs;
-using YahurrFramework.Structs;
 
 namespace YahurrFramework
 {
-    class Program
+	class Program
     {
         static void Main(string[] args)
         {

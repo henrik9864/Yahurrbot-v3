@@ -1,11 +1,8 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace YahurrFramework.Structs
 {
-    class ClientToken
+	class ClientToken
     {
 		public ulong ID { get; private set; }
 

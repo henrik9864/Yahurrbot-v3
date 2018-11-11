@@ -2,14 +2,12 @@
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using YahurrFramework.Attributes;
@@ -86,6 +84,7 @@ namespace YahurrFramework.Managers
 					}
 				}
 
+				module.SetContext(new MethodContext(Client.Guilds.FirstOrDefault(), null, null));
 				await module.InitModule().ConfigureAwait(false);
 			}
 		}

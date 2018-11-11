@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace YahurrBot.Enums
+﻿namespace YahurrBot.Enums
 {
-    public enum SerializationType
+	public enum SerializationType
     {
 		JSON,
     }

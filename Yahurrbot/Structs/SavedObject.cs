@@ -1,11 +1,6 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
-using Newtonsoft.Json.Schema.Generation;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using YahurrBot.Enums;
 using YahurrFramework;
@@ -13,7 +8,7 @@ using YahurrFramework.Managers;
 
 namespace YahurrBot.Structs
 {
-    internal class SavedObject
+	internal class SavedObject
     {
 		public string Name { get; private set; }
 

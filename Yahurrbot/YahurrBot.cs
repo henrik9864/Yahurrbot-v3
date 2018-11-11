@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -17,14 +16,14 @@ using YahurrFramework.Structs;
 
 namespace YahurrFramework
 {
-    public class YahurrBot
+	public class YahurrBot
     {
 		/// <summary>
 		/// What type of bot this is.
 		/// </summary>
 		public TokenType Type { get; } = TokenType.Bot;
 
-		public string Version { get; } = "1.1.0";
+		public string Version { get; } = "1.2.0";
 
 		internal ClientConfig Config { get; private set; } = new ClientConfig();
 
@@ -66,6 +65,11 @@ namespace YahurrFramework
 			// Run Yahurrbot startup
 			await LoggingManager.LogMessage(LogLevel.Message, $"Starting Yahurrbot v{Version}", "Startup").ConfigureAwait(false);
 			bool succsess = await StartupAsync().ConfigureAwait(false);
+
+			SemaphoreSlim signal = new SemaphoreSlim(0, 1);
+			client.GuildAvailable += async _ => { signal.Release(); await Task.CompletedTask; };
+
+			await signal.WaitAsync();
 
 			if (!succsess)
 				return ReturnCode.Error;
@@ -152,6 +156,8 @@ namespace YahurrFramework
 		/// <returns>If startup was sucsessfull</returns>
 		async Task<bool> StartupAsync()
 		{
+			Directory.CreateDirectory("Modules");
+
 			await LoggingManager.LogMessage(LogLevel.Message, $"Loading config...", "Startup").ConfigureAwait(false);
 			Config = await GetConfig("Config").ConfigureAwait(false);
 
@@ -213,10 +219,20 @@ namespace YahurrFramework
 		/// <returns></returns>
 		async Task<ClientConfig> GetConfig(string directory)
 		{
+			if (!Directory.Exists(directory))
+				Directory.CreateDirectory(directory);
+
 			string file = await GetFileOfType(directory, "*.json").ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(file))
-				return null;
+			{
+				ClientConfig config = new ClientConfig();
+
+				using (StreamWriter writer = File.CreateText($"{directory}/Config.json"))
+					await writer.WriteAsync(JsonConvert.SerializeObject(config));
+
+				return config;
+			}
 
 			using (StreamReader reader = new StreamReader(file))
 			{

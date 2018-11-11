@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace YahurrBot.Enums
+﻿namespace YahurrBot.Enums
 {
-    public enum ReturnCode
+	public enum ReturnCode
     {
 		Error = -1,
 		OK = 1,

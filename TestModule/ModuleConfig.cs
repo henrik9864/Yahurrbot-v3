@@ -1,11 +1,6 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TestModule
+﻿namespace TestModule
 {
-    public class ModuleConfig
+	public class ModuleConfig
     {
 		public string PingResponse { get; set; } = "Pingerino";
     }

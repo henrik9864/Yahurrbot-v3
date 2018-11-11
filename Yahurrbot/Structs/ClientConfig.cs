@@ -1,12 +1,9 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using YahurrFramework.Enums;
 
 namespace YahurrFramework.Structs
 {
-    internal class ClientConfig
+	internal class ClientConfig
     {
 		/// <summary>
 		/// At what level messages will start to be displayed.
@@ -18,18 +15,18 @@ namespace YahurrFramework.Structs
 		/// If the app will display whole exceptions.
 		/// </summary>
 		[JsonProperty]
-		public bool ThrowExceptions { get; private set; }
+		public bool ThrowExceptions { get; private set; } = true;
 
 		/// <summary>
 		/// Directory to look for token files.
 		/// </summary>
 		[JsonProperty]
-		public string TokenDirectory { get; private set; }
+		public string TokenDirectory { get; private set; } = "Tokens";
 
 		/// <summary>
 		/// Default token to use if it finds multiple.
 		/// </summary>
 		[JsonProperty]
-		public int DefaultTokenIndex { get; private set; } = -1;
+		public int DefaultTokenIndex { get; private set; } = 1;
 	}
 }

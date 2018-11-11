@@ -1,8 +1,6 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using YahurrBot.Interfaces;
 using YahurrFramework.Attributes;
@@ -73,13 +71,11 @@ namespace YahurrFramework.Commands
 
 					for (int a = 0; a < command.Count - i; a++)
 						param[a] = ParseParameter(command[i + a], indexType);
-						//param[a] = JsonConvert.DeserializeObject(command[i + a], indexType);
 
 					formattedParameters[i] = param;
 					break;
 				}
 
-				//formattedParameters[i] = JsonConvert.DeserializeObject(command[i], parameter.Type);
 				formattedParameters[i] = ParseParameter(command[i], parameter.Type);
 			}
 
@@ -89,10 +85,10 @@ namespace YahurrFramework.Commands
 
 		object ParseParameter(string param, Type paramType)
 		{
-			if (int.TryParse(param, out int result))
+			if (int.TryParse(param, out int result) && typeof(int).IsAssignableFrom(paramType))
 				return result;
 
-			if (bool.TryParse(param, out bool boolResult))
+			if (bool.TryParse(param, out bool boolResult) && typeof(bool).IsAssignableFrom(paramType))
 				return result;
 
 			if (typeof(Enum).IsAssignableFrom(paramType))
@@ -123,6 +119,11 @@ namespace YahurrFramework.Commands
 		internal T GetAttribute<T>(bool inherit) where T : Attribute
 		{
 			return method.GetCustomAttribute<T>(inherit);
+		}
+
+		internal T[] GetAttributes<T>(bool inherit) where T : Attribute
+		{
+			return (T[])method.GetCustomAttributes<T>(inherit);
 		}
 	}
 }

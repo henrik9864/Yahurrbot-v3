@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
-using System.Data.SqlClient;
 using Discord.WebSocket;
-using YahurrFramework;
 using YahurrFramework.Enums;
 using YahurrFramework.Attributes;
 using YahurrFramework.Commands;
@@ -89,7 +86,7 @@ namespace YahurrFramework.Managers
 			switch (command[0])
 			{
 				case "help":
-					succsess = HelpCommand(command, 6, ref output) ? 1 : 0;
+					succsess = HelpCommand(command, 20, ref output) ? 1 : 0;
 					break;
 			}
 
@@ -212,13 +209,13 @@ namespace YahurrFramework.Managers
 			return best != -1;
 		}
 
-		bool GetCommands(List<string> command, bool	validate, out List<YCommand> savedCommands)
+		bool GetCommands(List<string> command, bool	validate, bool validateParam, out List<YCommand> savedCommands)
 		{
 			List<YCommand> foundCommands = new List<YCommand>();
 			for (int i = 0; i <= maxLength; i++)
 			{
 				if (this.savedCommands.TryGetValue(i, out CommandNode node))
-					node.TryGetCommands(command, validate, ref foundCommands);
+					node.TryGetCommands(command, validate, validateParam, ref foundCommands);
 			}
 
 			savedCommands = foundCommands;
@@ -269,20 +266,20 @@ namespace YahurrFramework.Managers
 				if (page < 1)
 					page = 1;
 
-				GetCommands(command, false, out List<YCommand> savedCommands);
+				GetCommands(command, false, false, out List<YCommand> savedCommands);
 				// Lets just not touch this anymore
 				List<YCommand> selectedCommands = savedCommands.Where((_, i) => i < page * perPage && i >= (page - 1) * perPage).ToList();
 
 				output = "```";
 				output += "!help <page> -- To change page.\n";
 				output += "!help <command> -- To view a command or module in more detail.\n\n";
-				output += $"Page {page}:\n";
+				output += $"Page {page}/{Math.Ceiling(savedCommands.Count / (decimal)perPage)}:\n";
 
 				foreach (YCommand cmd in selectedCommands)
 				{
 					string name = string.Join(' ', cmd.Structure);
 
-					output += $"	!{name}\n";
+					output += $"	!{name} -- {cmd.Summary ?? "No description."}\n";
 				}
 
 				output += "```";
@@ -303,7 +300,7 @@ namespace YahurrFramework.Managers
 		{
 			command.RemoveAt(0);
 
-			if (!GetCommands(command, true, out List<YCommand> savedCommands))
+			if (!GetCommands(command, true, false, out List<YCommand> savedCommands))
 				return false;
 
 			if (savedCommands.Count == 1)
@@ -342,12 +339,13 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		bool DisplayCommand(YCommand command, ref string output)
 		{
+			Example[] examples = command.GetAttributes<Example>(true);
 			string joinedParams = ConcatParameters(command);
 			string joinedName = string.Join(' ', command.Structure);
 			string commandSummary = !string.IsNullOrWhiteSpace(command.Summary) ? command.Summary + "\n" : "No description.\n";
 
 			output = "```";
-			output += $"{command.Name}:\n";
+			output += $"{command.Name} command:\n";
 			output += commandSummary;
 			output += $"	!{joinedName} {joinedParams}\n";
 
@@ -356,7 +354,17 @@ namespace YahurrFramework.Managers
 				YParameter parameter = command.Parameters[i];
 				string parameterSummary = parameter.Summary == null ? "No description." : parameter.Summary;
 
-				output += $"	 - {parameter.Name},	{parameterSummary}\n";
+				output += $"	 {i}: {parameter.Name} -- {parameterSummary}\n";
+			}
+
+			if (!(examples is null))
+			{
+				output += "\nExample:";
+
+				foreach (Example example in examples)
+				{
+					output += $"\n{example.Value}";
+				}
 			}
 
 			output += "```";
