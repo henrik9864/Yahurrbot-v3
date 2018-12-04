@@ -198,14 +198,14 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		bool ValidateGuild(IGuild guild, YModule module)
 		{
-			List<ServerFilter> filterAttributes = module.GetType().GetCustomAttributes<ServerFilter>().ToList();
+			/*List<ServerFilter> filterAttributes = module.GetType().GetCustomAttributes<ServerFilter>().ToList();
 			for (int i = 0; i < filterAttributes.Count; i++)
 			{
 				ServerFilter filter = filterAttributes[i];
 
 				if (filter.IsFiltered(guild.Id))
 					return false;
-			}
+			}*/
 
 			return true;
 		}

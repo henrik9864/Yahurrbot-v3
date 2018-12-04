@@ -23,7 +23,7 @@ namespace YahurrFramework
 		/// </summary>
 		public TokenType Type { get; } = TokenType.Bot;
 
-		public string Version { get; } = "1.2.0";
+		public string Version { get; } = "1.3.2";
 
 		internal ClientConfig Config { get; private set; } = new ClientConfig();
 
@@ -39,6 +39,8 @@ namespace YahurrFramework
 
 		internal FileManager FileManager { get; }
 
+		internal PermissionManager PermissionManager { get; }
+
 		DiscordSocketClient client;
 
 		public YahurrBot()
@@ -50,6 +52,7 @@ namespace YahurrFramework
 			ModuleManager = new ModuleManager(this, client);
 			EventManager = new EventManager(this, client);
 			FileManager = new FileManager(this, client);
+			PermissionManager = new PermissionManager(this, client);
 
 			LoggingManager.Log += Log;
 			LoggingManager.Read += GetInput;
@@ -66,13 +69,11 @@ namespace YahurrFramework
 			await LoggingManager.LogMessage(LogLevel.Message, $"Starting Yahurrbot v{Version}", "Startup").ConfigureAwait(false);
 			bool succsess = await StartupAsync().ConfigureAwait(false);
 
-			SemaphoreSlim signal = new SemaphoreSlim(0, 1);
-			client.GuildAvailable += async _ => { signal.Release(); await Task.CompletedTask; };
-
-			await signal.WaitAsync();
-
 			if (!succsess)
 				return ReturnCode.Error;
+
+			SemaphoreSlim signal = new SemaphoreSlim(0, 1);
+			client.GuildAvailable += async _ => { signal.Release(); await Task.CompletedTask; };
 
 			// Load all modules onto memory
 			await ModuleManager.LoadModulesAsync("Modules").ConfigureAwait(false);
@@ -80,6 +81,18 @@ namespace YahurrFramework
 			// Load all savefiles
 			await LoggingManager.LogMessage(LogLevel.Message, $"Loading save files...", "Startup").ConfigureAwait(false);
 			await FileManager.LoadObjectList().ConfigureAwait(false);
+
+			// Load saved permission from file
+			await LoggingManager.LogMessage(LogLevel.Message, $"Loading permissions...", "PermissionManager").ConfigureAwait(false);
+			await PermissionManager.LoadPermissions().ConfigureAwait(false);
+
+			// Wait for bot to connect to discord
+			Task signalTask = signal.WaitAsync();
+			if (!signalTask.IsCompleted)
+			{
+				await LoggingManager.LogMessage(LogLevel.Message, $"Waiting for client to connect to guilds...", "Startup").ConfigureAwait(false);
+				await signalTask;
+			}
 
 			// Start all loaded modules
 			await LoggingManager.LogMessage(LogLevel.Message, $"Initializing modules...", "Startup").ConfigureAwait(false);
@@ -129,6 +142,7 @@ namespace YahurrFramework
 							folder = commands[1];
 
 						Config = await GetConfig(folder).ConfigureAwait(false);
+						File.WriteAllText($"{folder}/ClientConfig.json", JsonConvert.SerializeObject(Config));
 						break;
 					case "list":
 						Console.WriteLine("Loaded modules:");
@@ -167,6 +181,8 @@ namespace YahurrFramework
 				return false;
 			}
 
+			this.CommandManager.CommandPrefix = Config.CommandPrefix;
+
 			await LoggingManager.LogMessage(LogLevel.Message, $"Loading tokens...", "Startup").ConfigureAwait(false);
 			ClientToken clientInfo = await GetToken(Config.TokenDirectory ?? "").ConfigureAwait(false);
 
@@ -194,7 +210,7 @@ namespace YahurrFramework
 			JSchemaGenerator generator = new JSchemaGenerator();
 			JSchema schema = generator.Generate(typeof(ClientToken));
 
-			string file = await GetFileOfType(directory, "*.json", Config.DefaultTokenIndex).ConfigureAwait(false);
+			string file = await GetFileOfType(directory, "*.json", Config.DefaultTokenName).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(file))
 				return null;
@@ -222,14 +238,14 @@ namespace YahurrFramework
 			if (!Directory.Exists(directory))
 				Directory.CreateDirectory(directory);
 
-			string file = await GetFileOfType(directory, "*.json").ConfigureAwait(false);
+			string file = await GetFileOfType(directory, "*.json", "ClientConfig").ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(file))
 			{
 				ClientConfig config = new ClientConfig();
 
 				using (StreamWriter writer = File.CreateText($"{directory}/Config.json"))
-					await writer.WriteAsync(JsonConvert.SerializeObject(config));
+					await writer.WriteAsync(JsonConvert.SerializeObject(config, Formatting.Indented));
 
 				return config;
 			}
@@ -248,14 +264,22 @@ namespace YahurrFramework
 		/// <param name="format">What files to include.</param>
 		/// <param name="searchOption">Where to search for files.</param>
 		/// <returns>File</returns>
-		async Task<string> GetFileOfType(string directory, string format, int deafultIndex = -1, SearchOption searchOption = SearchOption.TopDirectoryOnly)
+		async Task<string> GetFileOfType(string directory, string format, string defaultName, SearchOption searchOption = SearchOption.TopDirectoryOnly)
 		{
-			int index = deafultIndex;
 			string[] files = Directory.GetFiles(directory, format, searchOption);
 
-			if (files.Length > 1 && index == -1)
+			if (files.Length > 1)
 			{
-				await LoggingManager.LogMessage(LogLevel.Message, "Please type file name or index.", "Startup").ConfigureAwait(false);
+				await LoggingManager.LogMessage(LogLevel.Message, $"Using default file name of {defaultName}", "Startup").ConfigureAwait(false);
+
+				for (int i = 0; i < files.Length; i++)
+				{
+					string fileName = Path.GetFileNameWithoutExtension(files[i]);
+
+					if (fileName == defaultName)
+						return files[i];
+				}
+				/*await LoggingManager.LogMessage(LogLevel.Message, "Please type file name or index.", "Startup").ConfigureAwait(false);
 				string nameOrIndex = await LoggingManager.GetInput().ConfigureAwait(false);
 
 				if (string.IsNullOrEmpty(nameOrIndex))
@@ -264,27 +288,27 @@ namespace YahurrFramework
 					return null;
 				}
 
-				if (!int.TryParse(nameOrIndex, out index))
+				if (!int.TryParse(nameOrIndex, out defaultIndex))
 				{
-					index = Array.FindIndex(files, a =>
+					defaultIndex = Array.FindIndex(files, a =>
 						a.IndexOf(nameOrIndex, StringComparison.OrdinalIgnoreCase) >= 0
 					);
 				}
 
-				if (index == -1 || index >= files.Length)
+				if (defaultIndex == -1 || defaultIndex >= files.Length)
 				{
 					await LoggingManager.LogMessage(LogLevel.Message, "Name or index not found.", "Startup").ConfigureAwait(false);
 					return null;
-				}
+				}*/
 			}
 			else if (files.Length == 1)
 				return files[0];
 			else if (files.Length == 0)
 				return null;
 			else
-				await LoggingManager.LogMessage(LogLevel.Message, $"Using default index of {Config.DefaultTokenIndex}", "Startup").ConfigureAwait(false);
+				await LoggingManager.LogMessage(LogLevel.Message, $"Using default index of {Config.DefaultTokenName}", "Startup").ConfigureAwait(false);
 
-			return files[index];
+			return null;
 		}
 
 		Task Log(LogMessage message, ClientConfig config)

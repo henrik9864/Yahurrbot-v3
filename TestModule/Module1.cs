@@ -62,13 +62,11 @@ namespace TestModule
 		}
 
 		[Command("print", "string"), Summary("Prints a string."), Name("Print String")]
-		public async Task SayString([Summary("String to print")]string str)
+		public async Task SayString([Summary("String to print")]string str, int n = 1)
 		{
-			await RespondAsync(str).ConfigureAwait(false);
+			await RespondAsync($"{n}: {str}").ConfigureAwait(false);
 		}
 
-		[ChannelFilter(FilterType.Blacklist, 293381166365540353)]
-		[RoleFilter(FilterType.Whitelist, 288627464450736128)]
 		[Command("add"), Summary("Adds two numbers together.")]
 		public async Task AddInt([Summary("Number 1."), Name("Number1")]int n1, [Summary("Number 2.")]int Number2)
 		{
@@ -91,20 +89,20 @@ namespace TestModule
 		[Command("param", "noe"), Summary("Parameter test")]
 		public async Task ParamTest1(params string[] strs)
 		{
-			await RespondAsync("Length: " + strs.Length).ConfigureAwait(false);
-
-			foreach (var item in strs)
-			{
-				await RespondAsync("	" + item).ConfigureAwait(false);
-			}
-
-			throw new Exception("Nooo");
+			await ParamTest(strs);
 		}
 
 		[Command("say", "something")]
 		public async void SaySomething()
 		{
 			await RespondAsync("Hello World!");
+			await Task.CompletedTask;
+		}
+
+		[Command("say", "something")]
+		public async void SaySomething(string text)
+		{
+			await RespondAsync(text);
 			await Task.CompletedTask;
 		}
 	}

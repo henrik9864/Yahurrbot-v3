@@ -99,10 +99,10 @@ namespace YahurrFramework
 		/// <param name="name">Name of module</param>
 		/// <param name="param">Method parameters</param>
 		/// <returns></returns>
-		internal async Task RunMethod(string name, params object[] param)
+		internal async Task RunMethod(string name, int paramCount, params object[] param)
 		{
 			BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.IgnoreCase;
-			MethodInfo method = GetType().GetMethod(name, flags);
+			MethodInfo method = GetType().GetMethods(flags).First(a => a.Name == name && a.GetParameters().Length == paramCount);
 
 			if (method != null)
 			{
@@ -121,13 +121,14 @@ namespace YahurrFramework
 					if (rng.Next(0, 101) == 69)
 						userResponse += $"oopsie Woopsie {name} did a fucky wucky!";
 					else
-						userResponse += $"Fatal error in command {name} see bot log for more info.";
+						userResponse += $"Fatal error in method {name} see bot log for more info.";
 
+					await RespondAsync(userResponse + "```");
 					throw;
 				}
 			}
 			else
-				throw new MissingMethodException($"Method {name} not found.");
+				throw new MissingMethodException($"Method {name} was not found.");
 		}
 
 		/// <summary>
@@ -163,14 +164,15 @@ namespace YahurrFramework
 		public SocketGuildUser GetUser(string name, bool partial)
 		{
 			List<SocketGuildUser> Users = (Guild as SocketGuild)?.Users.ToList();
+			name = name.ToLower();
 
 			if (TryParseIdentefier(name, out ulong id))
 				return (Guild as SocketGuild).GetUser(id);
 
 			if (!partial)
-				return Users.Find(a => a.Nickname == name || a.Username == name);
+				return Users.Find(a => a.Nickname.ToLower() == name || a.Username.ToLower() == name);
 			else
-				return Users.Find(a => a?.Nickname?.Contains(name) ?? false || a.Username.Contains(name));
+				return Users.Find(a => a?.Nickname?.ToLower()?.Contains(name) ?? false || a.Username.ToLower().Contains(name));
 		}
 
 		/// <summary>
@@ -182,11 +184,12 @@ namespace YahurrFramework
 		public List<SocketGuildUser> GetUsers(string name, bool partial)
 		{
 			List<SocketGuildUser> Users = (Guild as SocketGuild)?.Users.ToList();
+			name = name.ToLower();
 
 			if (!partial)
-				return Users.FindAll(a => a.Nickname == name || a.Username == name);
+				return Users.FindAll(a => a.Nickname.ToLower() == name || a.Username.ToLower() == name);
 			else
-				return Users.FindAll(a => a?.Nickname?.Contains(name) ?? false || a.Username.Contains(name));
+				return Users.FindAll(a => a?.Nickname?.ToLower()?.Contains(name) ?? false || a.Username.ToLower().Contains(name));
 		}
 
 		/// <summary>
@@ -198,14 +201,15 @@ namespace YahurrFramework
 		public SocketRole GetRole(string name, bool partial)
 		{
 			List<SocketRole> Users = (Guild as SocketGuild)?.Roles.ToList();
+			name = name.ToLower();
 
 			if (TryParseIdentefier(name, out ulong id))
 				return (Guild as SocketGuild).GetRole(id);
 
 			if (!partial)
-				return Users.Find(a => a.Name == name);
+				return Users.Find(a => a.Name.ToLower() == name);
 			else
-				return Users.Find(a => a?.Name?.Contains(name) ?? false);
+				return Users.Find(a => a?.Name?.ToLower()?.Contains(name) ?? false);
 		}
 
 		/// <summary>
@@ -217,11 +221,12 @@ namespace YahurrFramework
 		public List<SocketRole> GetRoles(string name, bool partial)
 		{
 			List<SocketRole> Users = (Guild as SocketGuild)?.Roles.ToList();
+			name = name.ToLower();
 
 			if (!partial)
-				return Users.FindAll(a => a.Name == name);
+				return Users.FindAll(a => a.Name.ToLower() == name);
 			else
-				return Users.FindAll(a => a?.Name?.Contains(name) ?? false);
+				return Users.FindAll(a => a?.Name?.ToLower()?.Contains(name) ?? false);
 		}
 
 		/// <summary>

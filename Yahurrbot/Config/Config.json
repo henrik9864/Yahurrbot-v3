@@ -1,6 +1,0 @@
-﻿{
-	"MinLogLevel": "Debug",
-	"TokenDirectory": "Tokens", 
-	"DefaultTokenIndex": "1",
-	"ThrowExceptions": true
-}

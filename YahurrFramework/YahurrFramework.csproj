@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Wrappers\**" />
+    <EmbeddedResource Remove="Wrappers\**" />
+    <None Remove="Wrappers\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CsvHelper" Version="7.1.1" />
     <PackageReference Include="Discord.Net" Version="1.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
@@ -14,9 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Config\Config.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Tokens\ExampleToken.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -26,7 +29,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Wrappers\" />
+    <Reference Include="YahurrLexer">
+      <HintPath>..\..\..\BovrilLexer\BovrilLexer\bin\Debug\netcoreapp2.1\YahurrLexer.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

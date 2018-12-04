@@ -23,10 +23,13 @@ namespace YahurrFramework.Structs
 		[JsonProperty]
 		public string TokenDirectory { get; private set; } = "Tokens";
 
+		[JsonProperty]
+		public char CommandPrefix { get; private set; } = '!';
+
 		/// <summary>
 		/// Default token to use if it finds multiple.
 		/// </summary>
 		[JsonProperty]
-		public int DefaultTokenIndex { get; private set; } = 1;
+		public string DefaultTokenName { get; private set; }
 	}
 }

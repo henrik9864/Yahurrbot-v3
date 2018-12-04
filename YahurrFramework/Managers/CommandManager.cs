@@ -7,12 +7,13 @@ using YahurrFramework.Enums;
 using YahurrFramework.Attributes;
 using YahurrFramework.Commands;
 using System.Linq;
+using YahurrFramework.Structs;
 
 namespace YahurrFramework.Managers
 {
 	internal class CommandManager : BaseManager
 	{
-		internal char CommandPrefix { get; }
+		internal char CommandPrefix { get; set; } = '!';
 
 		int maxLength = 0;
 		Dictionary<int, CommandNode> savedCommands;
@@ -20,7 +21,6 @@ namespace YahurrFramework.Managers
 		public CommandManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
 			savedCommands = new Dictionary<int, CommandNode>();
-			CommandPrefix = '!';
 		}
 
 		/// <summary>
@@ -29,19 +29,22 @@ namespace YahurrFramework.Managers
 		/// <param name="command"></param>
 		internal void AddCommand(YCommand command)
 		{
-			int structureLength = command.Structure.Count;
-
-			if (structureLength > maxLength)
-				maxLength = structureLength;
-
-			if (savedCommands.TryGetValue(structureLength, out CommandNode node))
-				node.Add(command);
-			else
+			lock (savedCommands)
 			{
-				node = new CommandNode(structureLength);
-				node.Add(command);
+				int structureLength = command.Structure.Count;
 
-				savedCommands.Add(structureLength, node);
+				if (structureLength > maxLength)
+					maxLength = structureLength;
+
+				if (savedCommands.TryGetValue(structureLength, out CommandNode node))
+					node.Add(command);
+				else
+				{
+					node = new CommandNode(structureLength);
+					node.Add(command);
+
+					savedCommands.Add(structureLength, node);
+				}
 			}
 		}
 
@@ -57,14 +60,14 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		internal async Task<bool> RunMessageCommand(SocketMessage command)
 		{
-			if (!TryFindCommand(command.Content, out string msg))
+			if (!TryFindCommand(command.Content, out string msg, out bool silent))
 				return false;
 
 			List<string> cmd = new List<string>();
 			cmd.AddRange(msg.Split(' '));
 
 			if (!await RunInternalCommand(command, cmd).ConfigureAwait(false))
-				await RunCommand(command, cmd).ConfigureAwait(false);
+				await RunCommand(command, cmd, silent).ConfigureAwait(false);
 
 			return true;
 		}
@@ -86,7 +89,7 @@ namespace YahurrFramework.Managers
 			switch (command[0])
 			{
 				case "help":
-					succsess = HelpCommand(command, 20, ref output) ? 1 : 0;
+					succsess = HelpCommand(command, context, 20, ref output) ? 1 : 0;
 					break;
 			}
 
@@ -108,81 +111,33 @@ namespace YahurrFramework.Managers
 		/// <param name="context">Context for the command.</param>
 		/// <param name="command">Command with parameters split up by spaces.</param>
 		/// <returns></returns>
-		async Task<bool> RunCommand(SocketMessage context, List<string> command)
+		async Task<bool> RunCommand(SocketMessage context, List<string> command, bool silent = false)
 		{
+			if (!GetCommand(command, out YCommand savedCommand))
+			{
+				if (!silent)
+					await context.Channel.SendMessageAsync("Command not found.").ConfigureAwait(false);
+
+				return false;
+			}
+
+			// Check if user can run command
+			if (!Bot.PermissionManager.CanRun(savedCommand, context))
+			{
+				await context.Channel.SendMessageAsync("Command not found.").ConfigureAwait(false);
+				return false;
+			}
+
 			try
 			{
-				if (!GetCommand(command, out YCommand savedCommand))
-				{
-					await context.Channel.SendMessageAsync("Command not found.").ConfigureAwait(false);
-					return false;
-				}
-
-				// Check if user can run command
-				string reason = "You cannot run this command, unknown reason.";
-				if (!ValidateCommand(context, savedCommand, ref reason))
-				{
-					await context.Channel.SendMessageAsync(reason).ConfigureAwait(false);
-					return false;
-				}
-
-				try
-				{
-					await savedCommand.Invoke(command, new MethodContext(context)).ConfigureAwait(false);
-				}
-				catch (Exception ex)
-				{
-					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {savedCommand.Name}:", "ModuleManager").ConfigureAwait(false);
-					await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
-				}
-
-				return true;
+				await savedCommand.Invoke(command, new MethodContext(context)).ConfigureAwait(false);
 			}
-			catch (Exception e)
+			catch (Exception ex)
 			{
-				Console.WriteLine(e);
-				throw;
-			}
-		}
-
-		/// <summary>
-		/// Validates if a command can be excecuted by person.
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="command"></param>
-		/// <returns></returns>
-		bool ValidateCommand(SocketMessage context, YCommand command, ref string reason)
-		{
-			SocketGuildChannel channel = context.Channel as SocketGuildChannel;
-			SocketGuildUser guildUser = context.Author as SocketGuildUser;
-			ChannelFilter channelFilter = command.GetAttribute<ChannelFilter>(true);
-			RoleFilter roleFilter = command.GetAttribute<RoleFilter>(true);
-
-			if (channelFilter != null && !channelFilter.IsFiltered(channel?.Id ?? 0))
-			{
-				reason = "This command cannot be run in this channel.";
-				return false;
+				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to run command {savedCommand.Name}:", "ModuleManager").ConfigureAwait(false);
+				await Bot.LoggingManager.LogMessage(ex, "ModuleManager").ConfigureAwait(false);
 			}
 
-			if (command.IsDM && !(context.Channel is SocketDMChannel))
-			{
-				reason = "This is a DM only command.";
-				return false;
-			}
-
-			if (roleFilter != null)
-			{
-				foreach (SocketRole role in guildUser.Roles)
-				{
-					if (roleFilter.IsFiltered(role.Id))
-						return true;
-				}
-
-				reason = "You do not have permission to run this command.";
-				return false;
-			}
-
-			// Assume valid untill proven othervise
 			return true;
 		}
 
@@ -209,24 +164,33 @@ namespace YahurrFramework.Managers
 			return best != -1;
 		}
 
-		bool GetCommands(List<string> command, bool	validate, bool validateParam, out List<YCommand> savedCommands)
+		/// <summary>
+		/// Get all commands that match the commadn structure
+		/// </summary>
+		/// <param name="command"></param>
+		/// <param name="validateStructure">If the command structure should be mactehd</param>
+		/// <param name="validateParam">If command parameters is part of the structure</param>
+		/// <param name="savedCommands"></param>
+		/// <returns></returns>
+		bool GetCommands(List<string> command, bool validateStructure, bool validateParam, out List<YCommand> savedCommands)
 		{
 			List<YCommand> foundCommands = new List<YCommand>();
 			for (int i = 0; i <= maxLength; i++)
 			{
 				if (this.savedCommands.TryGetValue(i, out CommandNode node))
-					node.TryGetCommands(command, validate, validateParam, ref foundCommands);
+					node.TryGetCommands(command, validateStructure, validateParam, ref foundCommands);
 			}
 
 			savedCommands = foundCommands;
 			return foundCommands.Count > 0;
 		}
 
-		bool TryFindCommand(string message, out string command)
+		bool TryFindCommand(string message, out string command, out bool silent)
 		{
 			if (message[0] == CommandPrefix)
 			{
 				command = message.Substring(1);
+				silent = false;
 				return true;
 			}
 
@@ -241,11 +205,13 @@ namespace YahurrFramework.Managers
 					if (command[0] == CommandPrefix)
 						command = command.Substring(1);
 
+					silent = true;
 					return true;
 				}
 			}
 
 			command = null;
+			silent = false;
 			return false;
 		}
 
@@ -258,22 +224,31 @@ namespace YahurrFramework.Managers
 		/// <param name="perPage"></param>
 		/// <param name="output"></param>
 		/// <returns></returns>
-		bool HelpCommand(List<string> command, int perPage, ref string output)
+		bool HelpCommand(List<string> command, SocketMessage context, int perPage, ref string output)
 		{
 			int page = 1; // Starts with one cus user prefernce
+			int maxPages = (int)Math.Ceiling(savedCommands.Count / (decimal)perPage);
+
 			if (command.Count == 1 || int.TryParse(command[1], out page))
 			{
 				if (page < 1)
 					page = 1;
 
+				if (page > maxPages)
+					page = maxPages;
+
+				// Get all commands with matching structure
 				GetCommands(command, false, false, out List<YCommand> savedCommands);
+				// Filter out all commands user does not have permission to run
+				FilterCommands(context, ref savedCommands);
+
 				// Lets just not touch this anymore
 				List<YCommand> selectedCommands = savedCommands.Where((_, i) => i < page * perPage && i >= (page - 1) * perPage).ToList();
 
 				output = "```";
 				output += "!help <page> -- To change page.\n";
 				output += "!help <command> -- To view a command or module in more detail.\n\n";
-				output += $"Page {page}/{Math.Ceiling(savedCommands.Count / (decimal)perPage)}:\n";
+				output += $"Page {page}/{maxPages}:\n";
 
 				foreach (YCommand cmd in selectedCommands)
 				{
@@ -287,7 +262,7 @@ namespace YahurrFramework.Managers
 				return true;
 			}
 
-			return HelpSpecificCommand(command, ref output);
+			return HelpSpecificCommand(command, context, ref output);
 		}
 
 		/// <summary>
@@ -296,36 +271,42 @@ namespace YahurrFramework.Managers
 		/// <param name="command"></param>
 		/// <param name="output"></param>
 		/// <returns></returns>
-		bool HelpSpecificCommand(List<string> command, ref string output)
+		bool HelpSpecificCommand(List<string> command, SocketMessage context, ref string output)
 		{
+			int selector = -1;
+			if (int.TryParse(command[command.Count - 1], out int parsed))
+			{
+				selector = parsed;
+				command.RemoveAt(command.Count - 1);
+			}
+
 			command.RemoveAt(0);
 
-			if (!GetCommands(command, true, false, out List<YCommand> savedCommands))
-				return false;
+			GetCommands(command, true, false, out List<YCommand> savedCommands);
+			FilterCommands(context, ref savedCommands);
 
-			if (savedCommands.Count == 1)
+			if (savedCommands.Count == 1 || (savedCommands.Count > 1 && selector > 0 && selector <= savedCommands.Count))
 			{
-				return DisplayCommand(savedCommands[0], ref output);
+				return DisplayCommand(savedCommands[selector == -1 ? 0 : (selector - 1)], ref output);
 			}
 			else if (savedCommands.Count > 1)
 			{
 				output = "```";
-				output += $"{savedCommands.Count} command{(savedCommands.Count == 1 ? "" : "s")} found, please be more spesific\n";
+				output += $"{savedCommands.Count} commands found, please be more spesific or add an index to the end of the help command\n";
 
-				foreach (YCommand cmd in savedCommands)
+				for (int i = 0; i < savedCommands.Count; i++)
 				{
+					YCommand cmd = savedCommands[i];
 					string name = string.Join(' ', cmd.Structure);
 
-					output += $"	!{name}\n";
+					output += $"	{i + 1} !{name}\n";
 				}
 
 				output += "```";
 			}
 			else
 			{
-				output = "```";
-				output += "No commands found with that structure.";
-				output += "```";
+				output += "Unknown command.";
 			}
 
 			return true;
@@ -408,6 +389,25 @@ namespace YahurrFramework.Managers
 					return "Int";
 				default:
 					return type;
+			}
+		}
+
+		/// <summary>
+		/// Remove all unwanted commands.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="commands"></param>
+		void FilterCommands(SocketMessage context, ref List<YCommand> commands)
+		{
+			//commands = commands.Where(a => Bot.PermissionManager.CanRun(a, context)).ToList();
+
+			for (int i = 0; i < commands.Count; i++)
+			{
+				YCommand command = commands[i];
+				IgnoreHelp ignoreHelp = command.GetAttribute<IgnoreHelp>(true);
+
+				if (ignoreHelp != null || !Bot.PermissionManager.CanRun(command, context))
+					commands.RemoveAt(i);
 			}
 		}
 

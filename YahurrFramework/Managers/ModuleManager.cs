@@ -46,15 +46,15 @@ namespace YahurrFramework.Managers
 			// Load all found modules
 			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loading modules...", "ModuleManager").ConfigureAwait(false);
 
+			List<Type> Modules = new List<Type>();
 			for (int i = 0; i < files.Length; i++)
 			{
 				FileInfo file = files[i];
 
 				// New system
-				List<Type> Modules = new List<Type>();
-				LoadDLL(file.FullName, ref Modules);
-				await LoadModules(Modules).ConfigureAwait(false);
+				Modules.AddRange(await LoadDLL(file.FullName));
 			}
+			await LoadModules(Modules).ConfigureAwait(false);
 
 			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count}/{Modules.Count} module{(Modules.Count == 1 ? "" : "s")}", "ModuleManager").ConfigureAwait(false);
 		}
@@ -98,7 +98,7 @@ namespace YahurrFramework.Managers
 			for (int i = 0; i < LoadedModules.Count; i++)
 			{
 				YModule module = LoadedModules[i];
-				await Task.Run(() => module.RunMethod("Shutdown")).ConfigureAwait(false); // Make sure one slow shutdown stops every other module from getting the call
+				await Task.Run(() => module.RunMethod("Shutdown", 0)).ConfigureAwait(false); // Make sure one slow shutdown stops every other module from getting the call
 			}
 		}
 
@@ -123,7 +123,10 @@ namespace YahurrFramework.Managers
 					channel = item as ISocketMessageChannel;
 
 				if (item is IMessage)
+				{
 					message = item as IMessage;
+					channel = message?.Channel as ISocketMessageChannel;
+				}
 			}
 
 			MethodContext context = new MethodContext(guild, channel, message);
@@ -138,7 +141,7 @@ namespace YahurrFramework.Managers
 				try
 				{
 					module.SetContext(context);
-					await module.RunMethod(name, parameters).ConfigureAwait(false);
+					await module.RunMethod(name, parameters.Length, parameters).ConfigureAwait(false);
 				}
 				catch (Exception ex)
 				{
@@ -179,12 +182,25 @@ namespace YahurrFramework.Managers
 		/// </summary>
 		/// <param name="path"></param>
 		/// <param name="ModuleTypes"></param>
-		void LoadDLL(string path, ref List<Type> ModuleTypes)
+		async Task<List<Type>> LoadDLL(string path)
 		{
 			Assembly dll = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
-			Type[] types = dll.GetTypes();
+			Type[] types;// = dll.GetTypes();
+
+			// Load all found types
+			try
+			{
+				types = dll.GetTypes();
+			}
+			catch (ReflectionTypeLoadException e)
+			{
+				types = e.Types.Where(t => t != null).ToArray();
+
+				await Bot.LoggingManager.LogMessage(LogLevel.Warning, $"Unable to load {e.Types.Length - types.Length} types from {dll.FullName}", "ModuleManager");
+			}
 
 			// Add all types that extent yahurrmodule
+			List<Type> ModuleTypes = new List<Type>();
 			for (int i = 0; i < types.Length; i++)
 			{
 				Type type = types[i];
@@ -195,6 +211,8 @@ namespace YahurrFramework.Managers
 					ModuleTypes.Add(type);
 				}
 			}
+
+			return ModuleTypes;
 		}
 
 		/// <summary>
@@ -260,8 +278,11 @@ namespace YahurrFramework.Managers
 				object config = LoadConfig(module).GetAwaiter().GetResult();
 				module.LoadModule(Client, Bot, config);
 
-				Modules.Add(type, module);
-				AddModule(module);
+				lock (Modules)
+					Modules.Add(type, module);
+
+				lock (LoadedModules)
+					AddModule(module);
 			});
 		}
 
