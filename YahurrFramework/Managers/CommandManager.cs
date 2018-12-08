@@ -187,7 +187,7 @@ namespace YahurrFramework.Managers
 
 		bool TryFindCommand(string message, out string command, out bool silent)
 		{
-			if (message[0] == CommandPrefix)
+			if (!string.IsNullOrEmpty(message) && message[0] == CommandPrefix)
 			{
 				command = message.Substring(1);
 				silent = false;
