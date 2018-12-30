@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using Aq.ExpressionJsonSerializer;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using YahurrBot.Enums;
@@ -13,12 +15,17 @@ namespace YahurrFramework.Managers
 	internal class FileManager : BaseManager
 	{
 		Dictionary<(string name, string moduleID), SavedObject> savedObjects;
+        JsonSerializerSettings jsonSettings;
 
 		public FileManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
-			savedObjects = new Dictionary<(string, string), SavedObject>();
+            savedObjects = new Dictionary<(string, string), SavedObject>();
 			Directory.CreateDirectory("Saves");
-		}
+
+            // Allow for custon serialization of lambda expressions
+            jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects };
+            jsonSettings.Converters.Add(new ExpressionJsonConverter(Assembly.GetCallingAssembly()));
+        }
 
 		/// <summary>
 		/// Sav object to file as json.
@@ -30,25 +37,8 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public async Task Save(object obj, string name, YModule module, bool @override, bool append)
 		{
-			string json = Serialize(obj, SerializationType.JSON);
-			SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
-
-			await SaveAsync(savedObject, json, @override, append).ConfigureAwait(false);
-		}
-
-		/// <summary>
-		/// Save object to file as type.
-		/// </summary>
-		/// <param name="obj">Object to save.</param>
-		/// <param name="name">Identefier for loading this object.</param>
-		/// <param name="type">Type to save as.</param>
-		/// <param name="module"></param>
-		/// <param name="override"></param>
-		/// <returns></returns>
-		public async Task Save(object obj, string name, SerializationType type, YModule module, bool @override, bool append)
-		{
-			string json = Serialize(obj, type);
-			SavedObject savedObject = new SavedObject(name, $".{type.ToString()}", module, obj.GetType());
+			string json = JsonConvert.SerializeObject(obj, jsonSettings);
+            SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
 
 			await SaveAsync(savedObject, json, @override, append).ConfigureAwait(false);
 		}
@@ -83,7 +73,7 @@ namespace YahurrFramework.Managers
 			if (!savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
 				return default(T);
 
-			return await savedObject.Deserialize<T>(null).ConfigureAwait(false);
+			return await savedObject.Deserialize<T>(jsonSettings).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -231,23 +221,6 @@ namespace YahurrFramework.Managers
 }
 			else
 				savedObjects.Add(key, savedObject);
-		}
-
-		/// <summary>
-		/// Convert any object to string useing serialization type.
-		/// </summary>
-		/// <param name="obj"></param>
-		/// <param name="type"></param>
-		/// <returns></returns>
-		string Serialize(object obj, SerializationType type)
-		{
-			switch (type)
-			{
-				case SerializationType.JSON:
-					return JsonConvert.SerializeObject(obj);
-				default:
-					return null;
-			}
 		}
 	}
 }

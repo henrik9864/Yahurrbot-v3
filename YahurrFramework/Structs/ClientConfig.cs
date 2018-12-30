@@ -23,6 +23,9 @@ namespace YahurrFramework.Structs
 		[JsonProperty]
 		public string TokenDirectory { get; private set; } = "Tokens";
 
+        /// <summary>
+        /// Character to be before any commands
+        /// </summary>
 		[JsonProperty]
 		public char CommandPrefix { get; private set; } = '!';
 
@@ -31,5 +34,11 @@ namespace YahurrFramework.Structs
 		/// </summary>
 		[JsonProperty]
 		public string DefaultTokenName { get; private set; }
+
+        /// <summary>
+        /// Person who is responsible for maintaitn this bot
+        /// </summary>
+        [JsonProperty]
+        public ulong Maintainer { get; private set; }
 	}
 }

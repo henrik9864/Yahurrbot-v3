@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using YahurrBot.Enums;
 using YahurrFramework;
@@ -33,15 +34,30 @@ namespace YahurrBot.Structs
 			this.Extension = Extension;
 			this.Path = Path;
 			this.typeName = typeName;
-		}
+        }
 
 		public SavedObject(string name, string ex, YModule module, Type type) : this(name, ex, module.ID, type.FullName, $"Saves/{SanetizeName(module.Name)}/{name}{ex}")
 		{
 			DirectoryInfo dir = Directory.CreateDirectory($"Saves/{SanetizeName(module.Name)}");
 		}
 
+        /// <summary>
+        /// Derserialize file with JSON
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        public async Task<T> Deserialize<T>(JsonSerializerSettings settings)
+        {
+            string json;
+            using (StreamReader reader = new StreamReader(Path))
+                json = await reader.ReadToEndAsync().ConfigureAwait(false);
+
+            return JsonConvert.DeserializeObject<T>(json, settings);
+        }
+
 		/// <summary>
-		/// Deserialize Object JSON to type.
+		/// Deserialize file with a custom serializer
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <param name="deserializer"></param>
@@ -52,13 +68,7 @@ namespace YahurrBot.Structs
 			using (StreamReader reader = new StreamReader(Path))
 				json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
-			if (deserializer != null)
-				return deserializer(json);
-			else
-			{
-				SerializationType type = (SerializationType)Enum.Parse(typeof(SerializationType), Extension.Replace(".", ""), true);
-				return Deserialize<T>(json, type);
-			}
+			return deserializer(json);
 		}
 
 		/// <summary>
@@ -76,17 +86,6 @@ namespace YahurrBot.Structs
 			name = name.Replace(" ", "");
 
 			return name;
-		}
-
-		T Deserialize<T>(string json, SerializationType type)
-		{
-			switch (type)
-			{
-				case SerializationType.JSON:
-					return JsonConvert.DeserializeObject<T>(json);
-				default:
-					return default(T);
-			}
 		}
 	}
 }

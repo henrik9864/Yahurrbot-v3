@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using YahurrFramework.Enums;
+using YahurrFramework.Interfaces;
 using YahurrLexer;
 
 namespace YahurrFramework.Structs
 {
-	internal class PermissionClass
-	{
+	internal class PermissionClass : IPermissionGroup
+    {
 		public string Name { get; private set; }
 
 		public List<Permission> Permissions { get; private set; }
@@ -43,7 +44,27 @@ namespace YahurrFramework.Structs
 			permissonGroups.Add(group.Name, group);
 		}
 
-		public static PermissionClass Parse(Lexer<PermissionTokenType> lexer, string moduleID)
+        public bool IsFiltered(ulong id, PermissionTarget target, out bool result)
+        {
+            bool filtered = false;
+            bool found = false;
+
+            for (int i = 0; i < Permissions.Count; i++)
+            {
+                Permission permission = Permissions[i];
+
+                if (permission.Target == target && permission.IsFiltered(id, out bool r))
+                {
+                    filtered = filtered || r;
+                    found = true;
+                }
+            }
+
+            result = filtered;
+            return found;
+        }
+
+        public static PermissionClass Parse(Lexer<PermissionTokenType> lexer, string moduleID)
 		{
 			PermissionClass @class = new PermissionClass(moduleID);
 			PermissionGroup premissionGroup = null;

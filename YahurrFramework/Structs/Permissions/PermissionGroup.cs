@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 using YahurrFramework.Enums;
+using YahurrFramework.Interfaces;
 
 namespace YahurrFramework.Structs
 {
-	internal class PermissionGroup
-	{
+	internal class PermissionGroup : IPermissionGroup
+    {
 		public PermissionClass Class { get; private set; }
 
 		public string Name { get; private set; }

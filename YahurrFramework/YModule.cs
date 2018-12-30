@@ -34,7 +34,7 @@ namespace YahurrFramework
 			}
 		}
 
-		protected DiscordSocketClient Client { get; private set; }
+		internal DiscordSocketClient Client { get; private set; }
 
 		protected HttpClient WebClient
 		{
@@ -154,6 +154,11 @@ namespace YahurrFramework
 		{
 			return await Channel?.SendMessageAsync(message, isTTS);
 		}
+
+        public SocketGuild GetGuild(ulong id)
+        {
+            return Client.GetGuild(id);
+        }
 
 		/// <summary>
 		/// Get guild user by id.
@@ -398,19 +403,6 @@ namespace YahurrFramework
 		protected Task SaveAsync(string name, object obj, bool @override = true, bool append = false)
 		{
 			return Bot.FileManager.Save(obj, name, this, @override, append);
-		}
-
-		/// <summary>
-		/// Save object to file.
-		/// </summary>
-		/// <param name="name">Identefier for this object.</param>
-		/// <param name="obj">Object to save.</param>
-		/// <param name="type">Srialization method to use,</param>
-		/// <param name="override">If you want to override previous saves</param>
-		/// <returns></returns>
-		protected Task SaveAsync(string name, object obj, SerializationType type, bool @override = true, bool append = false)
-		{
-			return Bot.FileManager.Save(obj, name, type, this, @override, append);
 		}
 
 		/// <summary>

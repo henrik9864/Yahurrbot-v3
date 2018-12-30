@@ -184,11 +184,11 @@ namespace YahurrFramework.Managers
 		/// <param name="ModuleTypes"></param>
 		async Task<List<Type>> LoadDLL(string path)
 		{
-			Assembly dll = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
+            Assembly dll = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
 			Type[] types;// = dll.GetTypes();
 
-			// Load all found types
-			try
+            // Load all found types
+            try
 			{
 				types = dll.GetTypes();
 			}
@@ -320,13 +320,19 @@ namespace YahurrFramework.Managers
 				string path = $"Config/Modules/{module.Name}.json";
 				if (File.Exists(path))
 				{
+                    object config;
+                    string json;
 					using (StreamReader reader = new StreamReader(path))
 					{
-						string json = await reader.ReadToEndAsync().ConfigureAwait(false);
-						JToken token = JToken.Parse(json);
-						return token.ToObject(configAttribute.Type);
+						json = await reader.ReadToEndAsync().ConfigureAwait(false);
+                        config = JToken.Parse(json).ToObject(configAttribute.Type);
 					}
-				}
+
+                    // Update config file JSON in case there is a new parameter
+                    json = JsonConvert.SerializeObject(config, Formatting.Indented);
+                    await File.WriteAllTextAsync(path, json);
+                    return config;
+                }
 				else
 				{
 					object instance = Activator.CreateInstance(configAttribute.Type);

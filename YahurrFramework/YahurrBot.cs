@@ -8,7 +8,6 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
-using Newtonsoft.Json.Schema.Generation;
 using YahurrBot.Enums;
 using YahurrFramework.Enums;
 using YahurrFramework.Managers;
@@ -23,7 +22,7 @@ namespace YahurrFramework
 		/// </summary>
 		public TokenType Type { get; } = TokenType.Bot;
 
-		public string Version { get; } = "1.3.2";
+		public string Version { get; } = "1.3.3";
 
 		internal ClientConfig Config { get; private set; } = new ClientConfig();
 
@@ -207,8 +206,6 @@ namespace YahurrFramework
 		async Task<ClientToken> GetToken(string directory)
 		{
 			Directory.CreateDirectory(directory);
-			JSchemaGenerator generator = new JSchemaGenerator();
-			JSchema schema = generator.Generate(typeof(ClientToken));
 
 			string file = await GetFileOfType(directory, "*.json", Config.DefaultTokenName).ConfigureAwait(false);
 
@@ -220,11 +217,7 @@ namespace YahurrFramework
 				string json = await reader.ReadToEndAsync().ConfigureAwait(false);
 				JObject token = JObject.Parse(json);
 
-				if (token.IsValid(schema))
-					return token.ToObject<ClientToken>();
-
-				await LoggingManager.LogMessage(LogLevel.Message, "Invalid token file.", "Startup").ConfigureAwait(false);
-				return null;
+				return token.ToObject<ClientToken>();
 			}
 		}
 
@@ -240,22 +233,26 @@ namespace YahurrFramework
 
 			string file = await GetFileOfType(directory, "*.json", "ClientConfig").ConfigureAwait(false);
 
-			if (string.IsNullOrEmpty(file))
-			{
-				ClientConfig config = new ClientConfig();
+            ClientConfig config;
+            if (string.IsNullOrEmpty(file))
+            {
+                config = new ClientConfig();
+            }
+            else
+            {
+                using (StreamReader reader = new StreamReader(file))
+                {
+                    string json = await reader.ReadToEndAsync().ConfigureAwait(false);
+                    config = JsonConvert.DeserializeObject<ClientConfig>(json);
+                }
+            }
 
-				using (StreamWriter writer = File.CreateText($"{directory}/Config.json"))
-					await writer.WriteAsync(JsonConvert.SerializeObject(config, Formatting.Indented));
+            // Always update config in case there is a new variable
+            using (StreamWriter writer = File.CreateText($"{directory}/Config.json"))
+                await writer.WriteAsync(JsonConvert.SerializeObject(config, Formatting.Indented));
 
-				return config;
-			}
-
-			using (StreamReader reader = new StreamReader(file))
-			{
-				string json = await reader.ReadToEndAsync().ConfigureAwait(false);
-				return JsonConvert.DeserializeObject<ClientConfig>(json);
-			}
-		}
+            return config;
+        }
 
 		/// <summary>
 		/// Get file of type with inbuild error messages.
@@ -279,27 +276,6 @@ namespace YahurrFramework
 					if (fileName == defaultName)
 						return files[i];
 				}
-				/*await LoggingManager.LogMessage(LogLevel.Message, "Please type file name or index.", "Startup").ConfigureAwait(false);
-				string nameOrIndex = await LoggingManager.GetInput().ConfigureAwait(false);
-
-				if (string.IsNullOrEmpty(nameOrIndex))
-				{
-					await LoggingManager.LogMessage(LogLevel.Message, "Invalid input.", "Startup").ConfigureAwait(false);
-					return null;
-				}
-
-				if (!int.TryParse(nameOrIndex, out defaultIndex))
-				{
-					defaultIndex = Array.FindIndex(files, a =>
-						a.IndexOf(nameOrIndex, StringComparison.OrdinalIgnoreCase) >= 0
-					);
-				}
-
-				if (defaultIndex == -1 || defaultIndex >= files.Length)
-				{
-					await LoggingManager.LogMessage(LogLevel.Message, "Name or index not found.", "Startup").ConfigureAwait(false);
-					return null;
-				}*/
 			}
 			else if (files.Length == 1)
 				return files[0];

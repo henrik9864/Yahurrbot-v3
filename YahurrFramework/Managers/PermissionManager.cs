@@ -8,6 +8,7 @@ using Discord;
 using Discord.WebSocket;
 using YahurrFramework.Commands;
 using YahurrFramework.Enums;
+using YahurrFramework.Interfaces;
 using YahurrFramework.Structs;
 using YahurrLexer;
 
@@ -76,6 +77,9 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public bool CanRun(YCommand command, SocketMessage message)
 		{
+            if (message.Author.Id == Bot.Config.Maintainer)
+                return true;
+
 			ulong userID = message.Author.Id;
 			ulong channelID = message.Channel.Id;
 			ulong guildID = (message.Channel as SocketGuildChannel)?.Guild?.Id ?? 1;
@@ -88,21 +92,37 @@ namespace YahurrFramework.Managers
 			{
 				PermissionGroup group = @class[command.MethodName];
 
-				if (group is null)
-					return true;
+				if (group != null)
+                {
+                    if (!ValidateProperties(group, message))
+                        return false;
 
-				if (!ValidateProperties(group, message))
-					return false;
+                    if (IsFiltered(group, userID, channelID, guildID, roles))
+                        return true;
+                }
 
-				return IsFiltered(group, userID, channelID, guildID, roles);
-			}
+                return IsFiltered(@class, userID, channelID, guildID, roles);
+            }
 
 			return true;
 		}
 
+        /// <summary>
+        /// Get premission class for this command if there is any
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        public PermissionClass GetPermissionClass(YCommand command)
+        {
+            if (Permissions.TryGetValue(command.Parent.Name, out PermissionClass @class))
+                return @class;
+
+            return null;
+        }
+
 		/// <summary>
 		/// Check if properties allow this command to be run.
-		/// </summary>
+		/// </summary>11
 		/// <param name="group"></param>
 		/// <param name="message"></param>
 		/// <returns></returns>
@@ -130,11 +150,11 @@ namespace YahurrFramework.Managers
 		/// <param name="guildID"></param>
 		/// <param name="roles"></param>
 		/// <returns></returns>
-		bool IsFiltered(PermissionGroup group, ulong userID, ulong channelID, ulong guildID, List<SocketRole> roles)
+		bool IsFiltered(IPermissionGroup group, ulong userID, ulong channelID, ulong guildID, List<SocketRole> roles)
 		{
-			bool guildFound = group.IsFiltered(userID, Enums.PermissionTarget.Guild, out bool guildResult);
+			bool guildFound = group.IsFiltered(guildID, Enums.PermissionTarget.Guild, out bool guildResult);
 			bool channelFound = group.IsFiltered(channelID, Enums.PermissionTarget.Channel, out bool channelResult);
-			bool userFound = group.IsFiltered(guildID, Enums.PermissionTarget.User, out bool userResult);
+			bool userFound = group.IsFiltered(userID, Enums.PermissionTarget.User, out bool userResult);
 
 			bool roleFound = false;
 			bool roleFiltered = false;
