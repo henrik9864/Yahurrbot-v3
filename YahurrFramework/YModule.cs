@@ -10,15 +10,17 @@ using System.Net.Http;
 using YahurrBot.Enums;
 using YahurrFramework.Attributes;
 using YahurrFramework.Enums;
+using YahurrFramework.Interfaces;
+using YahurrFramework.Commands;
 
 namespace YahurrFramework
 {
-	public class YModule
+	public class YModule : CommandContainer
     {
 		/// <summary>
 		/// Name of module.
 		/// </summary>
-		public string Name
+		public new string Name
 		{
 			get
 			{
@@ -46,31 +48,6 @@ namespace YahurrFramework
 
 		protected object Config { get; private set; }
 
-		protected IGuild Guild
-		{
-			get
-			{
-				return AsyncContext.Value.Guild;
-			}
-		}
-
-		protected ISocketMessageChannel Channel
-		{
-			get
-			{
-				return AsyncContext.Value.Channel;
-			}
-		}
-
-		protected IMessage Message
-		{
-			get
-			{
-				return AsyncContext.Value.Message;
-			}
-		}
-
-		AsyncLocal<MethodContext> AsyncContext = new AsyncLocal<MethodContext>();
 		YahurrBot Bot;
 
 		internal void LoadModule(DiscordSocketClient client, YahurrBot bot, object config)
@@ -93,56 +70,7 @@ namespace YahurrFramework
 			}
 		}
 
-		/// <summary>
-		/// Run a method on this module.
-		/// </summary>
-		/// <param name="name">Name of module</param>
-		/// <param name="param">Method parameters</param>
-		/// <returns></returns>
-		internal async Task RunMethod(string name, int paramCount, params object[] param)
-		{
-			BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.IgnoreCase;
-			MethodInfo method = GetType().GetMethods(flags).First(a => a.Name == name && a.GetParameters().Length == paramCount);
-
-			if (method != null)
-			{
-				try
-				{
-					object output = method.Invoke(this, param ?? new object[0]);
-
-					if (output is Task)
-						await (output as Task);
-				}
-				catch (Exception)
-				{
-					string userResponse = "```";
-					Random rng = new Random();
-
-					if (rng.Next(0, 101) == 69)
-						userResponse += $"oopsie Woopsie {name} did a fucky wucky!";
-					else
-						userResponse += $"Fatal error in method {name} see bot log for more info.";
-
-					await RespondAsync(userResponse + "```");
-					throw;
-				}
-			}
-			else
-				throw new MissingMethodException($"Method {name} was not found.");
-		}
-
-		/// <summary>
-		/// Set context for any command.
-		/// </summary>
-		/// <param name="context"></param>
-		internal void SetContext(MethodContext context)
-		{
-			AsyncContext.Value = context;
-		}
-
 		#region Helper functions
-
-		#region Guild
 
 		/// <summary>
 		/// Send a message back to user in the channe it was given in,
@@ -155,10 +83,25 @@ namespace YahurrFramework
 			return await Channel?.SendMessageAsync(message, isTTS);
 		}
 
-        public SocketGuild GetGuild(ulong id)
-        {
-            return Client.GetGuild(id);
-        }
+		/// <summary>
+		/// Get response from the same user.
+		/// </summary>
+		/// <param name="identical">If the responder must be the same user.</param>
+		/// <returns></returns>
+		protected async Task<SocketMessage> GetResponseAsync(bool identical)
+		{
+			var tcs = new TaskCompletionSource<SocketMessage>();
+			Bot.EventManager.ResponseEvents.Add(tcs);
+
+			SocketMessage message = await tcs.Task;
+
+			if (message.Author == Message.Author || !identical)
+				return message;
+			return
+				null;
+		}
+
+		#region User
 
 		/// <summary>
 		/// Get guild user by id.
@@ -197,6 +140,10 @@ namespace YahurrFramework
 				return Users.FindAll(a => a?.Nickname?.ToLower()?.Contains(name) ?? false || a.Username.ToLower().Contains(name));
 		}
 
+		#endregion
+
+		#region Role
+
 		/// <summary>
 		/// Get role by name.
 		/// </summary>
@@ -233,6 +180,10 @@ namespace YahurrFramework
 			else
 				return Users.FindAll(a => a?.Name?.ToLower()?.Contains(name) ?? false);
 		}
+
+		#endregion
+
+		#region Channel
 
 		/// <summary>
 		/// Get first channel of type.
@@ -276,6 +227,8 @@ namespace YahurrFramework
 				return Users.Find(a => a?.Name?.Contains(name) ?? false && typeof(T).IsAssignableFrom(a.GetType())) as T;
 		}
 
+		#endregion
+
 		bool TryParseIdentefier(string identefier, out ulong id)
 		{
 			if (identefier[0] == '<' && identefier[identefier.Length - 1] == '>')
@@ -293,8 +246,6 @@ namespace YahurrFramework
 			id = 0;
 			return false;
 		}
-
-		#endregion
 
 		#endregion
 
@@ -350,18 +301,6 @@ namespace YahurrFramework
 					return type.IsAssignableFrom(a.GetType());
 				});
 			});
-		}
-
-		/// <summary>
-		/// Get response from user.
-		/// </summary>
-		/// <returns></returns>
-		protected Task<SocketMessage> GetResponseAsync()
-		{
-			var tcs = new TaskCompletionSource<SocketMessage>();
-			Bot.EventManager.ResponseEvents.Add(tcs);
-			
-			return tcs.Task;
 		}
 
 		#endregion

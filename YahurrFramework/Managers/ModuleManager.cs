@@ -98,7 +98,7 @@ namespace YahurrFramework.Managers
 			for (int i = 0; i < LoadedModules.Count; i++)
 			{
 				YModule module = LoadedModules[i];
-				await Task.Run(() => module.RunMethod("Shutdown", 0)).ConfigureAwait(false); // Make sure one slow shutdown stops every other module from getting the call
+				await Task.Run(() => module.RunCommand("Shutdown", 0)).ConfigureAwait(false); // Make sure one slow shutdown stops every other module from getting the call
 			}
 		}
 
@@ -141,7 +141,7 @@ namespace YahurrFramework.Managers
 				try
 				{
 					module.SetContext(context);
-					await module.RunMethod(name, parameters.Length, parameters).ConfigureAwait(false);
+					await module.RunCommand(name, parameters.Length, parameters).ConfigureAwait(false);
 				}
 				catch (Exception ex)
 				{

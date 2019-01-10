@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using YahurrFramework.Commands;
+using YahurrFramework.Commands.InternalCommands;
 using YahurrFramework.Enums;
+using YahurrFramework.Enums.Permissions;
 using YahurrFramework.Interfaces;
 using YahurrFramework.Structs;
 using YahurrLexer;
@@ -80,6 +82,7 @@ namespace YahurrFramework.Managers
             if (message.Author.Id == Bot.Config.Maintainer)
                 return true;
 
+			bool defaultAllow = true;
 			ulong userID = message.Author.Id;
 			ulong channelID = message.Channel.Id;
 			ulong guildID = (message.Channel as SocketGuildChannel)?.Guild?.Id ?? 1;
@@ -87,6 +90,10 @@ namespace YahurrFramework.Managers
 
 			if (message.Channel is SocketGuildChannel)
 				roles = (message.Author as SocketGuildUser)?.Roles.ToList();
+
+			// Internal commands must be explicitly allowed, except Help
+			if (command.Parent.GetType() != typeof(HelpCommand) && typeof(InternalCommandContainer).IsAssignableFrom(command.Parent.GetType()))
+				defaultAllow = false;
 
 			if (Permissions.TryGetValue(command.Parent.Name, out PermissionClass @class))
 			{
@@ -97,14 +104,19 @@ namespace YahurrFramework.Managers
                     if (!ValidateProperties(group, message))
                         return false;
 
-                    if (IsFiltered(group, userID, channelID, guildID, roles))
-                        return true;
-                }
+					PermissionStatus gStatus = IsFiltered(group, userID, channelID, guildID, roles);
+					if (gStatus != PermissionStatus.NotFound)
+						return ToBool(gStatus, false);
 
-                return IsFiltered(@class, userID, channelID, guildID, roles);
-            }
+					if (group.Properties.TryGetValue("IgnoreAbove", out string value) && bool.TryParse(value, out bool result) && result)
+						return ToBool(gStatus, defaultAllow);
+				}
 
-			return true;
+				PermissionStatus status = IsFiltered(@class, userID, channelID, guildID, roles);
+				return ToBool(status, defaultAllow);
+			}
+
+			return defaultAllow;
 		}
 
         /// <summary>
@@ -150,39 +162,61 @@ namespace YahurrFramework.Managers
 		/// <param name="guildID"></param>
 		/// <param name="roles"></param>
 		/// <returns></returns>
-		bool IsFiltered(IPermissionGroup group, ulong userID, ulong channelID, ulong guildID, List<SocketRole> roles)
+		PermissionStatus IsFiltered(IPermissionGroup group, ulong userID, ulong channelID, ulong guildID, List<SocketRole> roles)
 		{
-			bool guildFound = group.IsFiltered(guildID, Enums.PermissionTarget.Guild, out bool guildResult);
-			bool channelFound = group.IsFiltered(channelID, Enums.PermissionTarget.Channel, out bool channelResult);
-			bool userFound = group.IsFiltered(userID, Enums.PermissionTarget.User, out bool userResult);
-
-			bool roleFound = false;
-			bool roleFiltered = false;
+			PermissionStatus guildStatus = group.IsFiltered(guildID, Enums.PermissionTarget.Guild);
+			PermissionStatus channelStatus = group.IsFiltered(channelID, Enums.PermissionTarget.Channel);
+			PermissionStatus userStatus = group.IsFiltered(userID, Enums.PermissionTarget.User);
+			PermissionStatus roleStatus = PermissionStatus.NotFound;
 
 			for (int i = 0; i < roles.Count; i++)
 			{
 				SocketRole role = roles[i];
-				bool roleResult = false;
+				PermissionStatus status = group.IsFiltered(role.Id, Enums.PermissionTarget.Role);
 
-				roleFound = roleFound || group.IsFiltered(role.Id, Enums.PermissionTarget.Role, out roleResult);
+				if (status != PermissionStatus.NotFound)
+				{
+					roleStatus = status;
 
-				if (roleResult)
-					roleFiltered = true;
+					if (roleStatus == PermissionStatus.Approved)
+						break;
+				}
 			}
 
-			if (userFound)
-				return !userResult;
+			if (userStatus != PermissionStatus.NotFound)
+				return userStatus;
 
-			if (roleFound)
-				return !roleFiltered;
+			if (roleStatus != PermissionStatus.NotFound)
+				return roleStatus;
 
-			if (channelFound)
-				return !channelResult;
+			if (channelStatus != PermissionStatus.NotFound)
+				return channelStatus;
 
-			if (guildFound)
-				return !guildResult;
+			if (guildStatus != PermissionStatus.NotFound)
+				return guildStatus;
 
-			return true;
+			return PermissionStatus.NotFound;
+		}
+
+		/// <summary>
+		/// Converts PermissionStatus to passed/not passed
+		/// </summary>
+		/// <param name="status"></param>
+		/// <param name="defaultAllow"></param>
+		/// <returns></returns>
+		bool ToBool(PermissionStatus status, bool defaultAllow = true)
+		{
+			switch (status)
+			{
+				case PermissionStatus.Approved:
+					return true;
+				case PermissionStatus.Denied:
+					return false;
+				case PermissionStatus.NotFound:
+					return defaultAllow;
+				default:
+					throw new Exception("Da fuck?");
+			}
 		}
 	}
 }

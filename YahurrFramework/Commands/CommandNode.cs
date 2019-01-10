@@ -76,13 +76,13 @@ namespace YahurrFramework.Commands
 		/// <returns></returns>
 		int ValidateCommand(List<string> command, bool validateParam, YCommand yCommand)
 		{
-			//if (yCommand.IsParam && StructureLength < command.Count)
-				//return -1;
+			if (!validateParam && StructureLength < command.Count)
+				return -1;
 
 			for (int i = 0; i < StructureLength; i++)
 			{
 				if (i >= command.Count)
-					break;
+					return -1;
 
 				if (command[i] != yCommand.Structure[i])
 					return -1;

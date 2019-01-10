@@ -8,6 +8,7 @@ using YahurrFramework.Attributes;
 using YahurrFramework.Commands;
 using System.Linq;
 using YahurrFramework.Structs;
+using YahurrFramework.Interfaces;
 
 namespace YahurrFramework.Managers
 {
@@ -48,9 +49,44 @@ namespace YahurrFramework.Managers
 			}
 		}
 
-		internal void AddCommand(YModule module, MethodInfo method)
+		/// <summary>
+		/// Create a new command from module and add it.
+		/// </summary>
+		/// <param name="container">Command container.</param>
+		/// <param name="method">Command method.</param>
+		internal void AddCommand(ICommandContainer container, MethodInfo method)
 		{
-			AddCommand(new YCommand(method, module));
+			AddCommand(new YCommand(method, container));
+		}
+
+		/// <summary>
+		/// Add all commands in a command container
+		/// </summary>
+		/// <param name="container"></param>
+		internal void AddCommands(ICommandContainer container)
+		{
+			MethodInfo[] methods = container.GetType().GetMethods();
+			for (int i = 0; i < methods.Length; i++)
+			{
+				MethodInfo method = methods[i];
+
+				if (method.GetCustomAttribute<Command>() != null)
+					AddCommand(container, method);
+			}
+		}
+
+		internal void LoadInternalCommands(string commandNamespace)
+		{
+			Type[] internalCommands = GetTypesInNamespace(Assembly.GetExecutingAssembly(), commandNamespace);
+
+			for (int i = 0; i < internalCommands.Length; i++)
+			{
+				Type command = internalCommands[i];
+
+				if (typeof(InternalCommandContainer).IsAssignableFrom(command))
+					AddCommands(Activator.CreateInstance(command, Client, Bot) as InternalCommandContainer);
+
+			}
 		}
 
 		/// <summary>
@@ -66,40 +102,61 @@ namespace YahurrFramework.Managers
 			List<string> cmd = new List<string>();
 			cmd.AddRange(msg.Split(' '));
 
-			if (!await RunInternalCommand(command, cmd).ConfigureAwait(false))
+			//if (!await RunInternalCommand(command, cmd).ConfigureAwait(false))
 				await RunCommand(command, cmd, silent).ConfigureAwait(false);
 
 			return true;
 		}
 
+
 		/// <summary>
-		/// Run any hardcoded internal commands.
+		/// Get YCommand from a list of string that represents that command
 		/// </summary>
-		/// <param name="context">Context for command</param>
-		/// <param name="command">Command to run</param>
+		/// <param name="command"></param>
+		/// <param name="savedCommand"></param>
 		/// <returns></returns>
-		async Task<bool> RunInternalCommand(SocketMessage context, List<string> command)
+		internal bool GetCommand(List<string> command, out YCommand savedCommand)
 		{
-			// En kommando på villspor
-			// Validere kommando navn
-			string output = "";
-			bool succsess = false;
+			int best = -1;
+			YCommand bestCommand = null;
 
-			// Might improve later
-			switch (command[0])
+			for (int i = 0; i <= command.Count; i++)
 			{
-				case "help":
-					succsess = HelpCommand(command, context, 20, ref output);
-					break;
-                case "permission":
-                    succsess = PermissionCommand(command, context, ref output);
-                    break;
-            }
+				if (savedCommands.TryGetValue(i, out CommandNode node))
+				{
+					int match = node.TryGetCommand(command, out YCommand cmd);
 
-			if (succsess && !string.IsNullOrWhiteSpace(output))
-				await context.Channel.SendMessageAsync(output).ConfigureAwait(false);
+					if (match > best)
+					{
+						bestCommand = cmd;
+						best = match;
+					}
+				}
+			}
 
-			return succsess;
+			savedCommand = bestCommand;
+			return best != -1;
+		}
+
+		/// <summary>
+		/// Get all commands that match the commadn structure
+		/// </summary>
+		/// <param name="command"></param>
+		/// <param name="validateStructure">If the command structure should be mactehd</param>
+		/// <param name="validateParam">If command parameters is part of the structure</param>
+		/// <param name="savedCommands"></param>
+		/// <returns></returns>
+		internal bool GetCommands(List<string> command, bool validateStructure, bool validateParam, out List<YCommand> savedCommands)
+		{
+			List<YCommand> foundCommands = new List<YCommand>();
+			for (int i = 0; i <= maxLength; i++)
+			{
+				if (this.savedCommands.TryGetValue(i, out CommandNode node))
+					node.TryGetCommands(command, validateStructure, validateParam, ref foundCommands);
+			}
+
+			savedCommands = foundCommands;
+			return foundCommands.Count > 0;
 		}
 
 		/// <summary>
@@ -138,56 +195,6 @@ namespace YahurrFramework.Managers
 			return true;
 		}
 
-        /// <summary>
-        /// Get YCommand from a list of string that represents that command
-        /// </summary>
-        /// <param name="command"></param>
-        /// <param name="savedCommand"></param>
-        /// <returns></returns>
-		bool GetCommand(List<string> command, out YCommand savedCommand)
-		{
-			int best = -1;
-			YCommand bestCommand = null;
-
-			for (int i = 0; i <= command.Count; i++)
-			{
-				if (savedCommands.TryGetValue(i, out CommandNode node))
-				{
-					int match = node.TryGetCommand(command, out YCommand cmd);
-					
-					if (match > best)
-					{
-						bestCommand = cmd;
-						best = match;
-					}
-				}
-			}
-
-			savedCommand = bestCommand;
-			return best != -1;
-		}
-
-		/// <summary>
-		/// Get all commands that match the commadn structure
-		/// </summary>
-		/// <param name="command"></param>
-		/// <param name="validateStructure">If the command structure should be mactehd</param>
-		/// <param name="validateParam">If command parameters is part of the structure</param>
-		/// <param name="savedCommands"></param>
-		/// <returns></returns>
-		bool GetCommands(List<string> command, bool validateStructure, bool validateParam, out List<YCommand> savedCommands)
-		{
-			List<YCommand> foundCommands = new List<YCommand>();
-			for (int i = 0; i <= maxLength; i++)
-			{
-				if (this.savedCommands.TryGetValue(i, out CommandNode node))
-					node.TryGetCommands(command, validateStructure, validateParam, ref foundCommands);
-			}
-
-			savedCommands = foundCommands;
-			return foundCommands.Count > 0;
-		}
-
 		bool TryFindCommand(string message, out string command, out bool silent)
 		{
 			if (!string.IsNullOrEmpty(message) && message[0] == CommandPrefix)
@@ -218,270 +225,12 @@ namespace YahurrFramework.Managers
 			return false;
 		}
 
-        #region Internal Commands
-
-        #region Help
-
-        /// <summary>
-        /// Run help command
-        /// </summary>
-        /// <param name="command"></param>
-        /// <param name="perPage"></param>
-        /// <param name="output"></param>
-        /// <returns></returns>
-        bool HelpCommand(List<string> command, SocketMessage context, int perPage, ref string output)
+		Type[] GetTypesInNamespace(Assembly assembly, string nameSpace)
 		{
-			int page = 1; // Starts with one cus user prefernce
-			int maxPages = (int)Math.Ceiling(savedCommands.Count / (decimal)perPage);
-
-			if (command.Count == 1 || int.TryParse(command[1], out page))
-			{
-				if (page < 1)
-					page = 1;
-
-				if (page > maxPages)
-					page = maxPages;
-
-				// Get all commands with matching structure
-				GetCommands(command, false, false, out List<YCommand> savedCommands);
-                Console.WriteLine(savedCommands.Count);
-
-                // Filter out all commands user does not have permission to run
-                savedCommands = FilterCommands(context, savedCommands);
-
-                Console.WriteLine(savedCommands.Count);
-
-				// Lets just not touch this anymore
-				List<YCommand> selectedCommands = savedCommands.Where((_, i) => i < page * perPage && i >= (page - 1) * perPage).ToList();
-
-                if (selectedCommands.Count == 0)
-                    return true;
-
-				output = "```";
-				output += "!help <page> -- To change page.\n";
-				output += "!help <command> -- To view a command or module in more detail.\n\n";
-				output += $"Page {page}/{maxPages}:\n";
-
-				foreach (YCommand cmd in selectedCommands)
-				{
-					string name = string.Join(' ', cmd.Structure);
-
-					output += $"	!{name} -- {cmd.Summary ?? "No description."}\n";
-				}
-
-				output += "```";
-
-				return true;
-			}
-
-			return HelpSpecificCommand(command, context, ref output);
+			return assembly
+				.GetTypes()
+				.Where(t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal))
+				.ToArray();
 		}
-
-		/// <summary>
-		/// Find specefied command and display detail view of that command.
-		/// </summary>
-		/// <param name="command"></param>
-		/// <param name="output"></param>
-		/// <returns></returns>
-		bool HelpSpecificCommand(List<string> command, SocketMessage context, ref string output)
-		{
-			int selector = -1;
-			if (int.TryParse(command[command.Count - 1], out int parsed))
-			{
-				selector = parsed;
-				command.RemoveAt(command.Count - 1);
-			}
-
-			command.RemoveAt(0);
-
-			GetCommands(command, true, false, out List<YCommand> savedCommands);
-            savedCommands = FilterCommands(context, savedCommands);
-
-            if (savedCommands.Count == 1 || (savedCommands.Count > 1 && selector > 0 && selector <= savedCommands.Count))
-			{
-				return DisplayCommand(savedCommands[selector == -1 ? 0 : (selector - 1)], ref output);
-			}
-			else if (savedCommands.Count > 1)
-			{
-				output = "```";
-				output += $"{savedCommands.Count} commands found, please be more spesific or add an index to the end of the help command\n";
-
-				for (int i = 0; i < savedCommands.Count; i++)
-				{
-					YCommand cmd = savedCommands[i];
-					string name = string.Join(' ', cmd.Structure);
-
-					output += $"	{i + 1} !{name}\n";
-				}
-
-				output += "```";
-			}
-			else
-			{
-                output = "";
-			}
-
-			return true;
-		}
-
-		/// <summary>
-		/// Display detailed view of command.
-		/// </summary>
-		/// <param name="command"></param>
-		/// <param name="output"></param>
-		/// <returns></returns>
-		bool DisplayCommand(YCommand command, ref string output)
-		{
-			Example[] examples = command.GetAttributes<Example>(true);
-			string joinedParams = ConcatParameters(command);
-			string joinedName = string.Join(' ', command.Structure);
-			string commandSummary = !string.IsNullOrWhiteSpace(command.Summary) ? command.Summary + "\n" : "No description.\n";
-
-			output = "```";
-			output += $"{command.Name} command:\n";
-			output += commandSummary;
-			output += $"	!{joinedName} {joinedParams}\n";
-
-			for (int i = 0; i < command.Parameters.Count; i++)
-			{
-				YParameter parameter = command.Parameters[i];
-				string parameterSummary = parameter.Summary == null ? "No description." : parameter.Summary;
-
-				output += $"	 {i}: {parameter.Name} -- {parameterSummary}\n";
-			}
-
-			if (!(examples is null))
-			{
-				output += "\nExample:";
-
-				foreach (Example example in examples)
-				{
-					output += $"\n{example.Value}";
-				}
-			}
-
-			output += "```";
-
-			return true;
-		}
-
-		/// <summary>
-		/// Converts yCommand parameters into one continious string.
-		/// </summary>
-		/// <param name="command"></param>
-		/// <returns></returns>
-		string ConcatParameters(YCommand command)
-		{
-			string output = "";
-
-			for (int i = 0; i < command.Parameters.Count; i++)
-			{
-				YParameter parameter = command.Parameters[i];
-				string hasParam = parameter.IsParam ? "params " : "";
-				string shorthandType = TypeToShorthand(parameter.Type.Name).ToLower();
-
-				output += $"<{hasParam}{shorthandType} {parameter.Name.ToLower()}> ";
-			}
-
-			return output;
-		}
-
-		/// <summary>
-		/// Convert System.Type name to a shorthand version.
-		/// </summary>
-		/// <param name="type">TypeName to convert</param>
-		/// <returns></returns>
-		string TypeToShorthand(string type)
-		{
-			switch (type)
-			{
-				case "Int32":
-					return "Int";
-				case "Int64":
-					return "Int";
-				default:
-					return type;
-			}
-		}
-
-        /// <summary>
-        /// Remove all unwanted commands.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="commands"></param>
-        List<YCommand> FilterCommands(SocketMessage context, List<YCommand> commands)
-		{
-            List<YCommand> approved = new List<YCommand>();
-
-			for (int i = 0; i < commands.Count; i++)
-			{
-				YCommand command = commands[i];
-				IgnoreHelp ignoreHelp = command.GetAttribute<IgnoreHelp>(true);
-
-                if (ignoreHelp == null && Bot.PermissionManager.CanRun(command, context))
-                    approved.Add(command);
-
-            }
-
-            return approved;
-		}
-
-        #endregion
-
-        #region Permission
-
-        bool PermissionCommand(List<string> command, SocketMessage context, ref string output)
-        {
-            command.RemoveAt(0);
-
-            int selector = -1;
-            if (int.TryParse(command[command.Count - 1], out int parsed))
-            {
-                selector = parsed;
-                command.RemoveAt(command.Count - 1);
-            }
-
-            GetCommands(command, true, false, out List<YCommand> savedCommands);
-            savedCommands = FilterCommands(context, savedCommands);
-
-            if (savedCommands.Count == 1 || (savedCommands.Count > 1 && selector > 0 && selector <= savedCommands.Count))
-            {
-                YCommand yCommand = savedCommands[selector == -1 ? 0 : (selector - 1)];
-                PermissionClass permissionClass = Bot.PermissionManager.GetPermissionClass(yCommand);
-
-                output = $"``{DisplayPermissions(yCommand, permissionClass)}``";
-                return true;
-            }
-            else if (savedCommands.Count > 1)
-            {
-                output = "```";
-                output += $"{savedCommands.Count} commands found, please be more spesific or add an index to the end of the help command\n";
-
-                for (int i = 0; i < savedCommands.Count; i++)
-                {
-                    YCommand cmd = savedCommands[i];
-                    string name = string.Join(' ', cmd.Structure);
-
-                    output += $"	{i + 1} !{name}\n";
-                }
-
-                output += "```";
-            }
-            else
-            {
-                output = "";
-            }
-
-            return true;
-        }
-
-        string DisplayPermissions(YCommand command, PermissionClass permissionClass)
-        {
-            return "";
-        }
-
-        #endregion
-
-        #endregion
     }
 }

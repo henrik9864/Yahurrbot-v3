@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using YahurrFramework.Enums;
+using YahurrFramework.Enums.Permissions;
 using YahurrFramework.Interfaces;
 
 namespace YahurrFramework.Structs
@@ -32,24 +33,22 @@ namespace YahurrFramework.Structs
 			Permissions.Add(permission);
 		}
 
-		public bool IsFiltered(ulong id, PermissionTarget target, out bool result)
+		public PermissionStatus IsFiltered(ulong id, PermissionTarget target)
 		{
-			bool filtered = false;
-			bool found = false;
-
 			for (int i = 0; i < Permissions.Count; i++)
 			{
 				Permission permission = Permissions[i];
 
-				if (permission.Target == target && permission.IsFiltered(id, out bool r))
+				if (permission.Target == target)
 				{
-					filtered = filtered || r;
-					found = true;
+					PermissionStatus targetStatus = permission.IsFiltered(id);
+
+					if (targetStatus != PermissionStatus.NotFound)
+						return targetStatus;
 				}
 			}
 
-			result = filtered;
-			return found;
+			return PermissionStatus.NotFound;
 		}
 	}
 }

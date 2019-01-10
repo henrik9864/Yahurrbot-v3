@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using YahurrBot.Interfaces;
 using YahurrFramework.Attributes;
+using YahurrFramework.Interfaces;
 
 namespace YahurrFramework.Commands
 {
@@ -19,15 +20,16 @@ namespace YahurrFramework.Commands
 
 		public List<YParameter> Parameters { get; }
 
-		public bool IsParam { get; }
-
-		public bool IsDM { get; }
-
-		public YModule Parent { get; }
+		public ICommandContainer Parent { get; }
 
 		MemberInfo method;
 
-		public YCommand(MethodInfo method, YModule module)
+		internal YCommand(MethodInfo method, ICommandContainer parent) : this(method)
+		{
+			this.Parent = parent;
+		}
+
+		internal YCommand(MethodInfo method)
 		{
 			Command command = method.GetCustomAttribute<Command>();
 			Summary summary = method.GetCustomAttribute<Summary>();
@@ -36,20 +38,14 @@ namespace YahurrFramework.Commands
 
 			Structure = command.CommandStructure;
 			Parameters = new List<YParameter>();
-			IsParam = false;
-			IsDM = command.IsDM;
 			Name = name?.Value ?? method.Name;
 			MethodName = method.Name;
 			Summary = summary?.Value;
-			this.Parent = module;
 			this.method = method;
 
 			for (int i = 0; i < parameters.Length; i++)
 			{
 				YParameter parameter = new YParameter(parameters[i]);
-
-				if (parameter.IsParam)
-					IsParam = true;
 
 				Parameters.Add(parameter);
 			}
@@ -90,7 +86,7 @@ namespace YahurrFramework.Commands
 			}
 
 			Parent.SetContext(context);
-			await Parent.RunMethod(method.Name, formattedParameters.Length, formattedParameters);
+			await Parent.RunCommand(method.Name, formattedParameters.Length, formattedParameters);
 		}
 
 		/// <summary>

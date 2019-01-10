@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using YahurrFramework.Enums;
+using YahurrFramework.Enums.Permissions;
 using YahurrFramework.Structs;
 
 namespace YahurrFramework.Interfaces
@@ -12,6 +13,6 @@ namespace YahurrFramework.Interfaces
 
         Dictionary<string, string> Properties { get; }
 
-        bool IsFiltered(ulong userID, PermissionTarget target, out bool result);
+        PermissionStatus IsFiltered(ulong userID, PermissionTarget target);
     }
 }

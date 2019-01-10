@@ -8,19 +8,11 @@ namespace YahurrFramework.Attributes
     {
 		public string Value { get; private set; }
 
-		public bool IsDM { get; }
-
 		public List<string> CommandStructure { get; private set; }
 
 		public Command(params string[] command)
 		{
 			Init(command);
-		}
-
-		public Command(bool isDM, params string[] command)
-		{
-			Init(command);
-			this.IsDM = isDM;
 		}
 
 		void Init(string[] command)

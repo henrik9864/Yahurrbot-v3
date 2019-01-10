@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using YahurrFramework.Enums;
+using YahurrFramework.Enums.Permissions;
 
 namespace YahurrFramework.Structs
 {
@@ -21,22 +22,22 @@ namespace YahurrFramework.Structs
 			Identifiers = identifiers;
 		}
 
-		public bool IsFiltered(ulong id, out bool result)
+		public PermissionStatus IsFiltered(ulong id)
 		{
-			bool filtered = Type == PermissionType.Whitelist ? true : false;
+			PermissionStatus status = PermissionStatus.NotFound;
+
+			if (Type == PermissionType.Whitelist)
+				status = PermissionStatus.Denied;
 
 			for (int i = 0; i < Identifiers.Count; i++)
 			{
 				ulong saved = Identifiers[i];
 
-				if (saved == id){
-					result = !filtered;
-					return true;
-				}
+				if (saved == id)
+					return Type == PermissionType.Whitelist ? PermissionStatus.Approved : PermissionStatus.Denied;
 			}
 
-			result = filtered;
-			return Type == PermissionType.Whitelist ? true : false;
+			return status;
 		}
 	}
 }

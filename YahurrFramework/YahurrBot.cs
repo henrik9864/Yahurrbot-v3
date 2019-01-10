@@ -22,7 +22,7 @@ namespace YahurrFramework
 		/// </summary>
 		public TokenType Type { get; } = TokenType.Bot;
 
-		public string Version { get; } = "1.3.3";
+		public string Version { get; } = "1.3.4";
 
 		internal ClientConfig Config { get; private set; } = new ClientConfig();
 
@@ -73,6 +73,10 @@ namespace YahurrFramework
 
 			SemaphoreSlim signal = new SemaphoreSlim(0, 1);
 			client.GuildAvailable += async _ => { signal.Release(); await Task.CompletedTask; };
+
+			// Load internal commands
+			await LoggingManager.LogMessage(LogLevel.Message, "Loading internal commands...", "Startup");
+			CommandManager.LoadInternalCommands("YahurrFramework.Commands.InternalCommands");
 
 			// Load all modules onto memory
 			await ModuleManager.LoadModulesAsync("Modules").ConfigureAwait(false);
