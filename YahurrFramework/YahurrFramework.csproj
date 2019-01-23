@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="1.0.2" />
+    <PackageReference Include="Discord.Net" Version="2.0.1" />
     <PackageReference Include="Flee" Version="1.2.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <PackageReference Include="CsvHelper" Version="12.1.0" />
@@ -33,9 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Aq.ExpressionJsonSerializer">
-      <HintPath>..\..\..\..\..\OneDrive\Skrivebord\expression-json-serializer-master\Aq.ExpressionJsonSerializer\bin\Debug\Aq.ExpressionJsonSerializer.dll</HintPath>
-    </Reference>
     <Reference Include="YahurrLexer">
       <HintPath>..\..\..\BovrilLexer\BovrilLexer\bin\Debug\netcoreapp2.1\YahurrLexer.dll</HintPath>
     </Reference>

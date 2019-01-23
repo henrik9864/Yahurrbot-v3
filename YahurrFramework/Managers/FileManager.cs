@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Aq.ExpressionJsonSerializer;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using YahurrBot.Enums;
@@ -21,10 +20,6 @@ namespace YahurrFramework.Managers
 		{
             savedObjects = new Dictionary<(string, string), SavedObject>();
 			Directory.CreateDirectory("Saves");
-
-            // Allow for custon serialization of lambda expressions
-            jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects };
-            jsonSettings.Converters.Add(new ExpressionJsonConverter(Assembly.GetCallingAssembly()));
         }
 
 		/// <summary>

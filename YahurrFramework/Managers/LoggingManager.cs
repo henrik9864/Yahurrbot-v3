@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using YahurrFramework.Enums;
@@ -13,7 +14,9 @@ namespace YahurrFramework.Managers
 
 		public event Func<ClientConfig, Task<string>> Read;
 
-		List<LogMessage> loggedMessages = new List<LogMessage>();
+		public ulong RedirectUser { get; set; } = 0;
+
+		public bool OnlyException { get; set; } = false;
 
 		public LoggingManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
@@ -57,7 +60,22 @@ namespace YahurrFramework.Managers
 
 		async Task LogMessage(LogMessage message)
 		{
-			loggedMessages.Add(message);
+			string fileName = DateTime.Today.ToString("yyyy.MM.dd");
+			string filePath = $"Logs/{fileName}.txt";
+			string logMesage = $"{message.Timestamp.ToString("HH:mm:ss")} {message.LogLevel}-{message.Source}: {message.Message}";
+
+			FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
+			using (StreamWriter writer = new StreamWriter(fileStream))
+			{
+				await writer.WriteLineAsync(logMesage);
+			}
+
+			if (RedirectUser != 0 && (!OnlyException || message.Exception != null))
+			{
+				var channel = await Client.GetUser(RedirectUser).GetOrCreateDMChannelAsync();
+				await channel.SendMessageAsync(logMesage);
+			}
+
 			await Log.Invoke(message, Bot.Config).ConfigureAwait(false);
 		}
 	}

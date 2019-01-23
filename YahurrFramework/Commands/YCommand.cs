@@ -100,11 +100,14 @@ namespace YahurrFramework.Commands
 			if (typeof(string).IsAssignableFrom(paramType))
 				return param;
 
-			if (int.TryParse(param, out int result) && typeof(int).IsAssignableFrom(paramType))
+			if (typeof(int).IsAssignableFrom(paramType) && int.TryParse(param, out int result))
 				return result;
 
-			if (bool.TryParse(param, out bool boolResult) && typeof(bool).IsAssignableFrom(paramType))
-				return result;
+			if (typeof(ulong).IsAssignableFrom(paramType) && ulong.TryParse(param, out ulong uResult))
+				return uResult;
+
+			if (typeof(bool).IsAssignableFrom(paramType) && bool.TryParse(param, out bool boolResult))
+				return boolResult;
 
 			if (typeof(Enum).IsAssignableFrom(paramType))
 			{

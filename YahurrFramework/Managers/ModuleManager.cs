@@ -152,6 +152,31 @@ namespace YahurrFramework.Managers
 		}
 
 		/// <summary>
+		/// Reload config from file for all loaded modules.
+		/// </summary>
+		/// <returns></returns>
+		internal async Task ReloadConfig()
+		{
+			foreach (YModule module in LoadedModules)
+			{
+				object config = await LoadConfig(module);
+				module.ChangeConfig(config);
+			}
+		}
+
+		/// <summary>
+		/// Save all configs to their respective files.
+		/// </summary>
+		/// <returns></returns>
+		internal async Task SaveConfig()
+		{
+			foreach (YModule module in LoadedModules)
+			{
+				await SaveConfig(module);
+			}
+		}
+
+		/// <summary>
 		/// Get any type from this or any loaded assembly.
 		/// </summary>
 		/// <param name="typeName"></param>
@@ -287,7 +312,7 @@ namespace YahurrFramework.Managers
 		}
 
 		/// <summary>
-		/// Bind module to client events.
+		/// Load all commands from module.
 		/// </summary>
 		/// <param name="module"></param>
 		void AddModule(YModule module)
@@ -347,6 +372,14 @@ namespace YahurrFramework.Managers
 			}
 
 			return null;
+		}
+
+		async Task SaveConfig(YModule module)
+		{
+			string path = $"Config/Modules/{module.Name}.json";
+			string json = JsonConvert.SerializeObject(module.GetConfig(), Formatting.Indented);
+
+			await File.WriteAllTextAsync(path, json);
 		}
 	}
 }

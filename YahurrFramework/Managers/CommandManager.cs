@@ -102,12 +102,10 @@ namespace YahurrFramework.Managers
 			List<string> cmd = new List<string>();
 			cmd.AddRange(msg.Split(' '));
 
-			//if (!await RunInternalCommand(command, cmd).ConfigureAwait(false))
-				await RunCommand(command, cmd, silent).ConfigureAwait(false);
+			await RunCommand(command, cmd, Bot.Config.Silent || silent).ConfigureAwait(false);
 
 			return true;
 		}
-
 
 		/// <summary>
 		/// Get YCommand from a list of string that represents that command

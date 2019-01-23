@@ -70,6 +70,16 @@ namespace YahurrFramework
 			}
 		}
 
+		internal void ChangeConfig(object config)
+		{
+			this.Config = config;
+		}
+
+		internal object GetConfig()
+		{
+			return Config;
+		}
+
 		#region Helper functions
 
 		/// <summary>

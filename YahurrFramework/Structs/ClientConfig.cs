@@ -40,5 +40,11 @@ namespace YahurrFramework.Structs
         /// </summary>
         [JsonProperty]
         public ulong Maintainer { get; private set; }
+
+		/// <summary>
+		/// Supress command not found.
+		/// </summary>
+		[JsonProperty]
+		public bool Silent { get; private set; } = false;
 	}
 }

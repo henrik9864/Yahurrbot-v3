@@ -22,7 +22,7 @@ namespace YahurrFramework
 		/// </summary>
 		public TokenType Type { get; } = TokenType.Bot;
 
-		public string Version { get; } = "1.3.4";
+		public string Version { get; } = "1.3.5";
 
 		internal ClientConfig Config { get; private set; } = new ClientConfig();
 
@@ -41,17 +41,17 @@ namespace YahurrFramework
 		internal PermissionManager PermissionManager { get; }
 
 		DiscordSocketClient client;
-
+		
 		public YahurrBot()
 		{
 			client = new DiscordSocketClient();
 
+			PermissionManager = new PermissionManager(this, client);
 			LoggingManager = new LoggingManager(this, client);
 			CommandManager = new CommandManager(this, client);
 			ModuleManager = new ModuleManager(this, client);
 			EventManager = new EventManager(this, client);
 			FileManager = new FileManager(this, client);
-			PermissionManager = new PermissionManager(this, client);
 
 			LoggingManager.Log += Log;
 			LoggingManager.Read += GetInput;
@@ -59,11 +59,15 @@ namespace YahurrFramework
 		}
 
 		/// <summary>
-		/// Start Yahurrbot
+		/// YahurrBot startup logic
 		/// </summary>
 		/// <returns></returns>
 		public async Task<ReturnCode> StartAsync()
 		{
+			// Create logging direcotry if it does not exist.
+			if (!Directory.Exists("Logs"))
+				Directory.CreateDirectory("Logs");
+
 			// Run Yahurrbot startup
 			await LoggingManager.LogMessage(LogLevel.Message, $"Starting Yahurrbot v{Version}", "Startup").ConfigureAwait(false);
 			bool succsess = await StartupAsync().ConfigureAwait(false);
@@ -105,7 +109,7 @@ namespace YahurrFramework
 			await LoggingManager.LogMessage(LogLevel.Message, $"Complete.", "Startup").ConfigureAwait(false);
 
 			// Run command and main loop
-			return await CommandLoop().ConfigureAwait(false);
+			return await ConsoleCommandLoop().ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -124,10 +128,20 @@ namespace YahurrFramework
 		}
 
 		/// <summary>
+		/// Realod config from file.
+		/// </summary>
+		/// <returns></returns>
+		internal async Task ReloadConfig()
+		{
+			await LoggingManager.LogMessage(LogLevel.Message, $"Loading config...", "Startup").ConfigureAwait(false);
+			Config = await GetConfig("Config").ConfigureAwait(false);
+		}
+
+		/// <summary>
 		/// Bot command loop
 		/// </summary>
 		/// <returns></returns>
-		async Task<ReturnCode> CommandLoop()
+		async Task<ReturnCode> ConsoleCommandLoop()
 		{
 			while (true)
 			{
@@ -175,8 +189,8 @@ namespace YahurrFramework
 		{
 			Directory.CreateDirectory("Modules");
 
-			await LoggingManager.LogMessage(LogLevel.Message, $"Loading config...", "Startup").ConfigureAwait(false);
-			Config = await GetConfig("Config").ConfigureAwait(false);
+			// Get config from file
+			await ReloadConfig();
 
 			if (Config == null)
 			{
@@ -252,7 +266,7 @@ namespace YahurrFramework
             }
 
             // Always update config in case there is a new variable
-            using (StreamWriter writer = File.CreateText($"{directory}/Config.json"))
+            using (StreamWriter writer = File.CreateText(file))
                 await writer.WriteAsync(JsonConvert.SerializeObject(config, Formatting.Indented));
 
             return config;
@@ -295,7 +309,7 @@ namespace YahurrFramework
 		{
 			if (config == null)
 			{
-				Console.WriteLine($"{message.Timestamp.ToString("hh:mm:ss")} {message.Source}: {message.Message}");
+				Console.WriteLine($"{message.Timestamp.ToString("HH:mm:ss")} {message.Source}: {message.Message}");
 				return Task.CompletedTask;
 			}
 

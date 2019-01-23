@@ -147,6 +147,9 @@ namespace YahurrFramework.Commands
 			if (typeof(int).IsAssignableFrom(type) && int.TryParse(param, out int result))
 				return true;
 
+			if (typeof(ulong).IsAssignableFrom(type) && ulong.TryParse(param, out ulong uResult))
+				return true;
+
 			if (typeof(bool).IsAssignableFrom(type) && bool.TryParse(param, out bool boolResult))
 				return true;
 
