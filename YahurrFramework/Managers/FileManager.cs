@@ -14,7 +14,6 @@ namespace YahurrFramework.Managers
 	internal class FileManager : BaseManager
 	{
 		Dictionary<(string name, string moduleID), SavedObject> savedObjects;
-        JsonSerializerSettings jsonSettings;
 
 		public FileManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
@@ -32,7 +31,7 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public async Task Save(object obj, string name, YModule module, bool @override, bool append)
 		{
-			string json = JsonConvert.SerializeObject(obj, jsonSettings);
+			string json = JsonConvert.SerializeObject(obj);
             SavedObject savedObject = new SavedObject(name, ".json", module, obj.GetType());
 
 			await SaveAsync(savedObject, json, @override, append).ConfigureAwait(false);
@@ -68,7 +67,7 @@ namespace YahurrFramework.Managers
 			if (!savedObjects.TryGetValue((name, module.ID), out SavedObject savedObject))
 				return default(T);
 
-			return await savedObject.Deserialize<T>(jsonSettings).ConfigureAwait(false);
+			return await savedObject.Deserialize<T>().ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -207,13 +206,11 @@ namespace YahurrFramework.Managers
 		/// <param name="override"></param>
 		void AddSavedObject((string name, string moduleID) key, SavedObject savedObject, bool @override)
 		{
-			if (savedObjects.TryGetValue(key, out SavedObject so))
+			if (savedObjects.ContainsKey(key))
 			{
 				if (@override)
-				{
 					savedObjects[key] = savedObject;
-				}
-}
+			}
 			else
 				savedObjects.Add(key, savedObject);
 		}

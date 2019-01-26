@@ -126,8 +126,7 @@ namespace YahurrFramework.Commands.InternalCommands
 
 			if (typeof(Enum).IsAssignableFrom(paramType))
 			{
-				object enumResult = null;
-				Enum.TryParse(paramType, param, out enumResult);
+				Enum.TryParse(paramType, param, out object enumResult);
 
 				return enumResult;
 			}

@@ -47,13 +47,13 @@ namespace YahurrBot.Structs
         /// <typeparam name="T"></typeparam>
         /// <param name="settings"></param>
         /// <returns></returns>
-        public async Task<T> Deserialize<T>(JsonSerializerSettings settings)
+        public async Task<T> Deserialize<T>()
         {
             string json;
             using (StreamReader reader = new StreamReader(Path))
                 json = await reader.ReadToEndAsync().ConfigureAwait(false);
 
-            return JsonConvert.DeserializeObject<T>(json, settings);
+            return JsonConvert.DeserializeObject<T>(json);
         }
 
 		/// <summary>
