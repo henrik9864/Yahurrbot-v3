@@ -29,7 +29,7 @@ namespace YahurrBot.Structs
 		private SavedObject(string Name, string Extension, string ModuleID, string typeName, string Path)
 		{
 			this.Name = Name;
-			this.Type = ModuleManager.GetType(typeName);
+			this.Type = Type.GetType(typeName);
 			this.ModuleID = ModuleID;
 			this.Extension = Extension;
 			this.Path = Path;

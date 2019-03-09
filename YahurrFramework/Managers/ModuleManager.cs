@@ -17,11 +17,6 @@ namespace YahurrFramework.Managers
 {
 	internal class ModuleManager : BaseManager
 	{
-		/// <summary>
-		/// List of all loaded assmblies
-		/// </summary>
-		static List<Assembly> LoadedAssemblies;
-
 		public List<YModule> LoadedModules { get; }
 
 		Dictionary<Type, YModule> Modules;
@@ -29,38 +24,59 @@ namespace YahurrFramework.Managers
 		public ModuleManager(YahurrBot bot, DiscordSocketClient client) : base(bot, client)
 		{
 			LoadedModules = new List<YModule>();
-			LoadedAssemblies = new List<Assembly>();
 			Modules = new Dictionary<Type, YModule>();
 		}
 
 		/// <summary>
-		/// Load all YahurrModules from a folder.
+		/// Load all DLL's into memor and instansiate all modules
 		/// </summary>
 		/// <param name="folder">Path to folder containing dll's.</param>
 		/// <returns></returns>
 		internal async Task LoadModulesAsync(string folder)
 		{
-			DirectoryInfo directory = Directory.CreateDirectory(folder);
-			FileInfo[] files = directory.GetFiles("*.dll");
+			DirectoryInfo modulesDirectory = Directory.CreateDirectory(folder);
+			DirectoryInfo[] directories = modulesDirectory.GetDirectories();
 
 			// Load all found modules
 			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loading modules...", "ModuleManager").ConfigureAwait(false);
 
-			List<Type> Modules = new List<Type>();
-			for (int i = 0; i < files.Length; i++)
+			List<Assembly> ModuleAssemblies = new List<Assembly>();
+			for (int i = 0; i < directories.Length; i++)
 			{
-				FileInfo file = files[i];
+				DirectoryInfo dir = directories[i];
 
-				// New system
-				Modules.AddRange(await LoadDLL(file.FullName));
+				string modulePath = $"{dir.FullName}/{dir.Name}.dll";
+				if (!File.Exists(modulePath))
+				{
+					await Bot.LoggingManager.LogMessage(LogLevel.Warning, $"Unable to load module {dir.Name} DLL not found.", "Module Manager");
+					continue;
+				}
+
+				ModuleAssemblies.Add(await Bot.AssemblyManager.LoadDLL($"{dir.FullName}/{dir.Name}.dll"));
 			}
-			await LoadModules(Modules).ConfigureAwait(false);
 
+			List<Type> Modules = new List<Type>();
+			for (int i = 0; i < ModuleAssemblies.Count; i++)
+			{
+				Assembly moduleAssembly = ModuleAssemblies[i];
+				Type[] types = moduleAssembly.GetTypes();
+
+				for (int a = 0; a < types.Length; a++)
+				{
+					Type type = types[a];
+
+					// Check if type found is a YahurrModule
+					if (typeof(YModule).IsAssignableFrom(type))
+						Modules.Add(type);
+				}
+			}
+
+			await LoadModules(Modules).ConfigureAwait(false);
 			await Bot.LoggingManager.LogMessage(LogLevel.Message, $"Loaded {LoadedModules.Count}/{Modules.Count} module{(Modules.Count == 1 ? "" : "s")}", "ModuleManager").ConfigureAwait(false);
 		}
 
 		/// <summary>
-		/// Startup all modules.
+		/// Run init on all modules and create ConfigFiles.
 		/// </summary>
 		/// <returns></returns>
 		internal async Task InitializeModules()
@@ -177,70 +193,6 @@ namespace YahurrFramework.Managers
 		}
 
 		/// <summary>
-		/// Get any type from this or any loaded assembly.
-		/// </summary>
-		/// <param name="typeName"></param>
-		/// <returns></returns>
-		static internal Type GetType(string typeName)
-		{
-			if (LoadedAssemblies == null)
-				return null;
-
-			Type type = Type.GetType(typeName, false, true);
-			if (type != null)
-				return type;
-
-			for (int i = 0; i < LoadedAssemblies.Count; i++)
-			{
-				Assembly assembly = LoadedAssemblies[i];
-				type = assembly.GetType(typeName, false, true);
-
-				if (type != null)
-					return type;
-			}
-
-			return null;
-		}
-
-		/// <summary>
-		/// Load DLL onto memory and extract all YModule classes.
-		/// </summary>
-		/// <param name="path"></param>
-		/// <param name="ModuleTypes"></param>
-		async Task<List<Type>> LoadDLL(string path)
-		{
-            Assembly dll = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
-			Type[] types;// = dll.GetTypes();
-
-            // Load all found types
-            try
-			{
-				types = dll.GetTypes();
-			}
-			catch (ReflectionTypeLoadException e)
-			{
-				types = e.Types.Where(t => t != null).ToArray();
-
-				await Bot.LoggingManager.LogMessage(LogLevel.Warning, $"Unable to load {e.Types.Length - types.Length} types from {dll.FullName}", "ModuleManager");
-			}
-
-			// Add all types that extent yahurrmodule
-			List<Type> ModuleTypes = new List<Type>();
-			for (int i = 0; i < types.Length; i++)
-			{
-				Type type = types[i];
-
-				// Check if type found is a YahurrModule
-				if (typeof(YModule).IsAssignableFrom(type))
-				{
-					ModuleTypes.Add(type);
-				}
-			}
-
-			return ModuleTypes;
-		}
-
-		/// <summary>
 		/// Create an instance of all modues in list.
 		/// </summary>
 		/// <param name="Modules">Modules to create an instance of.</param>
@@ -257,7 +209,7 @@ namespace YahurrFramework.Managers
 				ConstructorInfo[] constructorInfo = moduleType.GetConstructors();
 				if (constructorInfo.Length > 1 || constructorInfo[0].GetParameters().Length > 0)
 				{
-					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {moduleType.Name}, type can only have 1 constrcot with 0 arguments.", "ModuleManager").ConfigureAwait(false);
+					await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to load module {moduleType.Name}, type can only have 1 constrctor with 0 arguments.", "ModuleManager").ConfigureAwait(false);
 					continue;
 				}
 
@@ -271,7 +223,7 @@ namespace YahurrFramework.Managers
 			CancellationTokenSource tokenSource = new CancellationTokenSource();
 			try
 			{
-				Task.WaitAll(tasks.ConvertAll(a => a.task).ToArray(), 1000, tokenSource.Token);
+				Task.WaitAll(tasks.ConvertAll(a => a.task).ToArray(), 10000, tokenSource.Token);
 			}
 			catch (Exception ex)
 			{

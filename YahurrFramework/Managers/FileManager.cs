@@ -19,6 +19,7 @@ namespace YahurrFramework.Managers
 		{
             savedObjects = new Dictionary<(string, string), SavedObject>();
 			Directory.CreateDirectory("Saves");
+			Directory.CreateDirectory("Files");
         }
 
 		/// <summary>

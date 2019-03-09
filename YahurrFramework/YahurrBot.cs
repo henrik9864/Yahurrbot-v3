@@ -38,6 +38,8 @@ namespace YahurrFramework
 
 		internal FileManager FileManager { get; }
 
+		internal AssemblyManager AssemblyManager { get; }
+
 		internal PermissionManager PermissionManager { get; }
 
 		DiscordSocketClient client;
@@ -52,6 +54,7 @@ namespace YahurrFramework
 			ModuleManager = new ModuleManager(this, client);
 			EventManager = new EventManager(this, client);
 			FileManager = new FileManager(this, client);
+			AssemblyManager = new AssemblyManager(this, client);
 
 			LoggingManager.Log += Log;
 			LoggingManager.Read += GetInput;

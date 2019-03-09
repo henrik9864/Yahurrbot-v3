@@ -21,7 +21,7 @@ namespace YahurrFramework.Commands
 			}
 		}
 
-		protected IGuild Guild
+		static protected IGuild Guild
 		{
 			get
 			{
@@ -29,7 +29,7 @@ namespace YahurrFramework.Commands
 			}
 		}
 
-		protected ISocketMessageChannel Channel
+		static protected ISocketMessageChannel Channel
 		{
 			get
 			{
@@ -37,7 +37,7 @@ namespace YahurrFramework.Commands
 			}
 		}
 
-		protected IMessage Message
+		static protected IMessage Message
 		{
 			get
 			{
@@ -45,7 +45,7 @@ namespace YahurrFramework.Commands
 			}
 		}
 
-		AsyncLocal<MethodContext> asyncContext = new AsyncLocal<MethodContext>();
+		static AsyncLocal<MethodContext> asyncContext = new AsyncLocal<MethodContext>();
 
 		/// <summary>
 		/// Rund a command in this class.

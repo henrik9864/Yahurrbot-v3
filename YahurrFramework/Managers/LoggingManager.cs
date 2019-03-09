@@ -64,7 +64,7 @@ namespace YahurrFramework.Managers
 			string filePath = $"Logs/{fileName}.txt";
 			string logMesage = $"{message.Timestamp.ToString("HH:mm:ss")} {message.LogLevel}-{message.Source}: {message.Message}";
 
-			FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
+			FileStream fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.None);
 			using (StreamWriter writer = new StreamWriter(fileStream))
 			{
 				await writer.WriteLineAsync(logMesage);

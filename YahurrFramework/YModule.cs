@@ -88,9 +88,12 @@ namespace YahurrFramework
 		/// <param name="message"></param>
 		/// <param name="isTTS"></param>
 		/// <returns></returns>
-		public async Task<IUserMessage> RespondAsync(string message, bool isTTS = false)
+		public async Task<IUserMessage> RespondAsync(string message, bool dm = false, bool isTTS = false)
 		{
-			return await Channel?.SendMessageAsync(message, isTTS);
+			if (dm)
+				return await Message?.Author?.SendMessageAsync(message, isTTS);
+			else
+				return await Channel?.SendMessageAsync(message, isTTS);
 		}
 
 		/// <summary>
