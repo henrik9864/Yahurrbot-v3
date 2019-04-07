@@ -90,6 +90,24 @@ namespace YahurrFramework
 		/// <returns></returns>
 		public async Task<IUserMessage> RespondAsync(string message, bool dm = false, bool isTTS = false)
 		{
+			for (int i = 0; i < 5; i++)
+			{
+				try
+				{
+					return await SendMessage(message, dm, isTTS);
+				}
+				catch (Exception)
+				{
+					if (i == 4)
+						throw;
+				}
+			}
+
+			throw new Exception("Error sending message to discord.");
+		}
+
+		async Task<IUserMessage> SendMessage(string message, bool dm, bool isTTS)
+		{
 			if (dm)
 				return await Message?.Author?.SendMessageAsync(message, isTTS);
 			else
