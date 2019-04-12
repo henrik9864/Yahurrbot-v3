@@ -46,7 +46,7 @@ namespace TestModule
 			bool exists = await ExistsAsync("test1").ConfigureAwait(false);
 
 			if (message.Content == "Ping")
-				await RespondAsync(Config.PingResponse ?? "Error");
+				await TryRespondAsync(Config.PingResponse ?? "Error");
 		}
 
 		protected override async Task MessageDeleted(IMessage message, ISocketMessageChannel channel)
@@ -58,29 +58,29 @@ namespace TestModule
 		[Command("print", "int")]
 		public async Task SayInt([Summary("Number to print")]int number)
 		{
-			await RespondAsync(number.ToString()).ConfigureAwait(false);
+			await TryRespondAsync(number.ToString()).ConfigureAwait(false);
 		}
 
 		[Command("print", "string"), Summary("Prints a string."), Name("Print String")]
 		public async Task SayString([Summary("String to print")]string str, int n = 1)
 		{
-			await RespondAsync($"{n}: {str}").ConfigureAwait(false);
+			await TryRespondAsync($"{n}: {str}").ConfigureAwait(false);
 		}
 
 		[Command("add"), Summary("Adds two numbers together.")]
 		public async Task AddInt([Summary("Number 1."), Name("Number1")]int n1, [Summary("Number 2.")]int Number2)
 		{
-			await RespondAsync((n1 * Number2).ToString()).ConfigureAwait(false);
+			await TryRespondAsync((n1 * Number2).ToString()).ConfigureAwait(false);
 		}
 
 		[Command("param"), Summary("Parameter test")]
 		public async Task ParamTest(params string[] strs)
 		{
-			await RespondAsync("Length: " + strs.Length).ConfigureAwait(false);
+			await TryRespondAsync("Length: " + strs.Length).ConfigureAwait(false);
 
 			foreach (var item in strs)
 			{
-				await RespondAsync("	" + item).ConfigureAwait(false);
+				await TryRespondAsync("	" + item).ConfigureAwait(false);
 			}
 
 			throw new Exception("Nooo");
@@ -95,14 +95,14 @@ namespace TestModule
 		[Command("say", "something")]
 		public async void SaySomething()
 		{
-			await RespondAsync("Hello World!");
+			await TryRespondAsync("Hello World!");
 			await Task.CompletedTask;
 		}
 
 		[Command("say", "something")]
 		public async void SaySomething(string text)
 		{
-			await RespondAsync(text);
+			await TryRespondAsync(text);
 			await Task.CompletedTask;
 		}
 	}

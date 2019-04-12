@@ -43,7 +43,7 @@ namespace YahurrFramework
 		internal PermissionManager PermissionManager { get; }
 
 		DiscordSocketClient client;
-		
+
 		public YahurrBot()
 		{
 			client = new DiscordSocketClient();
@@ -72,7 +72,7 @@ namespace YahurrFramework
 				Directory.CreateDirectory("Logs");
 
 			// Run Yahurrbot startup
-			await LoggingManager.LogMessage(LogLevel.Message, $"Starting Yahurrbot v{Version}", "Startup").ConfigureAwait(false);
+			await LoggingManager.LogMessage(LogLevel.Message, $"Starting YahurrFramework v{Version}", "Startup").ConfigureAwait(false);
 			bool succsess = await StartupAsync().ConfigureAwait(false);
 
 			if (!succsess)
@@ -209,6 +209,8 @@ namespace YahurrFramework
 			if (clientInfo == null)
 			{
 				await LoggingManager.LogMessage(LogLevel.Critical, $"Unable to load token from folder '{Config.TokenDirectory}'", "Startup").ConfigureAwait(false);
+				await LoggingManager.LogMessage(LogLevel.Critical, $"Press any key to continiue...", "Startup").ConfigureAwait(false);
+				Console.ReadKey();
 				return false;
 			}
 
@@ -266,11 +268,11 @@ namespace YahurrFramework
                     string json = await reader.ReadToEndAsync().ConfigureAwait(false);
                     config = JsonConvert.DeserializeObject<ClientConfig>(json);
                 }
-            }
 
-            // Always update config in case there is a new variable
-            using (StreamWriter writer = File.CreateText(file))
-                await writer.WriteAsync(JsonConvert.SerializeObject(config, Formatting.Indented));
+				// Always update config in case there is a new variable
+				using (StreamWriter writer = File.CreateText(file))
+					await writer.WriteAsync(JsonConvert.SerializeObject(config, Formatting.Indented));
+			}
 
             return config;
         }
