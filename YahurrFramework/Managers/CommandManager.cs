@@ -96,6 +96,9 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		internal async Task<bool> RunMessageCommand(SocketMessage command)
 		{
+			if (command.Author.IsBot)
+				return false;
+
 			if (!TryFindCommand(command.Content, out string msg, out bool silent))
 				return false;
 

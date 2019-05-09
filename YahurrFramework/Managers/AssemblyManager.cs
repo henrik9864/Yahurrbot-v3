@@ -17,6 +17,7 @@ namespace YahurrFramework.Managers
 			AppDomain.CurrentDomain.AssemblyLoad += AssemblyLoad;
 			AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolve;
 			AppDomain.CurrentDomain.TypeResolve += TypeResolve;
+			AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += AssemblyResolve;
 		}
 
 		/// <summary>

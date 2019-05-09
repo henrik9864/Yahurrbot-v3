@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using YahurrFramework.Enums;
 
 namespace YahurrFramework.Structs
@@ -39,7 +40,7 @@ namespace YahurrFramework.Structs
         /// Person who is responsible for maintaitn this bot
         /// </summary>
         [JsonProperty]
-        public ulong Maintainer { get; private set; }
+        public List<ulong> Maintainer { get; private set; }
 
 		/// <summary>
 		/// Supress command not found.

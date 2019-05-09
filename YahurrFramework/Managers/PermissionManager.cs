@@ -79,7 +79,7 @@ namespace YahurrFramework.Managers
 		/// <returns></returns>
 		public bool CanRun(YCommand command, SocketMessage message)
 		{
-            if (message.Author.Id == Bot.Config.Maintainer)
+			if (Bot.Config.Maintainer.Contains(message.Author.Id))
                 return true;
 
 			bool defaultAllow = true;
