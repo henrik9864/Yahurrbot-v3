@@ -103,6 +103,12 @@ namespace YahurrFramework.Managers
 				module.SetContext(new MethodContext(Client.Guilds.FirstOrDefault(), null, null));
 				await module.InitModule().ConfigureAwait(false);
 			}
+
+			for (int i = 0; i < LoadedModules.Count; i++)
+			{
+				YModule module = LoadedModules[i];
+				await module.ModuleDone();
+			}
 		}
 
 		/// <summary>

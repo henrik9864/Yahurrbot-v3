@@ -70,6 +70,19 @@ namespace YahurrFramework
 			}
 		}
 
+		internal async Task ModuleDone()
+		{
+			try
+			{
+				await Done().ConfigureAwait(false);
+			}
+			catch (Exception e)
+			{
+				await Bot.LoggingManager.LogMessage(LogLevel.Error, $"Unable to initialize module {Name}:", "YahurrModule").ConfigureAwait(false);
+				await Bot.LoggingManager.LogMessage(e, "ModuleManager").ConfigureAwait(false);
+			}
+		}
+
 		internal void ChangeConfig(object config)
 		{
 			this.Config = config;
@@ -457,6 +470,11 @@ namespace YahurrFramework
 		#region EventMethods
 
 		protected async virtual Task Init()
+		{
+			await Task.CompletedTask;
+		}
+
+		protected async virtual Task Done()
 		{
 			await Task.CompletedTask;
 		}
