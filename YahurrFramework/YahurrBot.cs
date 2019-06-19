@@ -8,7 +8,7 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
-using YahurrBot.Enums;
+using YahurrFramework.Enums;
 using YahurrFramework.Enums;
 using YahurrFramework.Managers;
 using YahurrFramework.Structs;
@@ -22,7 +22,7 @@ namespace YahurrFramework
 		/// </summary>
 		public TokenType Type { get; } = TokenType.Bot;
 
-		public string Version { get; } = "1.3.5";
+		public string Version { get; } = "1.3.6";
 
 		internal ClientConfig Config { get; private set; } = new ClientConfig();
 

@@ -3,11 +3,11 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-using YahurrBot.Enums;
+using YahurrFramework.Enums;
 using YahurrFramework;
 using YahurrFramework.Managers;
 
-namespace YahurrBot.Structs
+namespace YahurrFramework.Structs
 {
 	internal class SavedObject
     {

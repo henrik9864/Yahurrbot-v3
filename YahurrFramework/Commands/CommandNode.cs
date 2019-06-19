@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using YahurrBot.Interfaces;
+using YahurrFramework.Interfaces;
 
 namespace YahurrFramework.Commands
 {

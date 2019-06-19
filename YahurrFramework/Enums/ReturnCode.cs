@@ -1,4 +1,4 @@
-﻿namespace YahurrBot.Enums
+﻿namespace YahurrFramework.Enums
 {
 	public enum ReturnCode
     {

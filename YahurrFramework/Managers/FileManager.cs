@@ -6,8 +6,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using YahurrBot.Enums;
-using YahurrBot.Structs;
+using YahurrFramework.Enums;
+using YahurrFramework.Structs;
 
 namespace YahurrFramework.Managers
 {

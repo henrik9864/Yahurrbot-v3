@@ -1,4 +1,4 @@
-﻿namespace YahurrBot.Interfaces
+﻿namespace YahurrFramework.Interfaces
 {
 	public interface IParseable
 	{

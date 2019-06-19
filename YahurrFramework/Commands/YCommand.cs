@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
-using YahurrBot.Interfaces;
+using YahurrFramework.Interfaces;
 using YahurrFramework.Attributes;
 using YahurrFramework.Interfaces;
 

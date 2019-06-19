@@ -7,9 +7,8 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
-using YahurrBot.Enums;
-using YahurrFramework.Attributes;
 using YahurrFramework.Enums;
+using YahurrFramework.Attributes;
 using YahurrFramework.Interfaces;
 using YahurrFramework.Commands;
 
