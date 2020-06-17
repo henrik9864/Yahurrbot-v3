@@ -1,15 +1,12 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Linq.Expressions;
-using System.Reflection;
+﻿using System;
 
 namespace YahurrFramework
 {
 	class Program
-    {
-        static void Main(string[] args)
-        {
-            int code;
+	{
+		static void Main(string[] args)
+		{
+			int code;
 			while (true)
 			{
 				YahurrBot bot = new YahurrBot();
@@ -20,6 +17,6 @@ namespace YahurrFramework
 			}
 
 			Console.WriteLine("Program exited with code: " + code);
-        }
+		}
 	}
 }

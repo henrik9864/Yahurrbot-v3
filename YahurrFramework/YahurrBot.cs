@@ -9,7 +9,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using YahurrFramework.Enums;
-using YahurrFramework.Enums;
 using YahurrFramework.Managers;
 using YahurrFramework.Structs;
 
@@ -78,6 +77,7 @@ namespace YahurrFramework
 			if (!succsess)
 				return ReturnCode.Error;
 
+			await LoggingManager.LogMessage(LogLevel.Message, "Waiting for guilds...", "Startup");
 			SemaphoreSlim signal = new SemaphoreSlim(0, 1);
 			client.GuildAvailable += async _ => { signal.Release(); await Task.CompletedTask; };
 
@@ -111,7 +111,7 @@ namespace YahurrFramework
 			// Continue this as main loop.
 			await LoggingManager.LogMessage(LogLevel.Message, $"Complete.", "Startup").ConfigureAwait(false);
 
-			// Run command and main loop
+			// Run command and main loop Y6G3d8g
 			return await ConsoleCommandLoop().ConfigureAwait(false);
 		}
 
