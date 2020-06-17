@@ -583,6 +583,11 @@ namespace YahurrFramework
 			await Task.CompletedTask;
 		}
 
+		protected async virtual Task UserLeft(SocketGuildUser user)
+		{
+			await Task.CompletedTask;
+		}
+
 		protected async virtual Task MessageUpdated(IMessage before, SocketMessage after, ISocketMessageChannel channel)
 		{
 			await Task.CompletedTask;

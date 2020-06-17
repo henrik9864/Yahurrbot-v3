@@ -45,6 +45,7 @@ namespace YahurrFramework.Managers
 			Client.GuildUnavailable += (a) => RunEvent("GuildUnavailable", a);
 			Client.GuildMembersDownloaded += (a) => RunEvent("GuildMembersDownloaded", a);
 			Client.UserJoined += (a) => RunEvent("UserJoined", a);
+			Client.UserLeft += (a) => RunEvent("UserLeft", a);
 			Client.MessageUpdated += async (a, b, c) => await RunEvent("MessageUpdated", await FromCache(a, c), b, c);
 			Client.LatencyUpdated += (a, b) => RunEvent("LatencyUpdated", a, b);
 			Client.MessageReceived += MessageReceived;
